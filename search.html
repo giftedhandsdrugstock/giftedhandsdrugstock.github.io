@@ -8,21 +8,19 @@
 <body>
 
     <div id="app">
-        <!-- Header -->
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ccc;padding-bottom:10px;">
             <h1>Drug Stock Search</h1>
             <div>
                 <span id="userDisplay" style="margin-right:15px;"></span>
-                <button onclick="logout()">Logout</button>
+                <a href="movement.html">Movement</a>
+                <button onclick="logout()" style="margin-left:10px;">Logout</button>
             </div>
         </div>
 
-        <!-- Search Bar -->
         <div style="margin:20px 0;">
             <input type="text" id="searchBox" placeholder="Search for a drug..." style="width:100%;padding:12px;font-size:18px;">
         </div>
 
-        <!-- Results -->
         <div id="results">
             <p>Type a drug name and press Enter.</p>
         </div>
@@ -36,7 +34,6 @@
                 window.location.href = 'index.html';
                 return;
             }
-
             const fullName = localStorage.getItem('fullName') || localStorage.getItem('username') || 'User';
             document.getElementById('userDisplay').textContent = 'Welcome, ' + fullName;
         }
@@ -66,16 +63,15 @@
                     return;
                 }
 
-                let html = '<table border="1" cellpadding="8" cellspacing="0" style="width:100%;border-collapse:collapse;">';
+                let html = '<table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;">';
                 html += '<tr><th>Drug Name</th><th>Form</th><th>Balance</th></tr>';
 
                 results.forEach(function(record) {
                     const balance = parseFloat(record[2]) || 0;
-                    const color = balance === 0 ? '#cc0000' : (balance < 10 ? '#cc8800' : '#008800');
                     html += '<tr>';
                     html += '<td>' + record[0] + '</td>';
                     html += '<td>' + record[1] + '</td>';
-                    html += '<td style="color:' + color + ';font-weight:bold;">' + balance + '</td>';
+                    html += '<td>' + balance + '</td>';
                     html += '</tr>';
                 });
 
@@ -90,6 +86,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
+
             const searchBox = document.getElementById('searchBox');
             searchBox.addEventListener('keydown', function(event) {
                 if (event.key === 'Enter') {
@@ -97,6 +94,7 @@
                     searchDrugs();
                 }
             });
+
             searchBox.focus();
         });
     </script>
