@@ -46,7 +46,7 @@
             </div>
         </div>
 
-        <!-- MAIN CONTENT - 2/3 LEFT | 1/3 RIGHT (hidden by default) -->
+        <!-- MAIN CONTENT -->
         <div class="orders-main" style="display:flex;gap:20px;">
 
             <!-- LEFT PANEL - 2/3 -->
@@ -55,7 +55,10 @@
                 <div class="section-box">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
                         <h2>Drug List</h2>
-                        <span id="drugCount" class="text-muted"></span>
+                        <div>
+                            <span id="drugCount" class="text-muted"></span>
+                            <button id="closeDrugListBtn" onclick="closeDrugList()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Drug List">✕</button>
+                        </div>
                     </div>
 
                     <div id="drugListContainer">
@@ -78,7 +81,10 @@
                 <div class="section-box">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
                         <h2>New Order</h2>
-                        <span id="orderIdDisplay" class="text-muted" style="font-size:13px;"></span>
+                        <div>
+                            <span id="orderIdDisplay" class="text-muted" style="font-size:13px;"></span>
+                            <button onclick="toggleNewOrder()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Order Panel">✕</button>
+                        </div>
                     </div>
 
                     <div id="orderListContainer" style="margin-top:10px;">
@@ -174,9 +180,7 @@
                 document.getElementById('orderIdDisplay').textContent = '';
                 document.getElementById('orderNotes').value = '';
                 renderOrderList();
-                if (isDrugListVisible) renderDrugList();
-                clearSearchArea();
-
+                // Don't clear search area when closing order panel
             } else {
                 panel.style.display = 'block';
                 btn.textContent = '✕ Cancel Order';
@@ -189,6 +193,70 @@
         }
 
         // ============================================================
+        // TOGGLE DRUG LIST
+        // ============================================================
+
+        function toggleDrugList() {
+            var container = document.getElementById('drugListContainer');
+            var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
+
+            if (isDrugListVisible) {
+                container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
+                document.getElementById('drugCount').textContent = '';
+                document.getElementById('pagination').style.display = 'none';
+                btn.textContent = 'Show All Drugs';
+                closeBtn.style.display = 'none';
+                isDrugListVisible = false;
+                // Clear search input when hiding
+                document.getElementById('drugSearch').value = '';
+            } else {
+                if (allDrugs.length === 0) {
+                    showLoading('Loading drugs...');
+                    loadDrugsSilent().then(function() {
+                        hideLoading();
+                        if (allDrugs.length === 0) {
+                            container.innerHTML = '<p class="text-muted">No drugs found.</p>';
+                        } else {
+                            filteredDrugs = allDrugs;
+                            currentPage = 1;
+                            renderDrugList();
+                            btn.textContent = 'Hide Drugs';
+                            closeBtn.style.display = 'inline';
+                            isDrugListVisible = true;
+                        }
+                    });
+                    return;
+                }
+
+                filteredDrugs = allDrugs;
+                currentPage = 1;
+                renderDrugList();
+                btn.textContent = 'Hide Drugs';
+                closeBtn.style.display = 'inline';
+                isDrugListVisible = true;
+            }
+        }
+
+        // ============================================================
+        // CLOSE DRUG LIST
+        // ============================================================
+
+        function closeDrugList() {
+            var container = document.getElementById('drugListContainer');
+            var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
+
+            container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
+            document.getElementById('drugCount').textContent = '';
+            document.getElementById('pagination').style.display = 'none';
+            btn.textContent = 'Show All Drugs';
+            closeBtn.style.display = 'none';
+            isDrugListVisible = false;
+            document.getElementById('drugSearch').value = '';
+        }
+
+        // ============================================================
         // CLEAR SEARCH AREA
         // ============================================================
 
@@ -197,11 +265,13 @@
 
             var container = document.getElementById('drugListContainer');
             var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
 
             container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
             document.getElementById('drugCount').textContent = '';
             document.getElementById('pagination').style.display = 'none';
             btn.textContent = 'Show All Drugs';
+            closeBtn.style.display = 'none';
             isDrugListVisible = false;
             currentPage = 1;
         }
@@ -231,46 +301,6 @@
         }
 
         // ============================================================
-        // TOGGLE DRUG LIST
-        // ============================================================
-
-        function toggleDrugList() {
-            var container = document.getElementById('drugListContainer');
-            var btn = document.getElementById('toggleDrugsBtn');
-
-            if (isDrugListVisible) {
-                container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
-                document.getElementById('drugCount').textContent = '';
-                document.getElementById('pagination').style.display = 'none';
-                btn.textContent = 'Show All Drugs';
-                isDrugListVisible = false;
-            } else {
-                if (allDrugs.length === 0) {
-                    showLoading('Loading drugs...');
-                    loadDrugsSilent().then(function() {
-                        hideLoading();
-                        if (allDrugs.length === 0) {
-                            container.innerHTML = '<p class="text-muted">No drugs found.</p>';
-                        } else {
-                            filteredDrugs = allDrugs;
-                            currentPage = 1;
-                            renderDrugList();
-                            btn.textContent = 'Hide Drugs';
-                            isDrugListVisible = true;
-                        }
-                    });
-                    return;
-                }
-
-                filteredDrugs = allDrugs;
-                currentPage = 1;
-                renderDrugList();
-                btn.textContent = 'Hide Drugs';
-                isDrugListVisible = true;
-            }
-        }
-
-        // ============================================================
         // SEARCH DRUGS
         // ============================================================
 
@@ -282,11 +312,37 @@
                 return;
             }
 
+            // Show drug list if hidden
             if (!isDrugListVisible) {
-                document.getElementById('toggleDrugsBtn').textContent = 'Hide Drugs';
-                isDrugListVisible = true;
-            }
+                var container = document.getElementById('drugListContainer');
+                var btn = document.getElementById('toggleDrugsBtn');
+                var closeBtn = document.getElementById('closeDrugListBtn');
 
+                // Load drugs if needed
+                if (allDrugs.length === 0) {
+                    showLoading('Loading drugs...');
+                    loadDrugsSilent().then(function() {
+                        hideLoading();
+                        performSearch(query);
+                    });
+                    return;
+                }
+                // Show the list
+                filteredDrugs = allDrugs;
+                currentPage = 1;
+                renderDrugList();
+                btn.textContent = 'Hide Drugs';
+                closeBtn.style.display = 'inline';
+                isDrugListVisible = true;
+                // Then perform search
+                performSearch(query);
+            } else {
+                // Already visible, just search
+                performSearch(query);
+            }
+        }
+
+        function performSearch(query) {
             showLoading('Searching for: ' + query);
 
             setTimeout(function() {
@@ -309,19 +365,16 @@
         }
 
         // ============================================================
-        // CLEAR SEARCH - FIXED (only clears input, keeps current results)
+        // CLEAR SEARCH
         // ============================================================
 
         function clearSearch() {
-            // Clear the search input
             document.getElementById('drugSearch').value = '';
 
-            // If drug list is visible, keep showing the current filtered results
             if (isDrugListVisible) {
-                // Keep filteredDrugs as they are (don't reset to allDrugs)
+                // Keep showing the current filtered results
                 renderDrugList();
             } else {
-                // If drug list is hidden, keep it hidden
                 document.getElementById('drugListContainer').innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
                 document.getElementById('drugCount').textContent = '';
                 document.getElementById('pagination').style.display = 'none';
@@ -355,7 +408,6 @@
 
             count.textContent = filteredDrugs.length + ' drugs';
 
-            // Only show pagination if there are more than 10 drugs
             if (filteredDrugs.length > pageSize) {
                 pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
                 pagination.style.display = 'flex';
@@ -540,7 +592,6 @@
             renderOrderList();
             if (isDrugListVisible) renderDrugList();
             showAlert('Order cleared.', 'info');
-            clearSearchArea();
         }
 
         // ============================================================
@@ -595,7 +646,6 @@
                     document.getElementById('orderNotes').value = '';
                     renderOrderList();
                     if (isDrugListVisible) renderDrugList();
-                    clearSearchArea();
 
                     currentOrderId = generateOrderId();
                     document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
