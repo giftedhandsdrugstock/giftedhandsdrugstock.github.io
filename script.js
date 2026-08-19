@@ -204,21 +204,3 @@ function hideLoading() {
         overlay.classList.remove('show');
     }
 }
-
-function clearSearchArea() {
-    // Clear search input
-    document.getElementById('drugSearch').value = '';
-
-    // Hide drug list
-    var container = document.getElementById('drugListContainer');
-    var btn = document.getElementById('toggleDrugsBtn');
-
-    container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
-    document.getElementById('drugCount').textContent = '';
-    document.getElementById('pagination').style.display = 'none';
-    btn.textContent = 'Show All Drugs';
-    isDrugListVisible = false;
-
-    // Reset pagination
-    currentPage = 1;
-}
