@@ -22,62 +22,31 @@
 
         <div id="alert" class="alert"></div>
 
-        <!-- MY PROFILE -->
+        <!-- SEARCH SECTION -->
         <div class="section-box">
-            <h2>My Profile</h2>
-            <form id="profileForm" onsubmit="updateProfile(event)">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>First Name</label>
-                        <input type="text" id="editFirstName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Last Name</label>
-                        <input type="text" id="editLastName" required>
-                    </div>
+            <div class="flex flex-wrap gap-10" style="align-items:center;">
+                <div style="flex:1;min-width:200px;">
+                    <input type="text" id="userSearch" placeholder="Search users..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="editEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Department</label>
-                        <input type="text" id="editDepartment" list="deptList" required>
-                        <datalist id="deptList">
-                            <option value="Pharmacy">
-                            <option value="Ward A">
-                            <option value="Ward B">
-                            <option value="Ward C">
-                            <option value="Outpatient">
-                            <option value="Emergency">
-                            <option value="Surgical">
-                            <option value="Maternity">
-                            <option value="Paediatric">
-                            <option value="Private">
-                            <option value="Administration">
-                            <option value="Other">
-                        </datalist>
-                    </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <label><input type="checkbox" id="searchName" checked> Name</label>
+                    <label><input type="checkbox" id="searchEmail" checked> Email</label>
+                    <label><input type="checkbox" id="searchDept" checked> Department</label>
+                    <label><input type="checkbox" id="searchUsername" checked> Username</label>
                 </div>
-                <div class="form-group">
-                    <label>Username (cannot be changed)</label>
-                    <input type="text" id="editUsername" disabled>
-                </div>
-                <div class="form-group">
-                    <label>New Password (leave blank to keep current)</label>
-                    <input type="password" id="editPassword" placeholder="Min 6 characters">
-                </div>
-                <button type="submit" class="btn">Update Profile</button>
-            </form>
+                <button class="btn" onclick="searchUsers()">Search</button>
+                <button class="btn" onclick="loadAllUsers()">Show All</button>
+            </div>
         </div>
 
-        <!-- ADMIN SECTION -->
-        <div id="adminSection" style="display:none;" class="section-box">
-            <h2>Manage Users (Admin)</h2>
-            <div class="flex flex-wrap gap-10 mb-10">
-                <button class="btn" onclick="loadAllUsers()">Refresh Users</button>
-                <button class="btn" onclick="deleteAllUsers()">Delete All Users</button>
+        <!-- USER LIST -->
+        <div class="section-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                <h2>Users</h2>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn" onclick="saveAllUsers()">Save All Changes</button>
+                    <button class="btn" onclick="deleteAllUsers()" style="color:#c00;">Delete All Users</button>
+                </div>
             </div>
             <div id="usersContainer">
                 <p class="text-muted">Loading users...</p>
@@ -88,6 +57,12 @@
 
     <script src="script.js"></script>
     <script>
+        // ============================================================
+        // USERS.HTML SPECIFIC
+        // ============================================================
+
+        var allUsers = [];
+        var originalUsers = [];
         var currentUser = {};
 
         function initUsers() {
@@ -98,87 +73,21 @@
             document.getElementById('userDisplay').textContent = 'Welcome, ' + currentUser.fullName;
             document.getElementById('roleDisplay').textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
 
-            document.getElementById('editUsername').value = currentUser.username;
-            document.getElementById('editFirstName').value = currentUser.firstName;
-            document.getElementById('editLastName').value = currentUser.lastName;
-            document.getElementById('editEmail').value = currentUser.email;
-            document.getElementById('editDepartment').value = currentUser.department;
-
-            if (currentUser.isAdmin) {
-                document.getElementById('adminSection').style.display = 'block';
-                loadAllUsers();
-            }
-        }
-
-        async function updateProfile(event) {
-            event.preventDefault();
-
-            var firstName = document.getElementById('editFirstName').value.trim();
-            var lastName = document.getElementById('editLastName').value.trim();
-            var email = document.getElementById('editEmail').value.trim();
-            var department = document.getElementById('editDepartment').value.trim();
-            var password = document.getElementById('editPassword').value.trim();
-            var username = localStorage.getItem('username');
-
-            if (!firstName || !lastName || !email || !department) {
-                showAlert('All fields except password are required.', 'error');
+            if (!currentUser.isAdmin) {
+                document.getElementById('usersContainer').innerHTML = '<p>Admin access required.</p>';
                 return;
             }
 
-            if (password && password.length < 6) {
-                showAlert('Password must be at least 6 characters.', 'error');
-                return;
-            }
-
-            try {
-                var url = API_URL +
-                    '?action=updateprofile' +
-                    '&username=' + encodeURIComponent(username) +
-                    '&firstName=' + encodeURIComponent(firstName) +
-                    '&lastName=' + encodeURIComponent(lastName) +
-                    '&email=' + encodeURIComponent(email) +
-                    '&department=' + encodeURIComponent(department);
-
-                if (password) {
-                    url += '&password=' + encodeURIComponent(password);
-                }
-
-                var response = await fetch(url);
-                var result = await response.json();
-
-                if (result.success) {
-                    localStorage.setItem('fullName', firstName + ' ' + lastName);
-                    localStorage.setItem('firstName', firstName);
-                    localStorage.setItem('lastName', lastName);
-                    localStorage.setItem('email', email);
-                    localStorage.setItem('department', department);
-
-                    showAlert('Profile updated successfully!', 'success');
-                    document.getElementById('editPassword').value = '';
-                    document.getElementById('userDisplay').textContent = 'Welcome, ' + firstName + ' ' + lastName;
-
-                    if (currentUser.isAdmin) {
-                        loadAllUsers();
-                    }
-                } else {
-                    showAlert(result.message || 'Error updating profile.', 'error');
-                }
-
-            } catch (error) {
-                console.error('Update error:', error);
-                showAlert('Error connecting to server.', 'error');
-            }
+            loadAllUsers();
         }
 
         async function loadAllUsers() {
             var container = document.getElementById('usersContainer');
             container.innerHTML = '<p class="text-muted">Loading...</p>';
 
-            var adminUsername = localStorage.getItem('username');
-
             try {
                 var response = await fetch(API_URL +
-                    '?action=getusers&adminUsername=' + encodeURIComponent(adminUsername));
+                    '?action=getusers&adminUsername=' + encodeURIComponent('admin'));
                 var results = await response.json();
 
                 if (!results.success && results.message) {
@@ -186,36 +95,9 @@
                     return;
                 }
 
-                if (results.length === 0) {
-                    container.innerHTML = '<p class="text-muted">No users found.</p>';
-                    return;
-                }
-
-                var html = '<table><tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Department</th><th>Created</th><th>Actions</th></tr>';
-
-                results.forEach(function(user) {
-                    var date = user.created ? new Date(user.created).toLocaleDateString() : 'Unknown';
-
-                    html += '<tr>';
-                    html += '<td>' + user.username + '</td>';
-                    html += '<td>' + user.email + '</td>';
-                    html += '<td>' + user.firstName + '</td>';
-                    html += '<td>' + user.lastName + '</td>';
-                    html += '<td>' + user.department + '</td>';
-                    html += '<td>' + date + '</td>';
-                    html += '<td>';
-                    if (user.username === 'admin') {
-                        html += '<span class="text-muted">Protected</span>';
-                    } else {
-                        html += '<button class="btn btn-small" onclick="adminEditUser(\'' + user.username + '\')">Edit</button>';
-                        html += ' <button class="btn btn-small" onclick="adminDeleteUser(\'' + user.username + '\')">Delete</button>';
-                    }
-                    html += '</td>';
-                    html += '</tr>';
-                });
-
-                html += '</table>';
-                container.innerHTML = html;
+                allUsers = results;
+                originalUsers = JSON.parse(JSON.stringify(results));
+                renderUsers(allUsers);
 
             } catch (error) {
                 console.error('Error:', error);
@@ -223,32 +105,144 @@
             }
         }
 
-        function adminEditUser(username) {
-            var newFirstName = prompt('Enter new first name for ' + username + ':');
-            if (newFirstName === null) return;
-            var newLastName = prompt('Enter new last name for ' + username + ':');
-            if (newLastName === null) return;
-            var newEmail = prompt('Enter new email for ' + username + ':');
-            if (newEmail === null) return;
-            var newDepartment = prompt('Enter new department for ' + username + ':');
-            if (newDepartment === null) return;
+        function renderUsers(users) {
+            var container = document.getElementById('usersContainer');
 
-            adminUpdateUser(username, newFirstName.trim(), newLastName.trim(), newEmail.trim(), newDepartment.trim());
+            if (users.length === 0) {
+                container.innerHTML = '<p class="text-muted">No users found.</p>';
+                return;
+            }
+
+            var html = '<table>';
+            html += '<tr>';
+            html += '<th>Username</th>';
+            html += '<th>First Name</th>';
+            html += '<th>Last Name</th>';
+            html += '<th>Email</th>';
+            html += '<th>Department</th>';
+            html += '<th>Actions</th>';
+            html += '</tr>';
+
+            users.forEach(function(user, index) {
+                var isAdmin = user.username === 'admin';
+                var isProtected = isAdmin;
+
+                html += '<tr id="user-row-' + index + '">';
+                html += '<td><strong>' + user.username + '</strong></td>';
+
+                // First Name (editable)
+                html += '<td>';
+                if (isProtected) {
+                    html += user.firstName;
+                } else {
+                    html += '<input type="text" id="fn-' + index + '" value="' + escapeHtml(user.firstName) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
+                }
+                html += '</td>';
+
+                // Last Name (editable)
+                html += '<td>';
+                if (isProtected) {
+                    html += user.lastName;
+                } else {
+                    html += '<input type="text" id="ln-' + index + '" value="' + escapeHtml(user.lastName) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
+                }
+                html += '</td>';
+
+                // Email (editable)
+                html += '<td>';
+                if (isProtected) {
+                    html += user.email;
+                } else {
+                    html += '<input type="email" id="em-' + index + '" value="' + escapeHtml(user.email) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
+                }
+                html += '</td>';
+
+                // Department (editable)
+                html += '<td>';
+                if (isProtected) {
+                    html += user.department;
+                } else {
+                    html += '<input type="text" id="dp-' + index + '" value="' + escapeHtml(user.department) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
+                }
+                html += '</td>';
+
+                // Actions
+                html += '<td>';
+                if (isProtected) {
+                    html += '<span class="text-muted">Protected</span>';
+                } else {
+                    html += '<button class="btn btn-small" onclick="saveUser(' + index + ')">💾 Save</button>';
+                    html += ' <button class="btn btn-small" onclick="deleteUser(\'' + user.username + '\')" style="color:#c00;">✕</button>';
+                }
+                html += '</td>';
+
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
         }
 
-        async function adminUpdateUser(username, firstName, lastName, email, department) {
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ============================================================
+        // SEARCH USERS
+        // ============================================================
+
+        function searchUsers() {
+            var query = document.getElementById('userSearch').value.toLowerCase().trim();
+            var searchName = document.getElementById('searchName').checked;
+            var searchEmail = document.getElementById('searchEmail').checked;
+            var searchDept = document.getElementById('searchDept').checked;
+            var searchUsername = document.getElementById('searchUsername').checked;
+
+            if (!query) {
+                renderUsers(allUsers);
+                return;
+            }
+
+            var filtered = allUsers.filter(function(user) {
+                var match = false;
+                if (searchName && (user.firstName.toLowerCase().indexOf(query) !== -1 || user.lastName.toLowerCase().indexOf(query) !== -1)) match = true;
+                if (searchEmail && user.email.toLowerCase().indexOf(query) !== -1) match = true;
+                if (searchDept && user.department.toLowerCase().indexOf(query) !== -1) match = true;
+                if (searchUsername && user.username.toLowerCase().indexOf(query) !== -1) match = true;
+                return match;
+            });
+
+            renderUsers(filtered);
+        }
+
+        // ============================================================
+        // SAVE SINGLE USER
+        // ============================================================
+
+        function saveUser(index) {
+            var user = allUsers[index];
+            if (!user || user.username === 'admin') return;
+
+            var firstName = document.getElementById('fn-' + index).value.trim();
+            var lastName = document.getElementById('ln-' + index).value.trim();
+            var email = document.getElementById('em-' + index).value.trim();
+            var department = document.getElementById('dp-' + index).value.trim();
+
             if (!firstName || !lastName || !email || !department) {
                 showAlert('All fields are required.', 'error');
                 return;
             }
 
-            var adminUsername = localStorage.getItem('username');
+            adminUpdateUser(user.username, firstName, lastName, email, department);
+        }
 
+        async function adminUpdateUser(username, firstName, lastName, email, department) {
             try {
                 var response = await fetch(API_URL +
                     '?action=adminupdateuser' +
+                    '&adminUsername=' + encodeURIComponent('admin') +
                     '&targetUsername=' + encodeURIComponent(username) +
-                    '&adminUsername=' + encodeURIComponent(adminUsername) +
                     '&firstName=' + encodeURIComponent(firstName) +
                     '&lastName=' + encodeURIComponent(lastName) +
                     '&email=' + encodeURIComponent(email) +
@@ -257,7 +251,7 @@
                 var result = await response.json();
 
                 if (result.success) {
-                    showAlert('User updated successfully!', 'success');
+                    showAlert('User ' + username + ' updated successfully!', 'success');
                     loadAllUsers();
                 } else {
                     showAlert(result.message || 'Error updating user.', 'error');
@@ -269,35 +263,120 @@
             }
         }
 
-        async function adminDeleteUser(username) {
+        // ============================================================
+        // SAVE ALL USERS
+        // ============================================================
+
+        function saveAllUsers() {
+            var allInputs = document.querySelectorAll('#usersContainer input');
+            if (allInputs.length === 0) {
+                showAlert('No editable users found.', 'info');
+                return;
+            }
+
+            if (!confirm('Save all changes for all users?')) return;
+
+            var promises = [];
+            var usersToUpdate = [];
+
+            allUsers.forEach(function(user, index) {
+                if (user.username === 'admin') return;
+
+                var firstName = document.getElementById('fn-' + index).value.trim();
+                var lastName = document.getElementById('ln-' + index).value.trim();
+                var email = document.getElementById('em-' + index).value.trim();
+                var department = document.getElementById('dp-' + index).value.trim();
+
+                if (!firstName || !lastName || !email || !department) {
+                    showAlert('All fields are required for ' + user.username, 'error');
+                    return;
+                }
+
+                usersToUpdate.push({
+                    username: user.username,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    department: department
+                });
+            });
+
+            if (usersToUpdate.length === 0) {
+                showAlert('No changes to save.', 'info');
+                return;
+            }
+
+            var completed = 0;
+            var errors = [];
+
+            usersToUpdate.forEach(function(user) {
+                fetch(API_URL +
+                    '?action=adminupdateuser' +
+                    '&adminUsername=' + encodeURIComponent('admin') +
+                    '&targetUsername=' + encodeURIComponent(user.username) +
+                    '&firstName=' + encodeURIComponent(user.firstName) +
+                    '&lastName=' + encodeURIComponent(user.lastName) +
+                    '&email=' + encodeURIComponent(user.email) +
+                    '&department=' + encodeURIComponent(user.department))
+                .then(function(response) { return response.json(); })
+                .then(function(result) {
+                    completed++;
+                    if (!result.success) {
+                        errors.push(user.username + ': ' + result.message);
+                    }
+                    if (completed === usersToUpdate.length) {
+                        if (errors.length === 0) {
+                            showAlert('All users updated successfully!', 'success');
+                        } else {
+                            showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
+                        }
+                        loadAllUsers();
+                    }
+                })
+                .catch(function(error) {
+                    completed++;
+                    errors.push(user.username + ': ' + error.message);
+                    if (completed === usersToUpdate.length) {
+                        showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
+                        loadAllUsers();
+                    }
+                });
+            });
+        }
+
+        // ============================================================
+        // DELETE USER
+        // ============================================================
+
+        function deleteUser(username) {
             if (!confirm('Delete user "' + username + '"? This cannot be undone.')) {
                 return;
             }
 
-            var adminUsername = localStorage.getItem('username');
-
-            try {
-                var response = await fetch(API_URL +
-                    '?action=deleteuser' +
-                    '&username=' + encodeURIComponent(username) +
-                    '&adminUsername=' + encodeURIComponent(adminUsername));
-
-                var result = await response.json();
-
+            fetch(API_URL +
+                '?action=deleteuser' +
+                '&username=' + encodeURIComponent(username) +
+                '&adminUsername=' + encodeURIComponent('admin'))
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
                 if (result.success) {
                     showAlert(result.message, 'success');
                     loadAllUsers();
                 } else {
                     showAlert(result.message || 'Error deleting user.', 'error');
                 }
-
-            } catch (error) {
+            })
+            .catch(function(error) {
                 console.error('Error:', error);
                 showAlert('Error connecting to server.', 'error');
-            }
+            });
         }
 
-        async function deleteAllUsers() {
+        // ============================================================
+        // DELETE ALL USERS
+        // ============================================================
+
+        function deleteAllUsers() {
             if (!confirm('Delete ALL non-admin users? This cannot be undone.')) {
                 return;
             }
@@ -306,34 +385,36 @@
                 return;
             }
 
-            var adminUsername = localStorage.getItem('username');
-
-            try {
-                var response = await fetch(API_URL +
-                    '?action=deleteallusers&adminUsername=' + encodeURIComponent(adminUsername));
-
-                var result = await response.json();
-
+            fetch(API_URL +
+                '?action=deleteallusers&adminUsername=' + encodeURIComponent('admin'))
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
                 if (result.success) {
                     showAlert(result.message, 'success');
                     loadAllUsers();
                 } else {
                     showAlert(result.message || 'Error deleting users.', 'error');
                 }
-
-            } catch (error) {
+            })
+            .catch(function(error) {
                 console.error('Error:', error);
                 showAlert('Error connecting to server.', 'error');
-            }
+            });
         }
+
+        // ============================================================
+        // ENTER KEY FOR SEARCH
+        // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
             initUsers();
 
-            setupEnterNavigation(
-                document.getElementById('profileForm'),
-                ['editFirstName', 'editLastName', 'editEmail', 'editDepartment', 'editPassword']
-            );
+            document.getElementById('userSearch').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchUsers();
+                }
+            });
         });
     </script>
 
