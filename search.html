@@ -12,7 +12,9 @@
             <h1>Drug Stock Search</h1>
             <div>
                 <span id="userDisplay" style="margin-right:15px;"></span>
+                <span id="roleDisplay" style="margin-right:15px;font-size:12px;color:#666;"></span>
                 <a href="movement.html">Movement</a>
+                <a href="users.html" id="usersLink" style="margin-left:10px;display:none;">Users</a>
                 <button onclick="logout()" style="margin-left:10px;">Logout</button>
             </div>
         </div>
@@ -34,8 +36,18 @@
                 window.location.href = 'index.html';
                 return;
             }
+
+            const username = localStorage.getItem('username');
             const fullName = localStorage.getItem('fullName') || localStorage.getItem('username') || 'User';
+            const isAdmin = username === 'admin';
+
             document.getElementById('userDisplay').textContent = 'Welcome, ' + fullName;
+            document.getElementById('roleDisplay').textContent = isAdmin ? '(Admin)' : '(User)';
+
+            // Show Users link only for admin
+            if (isAdmin) {
+                document.getElementById('usersLink').style.display = 'inline';
+            }
         }
 
         function logout() {
