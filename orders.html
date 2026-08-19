@@ -155,10 +155,22 @@
                 var response = await fetch(API_URL + '?search=');
                 var results = await response.json();
 
+                console.log('=== ORDERS PAGE DEBUG ===');
+                console.log('API Response:', results);
+                console.log('Number of drugs:', results.length);
+                console.log('First drug:', results[0] || 'No drugs found');
+
+                if (results.length === 0) {
+                    hideLoading();
+                    document.getElementById('drugListContainer').innerHTML = '<p class="text-muted">No drugs found in Dummy Master. Please initialize Dummy Master from Online Master.</p>';
+                    document.getElementById('drugCount').textContent = '0 drugs';
+                    return;
+                }
+
                 allDrugs = results.map(function(item) {
                     return {
-                        name: item[0],
-                        form: item[1],
+                        name: item[0] || 'Unknown',
+                        form: item[1] || 'Unknown',
                         balance: parseFloat(item[2]) || 0
                     };
                 });
@@ -171,8 +183,8 @@
             } catch (error) {
                 hideLoading();
                 console.error('Error loading drugs:', error);
-                document.getElementById('drugListContainer').innerHTML = '<p class="text-muted" style="color:#c00;">Error loading drugs. Please try again.</p>';
-                showAlert('Error loading drugs.', 'error');
+                document.getElementById('drugListContainer').innerHTML = '<p class="text-muted" style="color:#c00;">Error loading drugs: ' + error.message + '</p>';
+                showAlert('Error loading drugs. Check console.', 'error');
             }
         }
 
@@ -188,14 +200,18 @@
                 return;
             }
 
+            console.log('Searching for:', query);
+            console.log('Total drugs available:', allDrugs.length);
+
             showLoading('Searching for: ' + query);
 
-            // Simulate loading for search (already have data)
             setTimeout(function() {
                 filteredDrugs = allDrugs.filter(function(drug) {
                     return drug.name.toLowerCase().indexOf(query) !== -1 ||
                            drug.form.toLowerCase().indexOf(query) !== -1;
                 });
+
+                console.log('Matches found:', filteredDrugs.length);
 
                 currentPage = 1;
                 hideLoading();
@@ -230,7 +246,9 @@
             var pagination = document.getElementById('pagination');
             var pageInfo = document.getElementById('pageInfo');
 
-            if (filteredDrugs.length === 0) {
+            console.log('Rendering drug list, filtered count:', filteredDrugs.length);
+
+            if (!filteredDrugs || filteredDrugs.length === 0) {
                 container.innerHTML = '<p class="text-muted">No drugs found.</p>';
                 count.textContent = '0 drugs';
                 pagination.style.display = 'none';
@@ -249,15 +267,16 @@
             var html = '<table>';
             html += '<tr><th>Drug Name</th><th>Form</th><th>Balance</th><th>Order Qty</th><th>Action</th></tr>';
 
-            pageDrugs.forEach(function(drug) {
+            pageDrugs.forEach(function(drug, index) {
                 var inOrder = orderItems.some(function(item) { return item.name === drug.name; });
+                var safeId = 'qty-' + index;
 
                 html += '<tr>';
                 html += '<td><strong>' + drug.name + '</strong></td>';
                 html += '<td>' + drug.form + '</td>';
                 html += '<td>' + drug.balance + '</td>';
                 html += '<td>';
-                html += '<input type="number" id="qty-' + drug.name.replace(/[^a-zA-Z0-9]/g, '_') + '" ';
+                html += '<input type="number" id="' + safeId + '" ';
                 html += 'min="1" max="' + drug.balance + '" value="1" style="width:70px;padding:4px 6px;border:1px solid #ccc;text-align:center;">';
                 html += '</td>';
                 html += '<td>';
@@ -266,7 +285,7 @@
                 } else if (inOrder) {
                     html += '<span style="color:#0a0;">✅ Added</span>';
                 } else {
-                    html += '<button class="btn btn-small" onclick="addToOrder(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ')">Add</button>';
+                    html += '<button class="btn btn-small" onclick="addToOrder(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ',' + index + ')">Add</button>';
                 }
                 html += '</td>';
                 html += '</tr>';
@@ -299,9 +318,13 @@
         // ADD TO ORDER
         // ============================================================
 
-        function addToOrder(drugName, maxStock) {
-            var key = 'qty-' + drugName.replace(/[^a-zA-Z0-9]/g, '_');
-            var qtyInput = document.getElementById(key);
+        function addToOrder(drugName, maxStock, index) {
+            var qtyInput = document.getElementById('qty-' + index);
+            if (!qtyInput) {
+                showAlert('Error: Could not find quantity input.', 'error');
+                return;
+            }
+
             var qty = parseInt(qtyInput.value) || 1;
 
             if (qty < 1) {
