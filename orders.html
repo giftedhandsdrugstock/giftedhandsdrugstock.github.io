@@ -40,7 +40,7 @@
                 </div>
                 <button class="btn" onclick="searchDrugs()">Search</button>
                 <button class="btn" onclick="clearSearch()">Clear</button>
-                <button class="btn" onclick="showAllDrugs()">Show All Drugs</button>
+                <button class="btn" id="toggleDrugsBtn" onclick="toggleDrugList()">Show All Drugs</button>
             </div>
         </div>
 
@@ -117,6 +117,7 @@
         var orderItems = [];
         var currentUser = {};
         var orderHistory = [];
+        var isDrugListVisible = false;
 
         // ============================================================
         // INIT
@@ -140,32 +141,19 @@
                 return;
             }
 
-            showLoading('Loading drugs...');
-            loadDrugs();
+            // Load drugs in background but don't display
+            loadDrugsSilent();
+            loadOrderHistory();
         }
 
         // ============================================================
-        // LOAD DRUGS
+        // LOAD DRUGS SILENTLY (no display)
         // ============================================================
 
-        async function loadDrugs() {
-            showLoading('Loading drugs...');
-
+        async function loadDrugsSilent() {
             try {
                 var response = await fetch(API_URL + '?search=');
                 var results = await response.json();
-
-                console.log('=== ORDERS PAGE DEBUG ===');
-                console.log('API Response:', results);
-                console.log('Number of drugs:', results.length);
-                console.log('First drug:', results[0] || 'No drugs found');
-
-                if (results.length === 0) {
-                    hideLoading();
-                    document.getElementById('drugListContainer').innerHTML = '<p class="text-muted">No drugs found in Dummy Master. Please initialize Dummy Master from Online Master.</p>';
-                    document.getElementById('drugCount').textContent = '0 drugs';
-                    return;
-                }
 
                 allDrugs = results.map(function(item) {
                     return {
@@ -176,15 +164,51 @@
                 });
 
                 filteredDrugs = allDrugs;
-                hideLoading();
-                renderDrugList();
-                loadOrderHistory();
 
             } catch (error) {
-                hideLoading();
                 console.error('Error loading drugs:', error);
-                document.getElementById('drugListContainer').innerHTML = '<p class="text-muted" style="color:#c00;">Error loading drugs: ' + error.message + '</p>';
-                showAlert('Error loading drugs. Check console.', 'error');
+            }
+        }
+
+        // ============================================================
+        // TOGGLE DRUG LIST
+        // ============================================================
+
+        function toggleDrugList() {
+            var container = document.getElementById('drugListContainer');
+            var btn = document.getElementById('toggleDrugsBtn');
+
+            if (isDrugListVisible) {
+                // Hide
+                container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
+                document.getElementById('drugCount').textContent = '';
+                document.getElementById('pagination').style.display = 'none';
+                btn.textContent = 'Show All Drugs';
+                isDrugListVisible = false;
+            } else {
+                // Show
+                if (allDrugs.length === 0) {
+                    showLoading('Loading drugs...');
+                    loadDrugsSilent().then(function() {
+                        hideLoading();
+                        if (allDrugs.length === 0) {
+                            container.innerHTML = '<p class="text-muted">No drugs found.</p>';
+                        } else {
+                            filteredDrugs = allDrugs;
+                            currentPage = 1;
+                            renderDrugList();
+                            btn.textContent = 'Hide Drugs';
+                            isDrugListVisible = true;
+                        }
+                    });
+                    return;
+                }
+
+                filteredDrugs = allDrugs;
+                currentPage = 1;
+                renderDrugList();
+                btn.textContent = 'Hide Drugs';
+                isDrugListVisible = true;
             }
         }
 
@@ -200,8 +224,11 @@
                 return;
             }
 
-            console.log('Searching for:', query);
-            console.log('Total drugs available:', allDrugs.length);
+            // If drug list is hidden, show it
+            if (!isDrugListVisible) {
+                document.getElementById('toggleDrugsBtn').textContent = 'Hide Drugs';
+                isDrugListVisible = true;
+            }
 
             showLoading('Searching for: ' + query);
 
@@ -211,29 +238,35 @@
                            drug.form.toLowerCase().indexOf(query) !== -1;
                 });
 
-                console.log('Matches found:', filteredDrugs.length);
-
                 currentPage = 1;
                 hideLoading();
-                renderDrugList();
+
+                if (filteredDrugs.length === 0) {
+                    document.getElementById('drugListContainer').innerHTML = '<p class="text-muted">No drugs found matching "' + query + '".</p>';
+                    document.getElementById('drugCount').textContent = '0 drugs';
+                    document.getElementById('pagination').style.display = 'none';
+                } else {
+                    renderDrugList();
+                }
             }, 300);
         }
 
         function clearSearch() {
             document.getElementById('drugSearch').value = '';
-            filteredDrugs = allDrugs;
-            currentPage = 1;
-            renderDrugList();
+
+            // If drug list is visible, show all drugs
+            if (isDrugListVisible) {
+                filteredDrugs = allDrugs;
+                currentPage = 1;
+                renderDrugList();
+            } else {
+                document.getElementById('drugListContainer').innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
+                document.getElementById('drugCount').textContent = '';
+                document.getElementById('pagination').style.display = 'none';
+            }
+
             document.getElementById('drugSearch').focus();
             showAlert('Search cleared.', 'info');
-        }
-
-        function showAllDrugs() {
-            document.getElementById('drugSearch').value = '';
-            filteredDrugs = allDrugs;
-            currentPage = 1;
-            renderDrugList();
-            showAlert('Showing all drugs.', 'info');
         }
 
         // ============================================================
@@ -245,8 +278,6 @@
             var count = document.getElementById('drugCount');
             var pagination = document.getElementById('pagination');
             var pageInfo = document.getElementById('pageInfo');
-
-            console.log('Rendering drug list, filtered count:', filteredDrugs.length);
 
             if (!filteredDrugs || filteredDrugs.length === 0) {
                 container.innerHTML = '<p class="text-muted">No drugs found.</p>';
@@ -268,8 +299,9 @@
             html += '<tr><th>Drug Name</th><th>Form</th><th>Balance</th><th>Order Qty</th><th>Action</th></tr>';
 
             pageDrugs.forEach(function(drug, index) {
+                var globalIndex = start + index;
                 var inOrder = orderItems.some(function(item) { return item.name === drug.name; });
-                var safeId = 'qty-' + index;
+                var safeId = 'qty-' + globalIndex;
 
                 html += '<tr>';
                 html += '<td><strong>' + drug.name + '</strong></td>';
@@ -285,7 +317,7 @@
                 } else if (inOrder) {
                     html += '<span style="color:#0a0;">✅ Added</span>';
                 } else {
-                    html += '<button class="btn btn-small" onclick="addToOrder(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ',' + index + ')">Add</button>';
+                    html += '<button class="btn btn-small" onclick="addToOrder(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ',' + globalIndex + ')">Add</button>';
                 }
                 html += '</td>';
                 html += '</tr>';
@@ -417,7 +449,7 @@
             var removed = orderItems[index].name;
             orderItems.splice(index, 1);
             renderOrderList();
-            renderDrugList();
+            if (isDrugListVisible) renderDrugList();
             showAlert('Removed ' + removed + ' from your order.', 'info');
         }
 
@@ -435,7 +467,7 @@
 
             orderItems = [];
             renderOrderList();
-            renderDrugList();
+            if (isDrugListVisible) renderDrugList();
             showAlert('Order cleared.', 'info');
         }
 
@@ -483,7 +515,7 @@
                     showAlert('Order submitted successfully!', 'success');
                     orderItems = [];
                     renderOrderList();
-                    renderDrugList();
+                    if (isDrugListVisible) renderDrugList();
                     loadOrderHistory();
                 } else {
                     showAlert(result.message || 'Error submitting order.', 'error');
