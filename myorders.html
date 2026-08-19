@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+            <div class="loading-spinner"></div>
+            <span class="loading-text" id="loadingText">Loading...</span>
+        </div>
+    </div>
+
+    <div id="app">
+
+        <div class="header">
+            <h1>My Orders</h1>
+            <div class="header-right">
+                <span id="userDisplay"></span>
+                <span id="roleDisplay" class="text-muted"></span>
+                <a href="search.html">Search</a>
+                <a href="orders.html">New Order</a>
+                <a href="profile.html">Profile</a>
+                <a href="users.html" id="usersLink" style="display:none;">Users</a>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <!-- ============================================================
+        SEARCH SECTION
+        ============================================================ -->
+        <div class="section-box">
+            <div class="flex flex-wrap gap-10" style="align-items:center;">
+                <div style="flex:1;min-width:150px;">
+                    <input type="text" id="orderSearch" placeholder="Search by Order ID..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <label>From:</label>
+                    <input type="date" id="dateFrom" style="padding:6px 8px;border:1px solid #ccc;">
+                    <label>To:</label>
+                    <input type="date" id="dateTo" style="padding:6px 8px;border:1px solid #ccc;">
+                </div>
+                <button class="btn" onclick="searchOrders()">Search</button>
+                <button class="btn" onclick="clearSearch()">Clear</button>
+                <button class="btn" onclick="loadAllOrders()">Show All</button>
+            </div>
+            <div style="margin-top:10px;font-size:13px;color:#888;">
+                <span id="resultCount">0 orders found</span>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        MAIN CONTENT - HALF AND HALF
+        ============================================================ -->
+        <div class="orders-main" style="display:flex;gap:20px;">
+
+            <!-- LEFT PANEL - Order List -->
+            <div class="left-panel" style="flex:1;min-width:0;">
+
+                <div class="section-box">
+                    <h2>Order List</h2>
+                    <div id="orderListContainer">
+                        <p class="text-muted">No orders found.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT PANEL - Order Details -->
+            <div class="right-panel" style="flex:1;min-width:0;">
+
+                <div class="section-box">
+                    <h2>Order Details</h2>
+                    <div id="orderDetailsContainer">
+                        <p class="text-muted">Select an order to view details.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // ============================================================
+        // MYORDERS.HTML SPECIFIC
+        // ============================================================
+
+        var allOrders = [];
+        var filteredOrders = [];
+        var selectedOrderId = null;
+
+        // ============================================================
+        // INIT
+        // ============================================================
+
+        function initMyOrders() {
+            if (!checkAuth()) return;
+
+            var user = getCurrentUser();
+
+            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
+            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
+
+            if (user.isAdmin) {
+                document.getElementById('usersLink').style.display = 'inline';
+            }
+
+            loadAllOrders();
+        }
+
+        // ============================================================
+        // LOAD ALL ORDERS
+        // ============================================================
+
+        async function loadAllOrders() {
+            var container = document.getElementById('orderListContainer');
+            container.innerHTML = '<p class="text-muted">Loading orders...</p>';
+
+            var user = getCurrentUser();
+
+            try {
+                var url = API_URL + '?action=getorders&user=' + encodeURIComponent(user.username);
+
+                var response = await fetch(url);
+                var results = await response.json();
+
+                allOrders = results;
+                filteredOrders = results;
+                renderOrderList(filteredOrders);
+                updateResultCount();
+
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
+                showAlert('Error loading orders.', 'error');
+            }
+        }
+
+        // ============================================================
+        // SEARCH ORDERS
+        // ============================================================
+
+        function searchOrders() {
+            var searchTerm = document.getElementById('orderSearch').value.toLowerCase().trim();
+            var dateFrom = document.getElementById('dateFrom').value;
+            var dateTo = document.getElementById('dateTo').value;
+
+            filteredOrders = allOrders.filter(function(order) {
+                var match = true;
+
+                // Search by Order ID
+                if (searchTerm) {
+                    match = match && order.orderId.toLowerCase().indexOf(searchTerm) !== -1;
+                }
+
+                // Filter by date range
+                if (dateFrom) {
+                    var orderDate = new Date(order.timestamp);
+                    var fromDate = new Date(dateFrom);
+                    match = match && orderDate >= fromDate;
+                }
+
+                if (dateTo) {
+                    var orderDate = new Date(order.timestamp);
+                    var toDate = new Date(dateTo + 'T23:59:59');
+                    match = match && orderDate <= toDate;
+                }
+
+                return match;
+            });
+
+            renderOrderList(filteredOrders);
+            updateResultCount();
+        }
+
+        function clearSearch() {
+            document.getElementById('orderSearch').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            filteredOrders = allOrders;
+            renderOrderList(filteredOrders);
+            updateResultCount();
+        }
+
+        function updateResultCount() {
+            document.getElementById('resultCount').textContent = filteredOrders.length + ' order(s) found';
+        }
+
+        // ============================================================
+        // RENDER ORDER LIST
+        // ============================================================
+
+        function renderOrderList(orders) {
+            var container = document.getElementById('orderListContainer');
+
+            if (orders.length === 0) {
+                container.innerHTML = '<p class="text-muted">No orders found.</p>';
+                return;
+            }
+
+            var html = '';
+
+            orders.forEach(function(order) {
+                var date = order.timestamp ? new Date(order.timestamp).toLocaleDateString() : 'Unknown';
+                var itemCount = order.items ? order.items.length : 0;
+                var statusColor = getStatusColor(order.status);
+                var isSelected = selectedOrderId === order.orderId ? 'style="background:#e8f0fe;border-left:3px solid #2b6cb0;"' : '';
+
+                html += `
+                    <div class="order-list-item" onclick="selectOrder('${order.orderId}')" ${isSelected} style="padding:10px 12px;border-bottom:1px solid #eee;cursor:pointer;transition:background 0.2s;border-left:3px solid transparent;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">
+                            <div>
+                                <strong style="font-size:14px;">${order.orderId}</strong>
+                                <span style="font-size:12px;color:#888;margin-left:10px;">${date}</span>
+                            </div>
+                            <span style="color:${statusColor};font-weight:bold;font-size:13px;">${order.status.toUpperCase()}</span>
+                        </div>
+                        <div style="font-size:12px;color:#888;margin-top:4px;">
+                            ${itemCount} item(s) · ${order.department || 'N/A'}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // SELECT ORDER
+        // ============================================================
+
+        function selectOrder(orderId) {
+            selectedOrderId = orderId;
+
+            // Update list highlighting
+            var items = document.querySelectorAll('.order-list-item');
+            items.forEach(function(item) {
+                item.style.background = '';
+                item.style.borderLeft = '3px solid transparent';
+            });
+
+            // Find and highlight selected
+            var selectedItem = document.querySelector('.order-list-item[onclick="selectOrder(\'' + orderId + '\')"]');
+            if (selectedItem) {
+                selectedItem.style.background = '#e8f0fe';
+                selectedItem.style.borderLeft = '3px solid #2b6cb0';
+            }
+
+            // Find the order
+            var order = allOrders.find(function(o) { return o.orderId === orderId; });
+            if (order) {
+                renderOrderDetails(order);
+            }
+        }
+
+        // ============================================================
+        // RENDER ORDER DETAILS
+        // ============================================================
+
+        function renderOrderDetails(order) {
+            var container = document.getElementById('orderDetailsContainer');
+
+            var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
+            var statusColor = getStatusColor(order.status);
+
+            var itemsHtml = '';
+            if (order.items && order.items.length > 0) {
+                itemsHtml = '<table style="width:100%;margin-top:10px;">';
+                itemsHtml += '<tr><th>Drug</th><th>Quantity</th></tr>';
+                order.items.forEach(function(item) {
+                    itemsHtml += '<tr>';
+                    itemsHtml += '<td>' + item.drug + '</td>';
+                    itemsHtml += '<td style="text-align:center;">' + item.quantity + '</td>';
+                    itemsHtml += '</tr>';
+                });
+                itemsHtml += '</table>';
+            } else {
+                itemsHtml = '<p class="text-muted">No items in this order.</p>';
+            }
+
+            var statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+
+            html = `
+                <div style="margin-bottom:15px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                        <h3 style="font-weight:normal;font-size:18px;">${order.orderId}</h3>
+                        <span style="color:${statusColor};font-weight:bold;font-size:16px;">${statusLabel}</span>
+                    </div>
+                    <div style="margin-top:10px;font-size:14px;color:#555;">
+                        <div><strong>Date:</strong> ${date}</div>
+                        <div><strong>Department:</strong> ${order.department || 'N/A'}</div>
+                        <div><strong>Requested By:</strong> ${order.username || 'Unknown'}</div>
+                        <div><strong>Approved By:</strong> ${order.approvedBy || 'Pending'}</div>
+                        ${order.notes ? `<div><strong>Notes:</strong> ${order.notes}</div>` : ''}
+                    </div>
+                </div>
+                <hr style="border:none;border-top:1px solid #eee;">
+                <div style="margin-top:10px;">
+                    <strong>Items:</strong>
+                    ${itemsHtml}
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // HELPERS
+        // ============================================================
+
+        function getStatusColor(status) {
+            var colors = {
+                'pending': '#d69e2e',
+                'approved': '#38a169',
+                'rejected': '#e53e3e',
+                'completed': '#2b6cb0'
+            };
+            return colors[status] || '#666';
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initMyOrders();
+
+            document.getElementById('orderSearch').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchOrders();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
