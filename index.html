@@ -106,6 +106,10 @@
 
     <script src="script.js"></script>
     <script>
+        // ============================================================
+        // INDEX.HTML SPECIFIC
+        // ============================================================
+
         function showLogin() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
@@ -146,13 +150,16 @@
 
                 if (result.success) {
                     var user = result.user;
+
                     localStorage.setItem('loggedIn', 'true');
+                    localStorage.setItem('userId', user.userId || '');
                     localStorage.setItem('username', user.username);
                     localStorage.setItem('fullName', user.fullName);
                     localStorage.setItem('firstName', user.firstName);
                     localStorage.setItem('lastName', user.lastName);
                     localStorage.setItem('email', user.email);
                     localStorage.setItem('department', user.department);
+                    localStorage.setItem('created', user.created || '');
 
                     showAlert('Welcome, ' + user.fullName + '!', 'success');
 
