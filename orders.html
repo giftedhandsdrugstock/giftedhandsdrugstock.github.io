@@ -62,7 +62,7 @@
                         <p class="text-muted">Search for a drug or click "Show All Drugs".</p>
                     </div>
 
-                    <!-- Pagination - FIXED: removed duplicate display:flex -->
+                    <!-- Pagination -->
                     <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
                         <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
                         <span id="pageInfo" class="text-muted"></span>
@@ -308,14 +308,20 @@
             }, 300);
         }
 
+        // ============================================================
+        // CLEAR SEARCH - FIXED (only clears input, keeps current results)
+        // ============================================================
+
         function clearSearch() {
+            // Clear the search input
             document.getElementById('drugSearch').value = '';
 
+            // If drug list is visible, keep showing the current filtered results
             if (isDrugListVisible) {
-                filteredDrugs = allDrugs;
-                currentPage = 1;
+                // Keep filteredDrugs as they are (don't reset to allDrugs)
                 renderDrugList();
             } else {
+                // If drug list is hidden, keep it hidden
                 document.getElementById('drugListContainer').innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
                 document.getElementById('drugCount').textContent = '';
                 document.getElementById('pagination').style.display = 'none';
