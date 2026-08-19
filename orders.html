@@ -24,6 +24,7 @@
                 <span id="userDisplay"></span>
                 <span id="roleDisplay" class="text-muted"></span>
                 <a href="search.html">Search</a>
+                <a href="myorders.html">My Orders</a>
                 <a href="profile.html">Profile</a>
                 <a href="users.html" id="usersLink" style="display:none;">Users</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
@@ -41,10 +42,13 @@
                 <button class="btn" onclick="searchDrugs()">Search</button>
                 <button class="btn" onclick="clearSearch()">Clear</button>
                 <button class="btn" id="toggleDrugsBtn" onclick="toggleDrugList()">Show All Drugs</button>
+                <button class="btn" id="newOrderBtn" onclick="toggleNewOrder()">➕ New Order</button>
             </div>
         </div>
 
-        <!-- MAIN CONTENT - 2/3 LEFT | 1/3 RIGHT -->
+        <!-- ============================================================
+        MAIN CONTENT - 2/3 LEFT | 1/3 RIGHT (hidden by default)
+        ============================================================ -->
         <div class="orders-main" style="display:flex;gap:20px;">
 
             <!-- LEFT PANEL - 2/3 -->
@@ -70,36 +74,29 @@
 
             </div>
 
-            <!-- RIGHT PANEL - 1/3 -->
-            <div class="right-panel" style="flex:1;min-width:0;">
+            <!-- ============================================================
+            RIGHT PANEL - 1/3 (hidden by default)
+            ============================================================ -->
+            <div class="right-panel" style="flex:1;min-width:0;display:none;" id="orderPanel">
 
                 <div class="section-box">
-                    <h2>Your Order</h2>
-                    <span id="orderCount" class="text-muted"></span>
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                        <h2>New Order</h2>
+                        <span id="orderIdDisplay" class="text-muted" style="font-size:13px;"></span>
+                    </div>
 
                     <div id="orderListContainer" style="margin-top:10px;">
-                        <p class="text-muted">No items added yet.</p>
+                        <p class="text-muted">No items added yet. Search and add drugs.</p>
                     </div>
 
                     <div style="display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;">
-                        <button class="btn" onclick="submitOrder()">Submit Order</button>
-                        <button class="btn" onclick="clearOrder()" style="color:#c00;">Cancel Order</button>
+                        <button class="btn" onclick="submitOrder()">📤 Submit Order</button>
+                        <button class="btn" onclick="clearOrder()" style="color:#c00;">🗑️ Cancel Order</button>
                     </div>
                 </div>
 
             </div>
 
-        </div>
-
-        <!-- MY ORDERS -->
-        <div class="section-box" style="margin-top:20px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                <h2>My Orders</h2>
-                <span id="orderHistoryCount" class="text-muted"></span>
-            </div>
-            <div id="orderHistoryContainer">
-                <p class="text-muted">No orders placed yet.</p>
-            </div>
         </div>
 
     </div>
@@ -116,8 +113,19 @@
         var pageSize = 10;
         var orderItems = [];
         var currentUser = {};
-        var orderHistory = [];
         var isDrugListVisible = false;
+        var isNewOrderOpen = false;
+        var currentOrderId = '';
+
+        // ============================================================
+        // GENERATE ORDER ID
+        // ============================================================
+
+        function generateOrderId() {
+            var timestamp = Date.now().toString(36).toUpperCase();
+            var random = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return 'ORD-' + timestamp + '-' + random;
+        }
 
         // ============================================================
         // INIT
@@ -135,19 +143,49 @@
                 document.getElementById('usersLink').style.display = 'inline';
                 showAlert('Admin cannot place orders. Only approver rights.', 'info');
                 document.querySelector('.left-panel').style.display = 'none';
-                document.querySelector('.right-panel').style.display = 'none';
                 document.querySelector('.section-box:first-of-type').style.display = 'none';
-                loadOrderHistory();
+                document.getElementById('newOrderBtn').style.display = 'none';
                 return;
             }
 
-            // Load drugs in background but don't display
             loadDrugsSilent();
-            loadOrderHistory();
         }
 
         // ============================================================
-        // LOAD DRUGS SILENTLY (no display)
+        // TOGGLE NEW ORDER
+        // ============================================================
+
+        function toggleNewOrder() {
+            var panel = document.getElementById('orderPanel');
+            var btn = document.getElementById('newOrderBtn');
+
+            if (isNewOrderOpen) {
+                // Close - check if there are items
+                if (orderItems.length > 0) {
+                    if (!confirm('You have items in your order. Cancel order?')) {
+                        return;
+                    }
+                    orderItems = [];
+                }
+                panel.style.display = 'none';
+                btn.textContent = '➕ New Order';
+                isNewOrderOpen = false;
+                document.getElementById('orderIdDisplay').textContent = '';
+                renderOrderList();
+                if (isDrugListVisible) renderDrugList();
+            } else {
+                // Open
+                panel.style.display = 'block';
+                btn.textContent = '✕ Cancel Order';
+                isNewOrderOpen = true;
+                currentOrderId = generateOrderId();
+                document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
+                renderOrderList();
+            }
+        }
+
+        // ============================================================
+        // LOAD DRUGS SILENTLY
         // ============================================================
 
         async function loadDrugsSilent() {
@@ -179,14 +217,12 @@
             var btn = document.getElementById('toggleDrugsBtn');
 
             if (isDrugListVisible) {
-                // Hide
                 container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
                 document.getElementById('drugCount').textContent = '';
                 document.getElementById('pagination').style.display = 'none';
                 btn.textContent = 'Show All Drugs';
                 isDrugListVisible = false;
             } else {
-                // Show
                 if (allDrugs.length === 0) {
                     showLoading('Loading drugs...');
                     loadDrugsSilent().then(function() {
@@ -224,7 +260,6 @@
                 return;
             }
 
-            // If drug list is hidden, show it
             if (!isDrugListVisible) {
                 document.getElementById('toggleDrugsBtn').textContent = 'Hide Drugs';
                 isDrugListVisible = true;
@@ -254,7 +289,6 @@
         function clearSearch() {
             document.getElementById('drugSearch').value = '';
 
-            // If drug list is visible, show all drugs
             if (isDrugListVisible) {
                 filteredDrugs = allDrugs;
                 currentPage = 1;
@@ -351,6 +385,12 @@
         // ============================================================
 
         function addToOrder(drugName, maxStock, index) {
+            // Check if new order is open
+            if (!isNewOrderOpen) {
+                showAlert('Please click "New Order" first.', 'warning');
+                return;
+            }
+
             var qtyInput = document.getElementById('qty-' + index);
             if (!qtyInput) {
                 showAlert('Error: Could not find quantity input.', 'error');
@@ -391,12 +431,9 @@
 
         function renderOrderList() {
             var container = document.getElementById('orderListContainer');
-            var count = document.getElementById('orderCount');
-
-            count.textContent = orderItems.length + ' item(s)';
 
             if (orderItems.length === 0) {
-                container.innerHTML = '<p class="text-muted">No items added yet.</p>';
+                container.innerHTML = '<p class="text-muted">No items added yet. Search and add drugs.</p>';
                 return;
             }
 
@@ -490,6 +527,7 @@
                 user: currentUser.username,
                 userId: currentUser.userId,
                 department: currentUser.department,
+                orderId: currentOrderId,
                 items: orderItems.map(function(item) {
                     return {
                         drug: item.name,
@@ -504,6 +542,7 @@
                 '&user=' + encodeURIComponent(orderData.user) +
                 '&userId=' + encodeURIComponent(orderData.userId) +
                 '&department=' + encodeURIComponent(orderData.department) +
+                '&orderId=' + encodeURIComponent(orderData.orderId) +
                 '&items=' + encodeURIComponent(JSON.stringify(orderData.items)) +
                 '&timestamp=' + encodeURIComponent(orderData.timestamp);
 
@@ -512,11 +551,16 @@
             .then(function(result) {
                 hideLoading();
                 if (result.success) {
-                    showAlert('Order submitted successfully!', 'success');
+                    showAlert('Order submitted successfully! Order ID: ' + currentOrderId, 'success');
                     orderItems = [];
                     renderOrderList();
                     if (isDrugListVisible) renderDrugList();
-                    loadOrderHistory();
+
+                    // Reset order panel
+                    currentOrderId = generateOrderId();
+                    document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
+
+                    // Keep order panel open
                 } else {
                     showAlert(result.message || 'Error submitting order.', 'error');
                 }
@@ -526,62 +570,6 @@
                 console.error('Error:', error);
                 showAlert('Error connecting to server.', 'error');
             });
-        }
-
-        // ============================================================
-        // LOAD ORDER HISTORY
-        // ============================================================
-
-        async function loadOrderHistory() {
-            var container = document.getElementById('orderHistoryContainer');
-            var count = document.getElementById('orderHistoryCount');
-
-            try {
-                var url = API_URL + '?action=getorders&user=' + encodeURIComponent(currentUser.username);
-
-                var response = await fetch(url);
-                var results = await response.json();
-
-                if (results.length === 0) {
-                    container.innerHTML = '<p class="text-muted">No orders placed yet.</p>';
-                    count.textContent = '0 orders';
-                    return;
-                }
-
-                count.textContent = results.length + ' order(s)';
-
-                var html = '<table>';
-                html += '<tr><th>Date</th><th>Items</th><th>Status</th><th>Notes</th></tr>';
-
-                results.forEach(function(order) {
-                    var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
-                    var items = order.items.map(function(item) {
-                        return item.drug + ' (x' + item.quantity + ')';
-                    }).join(', ');
-
-                    var statusColors = {
-                        'pending': '#d69e2e',
-                        'approved': '#38a169',
-                        'rejected': '#e53e3e',
-                        'completed': '#2b6cb0'
-                    };
-                    var statusColor = statusColors[order.status] || '#666';
-
-                    html += '<tr>';
-                    html += '<td>' + date + '</td>';
-                    html += '<td>' + items + '</td>';
-                    html += '<td style="color:' + statusColor + ';font-weight:bold;">' + order.status.toUpperCase() + '</td>';
-                    html += '<td>' + (order.notes || '') + '</td>';
-                    html += '</tr>';
-                });
-
-                html += '</table>';
-                container.innerHTML = html;
-
-            } catch (error) {
-                console.error('Error loading order history:', error);
-                container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
-            }
         }
 
         // ============================================================
