@@ -106,6 +106,10 @@
 
     <script src="script.js"></script>
     <script>
+        // ============================================================
+        // ORDERS.HTML SPECIFIC
+        // ============================================================
+
         var allDrugs = [];
         var filteredDrugs = [];
         var currentPage = 1;
@@ -113,6 +117,10 @@
         var orderItems = [];
         var currentUser = {};
         var orderHistory = [];
+
+        // ============================================================
+        // INIT
+        // ============================================================
 
         function initOrders() {
             if (!checkAuth()) return;
@@ -128,11 +136,17 @@
                 document.querySelector('.left-panel').style.display = 'none';
                 document.querySelector('.right-panel').style.display = 'none';
                 document.querySelector('.section-box:first-of-type').style.display = 'none';
+                loadOrderHistory();
+                return;
             }
 
+            showLoading('Loading drugs...');
             loadDrugs();
-            loadOrderHistory();
         }
+
+        // ============================================================
+        // LOAD DRUGS
+        // ============================================================
 
         async function loadDrugs() {
             showLoading('Loading drugs...');
@@ -152,13 +166,19 @@
                 filteredDrugs = allDrugs;
                 hideLoading();
                 renderDrugList();
+                loadOrderHistory();
 
             } catch (error) {
                 hideLoading();
                 console.error('Error loading drugs:', error);
+                document.getElementById('drugListContainer').innerHTML = '<p class="text-muted" style="color:#c00;">Error loading drugs. Please try again.</p>';
                 showAlert('Error loading drugs.', 'error');
             }
         }
+
+        // ============================================================
+        // SEARCH DRUGS
+        // ============================================================
 
         function searchDrugs() {
             var query = document.getElementById('drugSearch').value.toLowerCase().trim();
@@ -168,13 +188,19 @@
                 return;
             }
 
-            filteredDrugs = allDrugs.filter(function(drug) {
-                return drug.name.toLowerCase().indexOf(query) !== -1 ||
-                       drug.form.toLowerCase().indexOf(query) !== -1;
-            });
+            showLoading('Searching for: ' + query);
 
-            currentPage = 1;
-            renderDrugList();
+            // Simulate loading for search (already have data)
+            setTimeout(function() {
+                filteredDrugs = allDrugs.filter(function(drug) {
+                    return drug.name.toLowerCase().indexOf(query) !== -1 ||
+                           drug.form.toLowerCase().indexOf(query) !== -1;
+                });
+
+                currentPage = 1;
+                hideLoading();
+                renderDrugList();
+            }, 300);
         }
 
         function clearSearch() {
@@ -183,6 +209,7 @@
             currentPage = 1;
             renderDrugList();
             document.getElementById('drugSearch').focus();
+            showAlert('Search cleared.', 'info');
         }
 
         function showAllDrugs() {
@@ -190,7 +217,12 @@
             filteredDrugs = allDrugs;
             currentPage = 1;
             renderDrugList();
+            showAlert('Showing all drugs.', 'info');
         }
+
+        // ============================================================
+        // RENDER DRUG LIST
+        // ============================================================
 
         function renderDrugList() {
             var container = document.getElementById('drugListContainer');
@@ -244,6 +276,10 @@
             container.innerHTML = html;
         }
 
+        // ============================================================
+        // PAGINATION
+        // ============================================================
+
         function prevPage() {
             if (currentPage > 1) {
                 currentPage--;
@@ -258,6 +294,10 @@
                 renderDrugList();
             }
         }
+
+        // ============================================================
+        // ADD TO ORDER
+        // ============================================================
 
         function addToOrder(drugName, maxStock) {
             var key = 'qty-' + drugName.replace(/[^a-zA-Z0-9]/g, '_');
@@ -290,6 +330,10 @@
             showAlert('Added ' + drugName + ' to your order.', 'success');
         }
 
+        // ============================================================
+        // RENDER ORDER LIST
+        // ============================================================
+
         function renderOrderList() {
             var container = document.getElementById('orderListContainer');
             var count = document.getElementById('orderCount');
@@ -320,6 +364,10 @@
             container.innerHTML = html;
         }
 
+        // ============================================================
+        // UPDATE ORDER QUANTITY
+        // ============================================================
+
         function updateOrderQty(index, newValue) {
             var qty = parseInt(newValue) || 1;
 
@@ -338,6 +386,10 @@
             renderOrderList();
         }
 
+        // ============================================================
+        // REMOVE FROM ORDER
+        // ============================================================
+
         function removeFromOrder(index) {
             var removed = orderItems[index].name;
             orderItems.splice(index, 1);
@@ -345,6 +397,10 @@
             renderDrugList();
             showAlert('Removed ' + removed + ' from your order.', 'info');
         }
+
+        // ============================================================
+        // CLEAR ORDER
+        // ============================================================
 
         function clearOrder() {
             if (orderItems.length === 0) {
@@ -359,6 +415,10 @@
             renderDrugList();
             showAlert('Order cleared.', 'info');
         }
+
+        // ============================================================
+        // SUBMIT ORDER
+        // ============================================================
 
         function submitOrder() {
             if (orderItems.length === 0) {
@@ -413,6 +473,10 @@
             });
         }
 
+        // ============================================================
+        // LOAD ORDER HISTORY
+        // ============================================================
+
         async function loadOrderHistory() {
             var container = document.getElementById('orderHistoryContainer');
             var count = document.getElementById('orderHistoryCount');
@@ -464,6 +528,10 @@
                 container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
             }
         }
+
+        // ============================================================
+        // INIT
+        // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
             initOrders();
