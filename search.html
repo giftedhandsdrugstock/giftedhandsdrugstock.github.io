@@ -8,6 +8,14 @@
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+            <div class="loading-spinner"></div>
+            <span class="loading-text" id="loadingText">Loading...</span>
+        </div>
+    </div>
+
     <div id="app">
 
         <div class="header">
@@ -16,7 +24,9 @@
                 <span id="userDisplay"></span>
                 <span id="roleDisplay" class="text-muted"></span>
                 <span id="deptDisplay" class="text-muted"></span>
+                <a href="profile.html">Profile</a>
                 <a href="users.html" id="usersLink" style="display:none;">Users</a>
+                <a href="loginhistory.html" id="historyLink" style="display:none;">Login History</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -38,58 +48,4 @@
 
             var user = getCurrentUser();
             document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
-            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
-            document.getElementById('deptDisplay').textContent = 'Department: ' + user.department;
-
-            if (user.isAdmin) {
-                document.getElementById('usersLink').style.display = 'inline';
-            }
-        }
-
-        async function searchDrugs() {
-            var query = document.getElementById('searchBox').value.trim();
-
-            if (!query) {
-                document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter.</p>';
-                return;
-            }
-
-            var resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<p>Searching...</p>';
-
-            try {
-                var response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
-                var results = await response.json();
-
-                if (results.length === 0) {
-                    resultsDiv.innerHTML = '<p>No matching drugs found.</p>';
-                    return;
-                }
-
-                var html = '<table><tr><th>Drug Name</th><th>Form</th><th>Balance</th></tr>';
-                results.forEach(function(record) {
-                    var balance = parseFloat(record[2]) || 0;
-                    html += '<tr>';
-                    html += '<td>' + record[0] + '</td>';
-                    html += '<td>' + record[1] + '</td>';
-                    html += '<td>' + balance + '</td>';
-                    html += '</tr>';
-                });
-                html += '</table>';
-                resultsDiv.innerHTML = html;
-
-            } catch (error) {
-                console.error('Search error:', error);
-                resultsDiv.innerHTML = '<p>Unable to retrieve stock information.</p>';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initSearch();
-            setupSearchEnter('searchBox', searchDrugs);
-            document.getElementById('searchBox').focus();
-        });
-    </script>
-
-</body>
-</html>
+           
