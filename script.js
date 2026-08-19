@@ -6,7 +6,7 @@
 // API URL - UPDATE THIS
 // ============================================================
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwlcUEZ9hWV1TPF2Fv5a1k8pJUqZ8cZ2R5QI4lAhogADGHVzsOsgvv3TEmQkSHFJkx1/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbwlcUEZ9hWV1TPF2Fv5a1k8pJUqZ8cZ2R5QI4lAhogADGHVzsOsgvv3TEmQkSHFJkx1/exec";
 
 // ============================================================
 // AUTH
@@ -22,17 +22,34 @@ function checkAuth() {
 
 function getCurrentUser() {
     return {
+        userId: localStorage.getItem('userId') || '',
         username: localStorage.getItem('username'),
         fullName: localStorage.getItem('fullName') || localStorage.getItem('username') || 'User',
         firstName: localStorage.getItem('firstName') || '',
         lastName: localStorage.getItem('lastName') || '',
         email: localStorage.getItem('email') || '',
         department: localStorage.getItem('department') || '',
+        created: localStorage.getItem('created') || '',
         isAdmin: localStorage.getItem('username') === 'admin'
     };
 }
 
 function logout() {
+    var userId = localStorage.getItem('userId');
+
+    if (userId) {
+        fetch(API_URL +
+            '?action=logout' +
+            '&userId=' + encodeURIComponent(userId))
+        .then(function(response) { return response.json(); })
+        .then(function(result) {
+            console.log('Logout logged:', result);
+        })
+        .catch(function(error) {
+            console.error('Logout log error:', error);
+        });
+    }
+
     localStorage.clear();
     window.location.href = 'index.html';
 }
@@ -65,8 +82,8 @@ function setupEnterNavigation(formElement, fieldIds) {
         var field = document.getElementById(fieldIds[i]);
         if (!field) continue;
 
-        field.addEventListener('keydown', function(e, index) {
-            return function() {
+        field.addEventListener('keydown', (function(index) {
+            return function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
 
@@ -81,7 +98,7 @@ function setupEnterNavigation(formElement, fieldIds) {
                     }
                 }
             };
-        }(i));
+        })(i));
     }
 }
 
@@ -101,4 +118,27 @@ function setupSearchEnter(searchBoxId, searchFunction) {
             }
         }
     });
+}
+
+// ============================================================
+// FORMAT DATE
+// ============================================================
+
+function formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    try {
+        var d = new Date(dateString);
+        return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        return dateString;
+    }
+}
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
