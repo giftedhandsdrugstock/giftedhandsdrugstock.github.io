@@ -48,4 +48,62 @@
 
             var user = getCurrentUser();
             document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
-           
+            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
+            document.getElementById('deptDisplay').textContent = 'Department: ' + user.department;
+
+            if (user.isAdmin) {
+                document.getElementById('usersLink').style.display = 'inline';
+                document.getElementById('historyLink').style.display = 'inline';
+            }
+        }
+
+        async function searchDrugs() {
+            var query = document.getElementById('searchBox').value.trim();
+
+            if (!query) {
+                document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter.</p>';
+                return;
+            }
+
+            var resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Searching...</p>';
+            showLoading('Searching for: ' + query);
+
+            try {
+                var response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
+                var results = await response.json();
+                hideLoading();
+
+                if (results.length === 0) {
+                    resultsDiv.innerHTML = '<p>No matching drugs found.</p>';
+                    return;
+                }
+
+                var html = '<table><tr><th>Drug Name</th><th>Form</th><th>Balance</th></tr>';
+                results.forEach(function(record) {
+                    var balance = parseFloat(record[2]) || 0;
+                    html += '<tr>';
+                    html += '<td>' + record[0] + '</td>';
+                    html += '<td>' + record[1] + '</td>';
+                    html += '<td>' + balance + '</td>';
+                    html += '</tr>';
+                });
+                html += '</table>';
+                resultsDiv.innerHTML = html;
+
+            } catch (error) {
+                hideLoading();
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = '<p>Unable to retrieve stock information.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initSearch();
+            setupSearchEnter('searchBox', searchDrugs);
+            document.getElementById('searchBox').focus();
+        });
+    </script>
+
+</body>
+</html>
