@@ -28,28 +28,29 @@
                 <div style="flex:1;min-width:200px;">
                     <input type="text" id="userSearch" placeholder="Search users..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
                 </div>
-                <div style="display:flex;gap:10px;align-items:center;">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                     <label><input type="checkbox" id="searchName" checked> Name</label>
                     <label><input type="checkbox" id="searchEmail" checked> Email</label>
                     <label><input type="checkbox" id="searchDept" checked> Department</label>
                     <label><input type="checkbox" id="searchUsername" checked> Username</label>
                 </div>
                 <button class="btn" onclick="searchUsers()">Search</button>
-                <button class="btn" onclick="loadAllUsers()">Show All</button>
+                <button class="btn" onclick="clearSearch()">Clear</button>
             </div>
         </div>
 
-        <!-- USER LIST -->
-        <div class="section-box">
+        <!-- USER LIST - Only appears after search -->
+        <div id="userListSection" class="section-box" style="display:none;">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                <h2>Users</h2>
+                <h2>Search Results</h2>
                 <div style="display:flex;gap:10px;">
+                    <span id="resultCount" class="text-muted"></span>
                     <button class="btn" onclick="saveAllUsers()">Save All Changes</button>
                     <button class="btn" onclick="deleteAllUsers()" style="color:#c00;">Delete All Users</button>
                 </div>
             </div>
             <div id="usersContainer">
-                <p class="text-muted">Loading users...</p>
+                <p class="text-muted">No users found.</p>
             </div>
         </div>
 
@@ -62,7 +63,7 @@
         // ============================================================
 
         var allUsers = [];
-        var originalUsers = [];
+        var filteredUsers = [];
         var currentUser = {};
 
         function initUsers() {
@@ -75,43 +76,46 @@
 
             if (!currentUser.isAdmin) {
                 document.getElementById('usersContainer').innerHTML = '<p>Admin access required.</p>';
+                document.getElementById('userListSection').style.display = 'block';
                 return;
             }
 
+            // Load all users in background
             loadAllUsers();
         }
 
         async function loadAllUsers() {
-            var container = document.getElementById('usersContainer');
-            container.innerHTML = '<p class="text-muted">Loading...</p>';
-
             try {
                 var response = await fetch(API_URL +
                     '?action=getusers&adminUsername=' + encodeURIComponent('admin'));
                 var results = await response.json();
 
                 if (!results.success && results.message) {
-                    container.innerHTML = '<p>' + results.message + '</p>';
+                    allUsers = [];
                     return;
                 }
 
                 allUsers = results;
-                originalUsers = JSON.parse(JSON.stringify(results));
-                renderUsers(allUsers);
 
             } catch (error) {
                 console.error('Error:', error);
-                container.innerHTML = '<p>Error loading users.</p>';
+                allUsers = [];
             }
         }
 
         function renderUsers(users) {
             var container = document.getElementById('usersContainer');
+            var section = document.getElementById('userListSection');
+            var count = document.getElementById('resultCount');
 
             if (users.length === 0) {
-                container.innerHTML = '<p class="text-muted">No users found.</p>';
+                container.innerHTML = '<p class="text-muted">No users found matching your search.</p>';
+                count.textContent = '0 users found';
+                section.style.display = 'block';
                 return;
             }
+
+            count.textContent = users.length + ' user(s) found';
 
             var html = '<table>';
             html += '<tr>';
@@ -123,46 +127,48 @@
             html += '<th>Actions</th>';
             html += '</tr>';
 
-            users.forEach(function(user, index) {
+            // Find the original index for each user to maintain edit references
+            users.forEach(function(user) {
+                var originalIndex = allUsers.indexOf(allUsers.find(function(u) { return u.username === user.username; }));
                 var isAdmin = user.username === 'admin';
                 var isProtected = isAdmin;
 
-                html += '<tr id="user-row-' + index + '">';
+                html += '<tr id="user-row-' + originalIndex + '">';
                 html += '<td><strong>' + user.username + '</strong></td>';
 
-                // First Name (editable)
+                // First Name
                 html += '<td>';
                 if (isProtected) {
                     html += user.firstName;
                 } else {
-                    html += '<input type="text" id="fn-' + index + '" value="' + escapeHtml(user.firstName) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
+                    html += '<input type="text" id="fn-' + originalIndex + '" value="' + escapeHtml(user.firstName) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
                 }
                 html += '</td>';
 
-                // Last Name (editable)
+                // Last Name
                 html += '<td>';
                 if (isProtected) {
                     html += user.lastName;
                 } else {
-                    html += '<input type="text" id="ln-' + index + '" value="' + escapeHtml(user.lastName) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
+                    html += '<input type="text" id="ln-' + originalIndex + '" value="' + escapeHtml(user.lastName) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
                 }
                 html += '</td>';
 
-                // Email (editable)
+                // Email
                 html += '<td>';
                 if (isProtected) {
                     html += user.email;
                 } else {
-                    html += '<input type="email" id="em-' + index + '" value="' + escapeHtml(user.email) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
+                    html += '<input type="email" id="em-' + originalIndex + '" value="' + escapeHtml(user.email) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
                 }
                 html += '</td>';
 
-                // Department (editable)
+                // Department
                 html += '<td>';
                 if (isProtected) {
                     html += user.department;
                 } else {
-                    html += '<input type="text" id="dp-' + index + '" value="' + escapeHtml(user.department) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
+                    html += '<input type="text" id="dp-' + originalIndex + '" value="' + escapeHtml(user.department) + '" style="width:100%;padding:4px 6px;border:1px solid #ccc;">';
                 }
                 html += '</td>';
 
@@ -171,7 +177,7 @@
                 if (isProtected) {
                     html += '<span class="text-muted">Protected</span>';
                 } else {
-                    html += '<button class="btn btn-small" onclick="saveUser(' + index + ')">💾 Save</button>';
+                    html += '<button class="btn btn-small" onclick="saveUser(' + originalIndex + ')">💾 Save</button>';
                     html += ' <button class="btn btn-small" onclick="deleteUser(\'' + user.username + '\')" style="color:#c00;">✕</button>';
                 }
                 html += '</td>';
@@ -181,6 +187,7 @@
 
             html += '</table>';
             container.innerHTML = html;
+            section.style.display = 'block';
         }
 
         function escapeHtml(text) {
@@ -199,11 +206,30 @@
             var searchDept = document.getElementById('searchDept').checked;
             var searchUsername = document.getElementById('searchUsername').checked;
 
+            // If no query, show nothing
             if (!query) {
-                renderUsers(allUsers);
+                document.getElementById('userListSection').style.display = 'none';
                 return;
             }
 
+            // If no search criteria selected, show nothing
+            if (!searchName && !searchEmail && !searchDept && !searchUsername) {
+                showAlert('Please select at least one search field.', 'error');
+                return;
+            }
+
+            // If allUsers is empty, reload
+            if (allUsers.length === 0) {
+                loadAllUsers().then(function() {
+                    performSearch(query, searchName, searchEmail, searchDept, searchUsername);
+                });
+                return;
+            }
+
+            performSearch(query, searchName, searchEmail, searchDept, searchUsername);
+        }
+
+        function performSearch(query, searchName, searchEmail, searchDept, searchUsername) {
             var filtered = allUsers.filter(function(user) {
                 var match = false;
                 if (searchName && (user.firstName.toLowerCase().indexOf(query) !== -1 || user.lastName.toLowerCase().indexOf(query) !== -1)) match = true;
@@ -213,7 +239,15 @@
                 return match;
             });
 
+            filteredUsers = filtered;
             renderUsers(filtered);
+        }
+
+        function clearSearch() {
+            document.getElementById('userSearch').value = '';
+            document.getElementById('userListSection').style.display = 'none';
+            document.getElementById('usersContainer').innerHTML = '<p class="text-muted">No users found.</p>';
+            document.getElementById('resultCount').textContent = '';
         }
 
         // ============================================================
@@ -252,7 +286,15 @@
 
                 if (result.success) {
                     showAlert('User ' + username + ' updated successfully!', 'success');
-                    loadAllUsers();
+                    // Reload users in background
+                    await loadAllUsers();
+                    // Re-apply search
+                    var query = document.getElementById('userSearch').value.trim();
+                    if (query) {
+                        searchUsers();
+                    } else {
+                        document.getElementById('userListSection').style.display = 'none';
+                    }
                 } else {
                     showAlert(result.message || 'Error updating user.', 'error');
                 }
@@ -268,20 +310,20 @@
         // ============================================================
 
         function saveAllUsers() {
-            var allInputs = document.querySelectorAll('#usersContainer input');
-            if (allInputs.length === 0) {
+            var visibleInputs = document.querySelectorAll('#usersContainer input');
+            if (visibleInputs.length === 0) {
                 showAlert('No editable users found.', 'info');
                 return;
             }
 
-            if (!confirm('Save all changes for all users?')) return;
+            if (!confirm('Save all changes for all displayed users?')) return;
 
-            var promises = [];
             var usersToUpdate = [];
 
-            allUsers.forEach(function(user, index) {
+            filteredUsers.forEach(function(user) {
                 if (user.username === 'admin') return;
 
+                var index = allUsers.indexOf(allUsers.find(function(u) { return u.username === user.username; }));
                 var firstName = document.getElementById('fn-' + index).value.trim();
                 var lastName = document.getElementById('ln-' + index).value.trim();
                 var email = document.getElementById('em-' + index).value.trim();
@@ -330,7 +372,14 @@
                         } else {
                             showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
                         }
-                        loadAllUsers();
+                        loadAllUsers().then(function() {
+                            var query = document.getElementById('userSearch').value.trim();
+                            if (query) {
+                                searchUsers();
+                            } else {
+                                document.getElementById('userListSection').style.display = 'none';
+                            }
+                        });
                     }
                 })
                 .catch(function(error) {
@@ -338,7 +387,14 @@
                     errors.push(user.username + ': ' + error.message);
                     if (completed === usersToUpdate.length) {
                         showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
-                        loadAllUsers();
+                        loadAllUsers().then(function() {
+                            var query = document.getElementById('userSearch').value.trim();
+                            if (query) {
+                                searchUsers();
+                            } else {
+                                document.getElementById('userListSection').style.display = 'none';
+                            }
+                        });
                     }
                 });
             });
@@ -361,7 +417,14 @@
             .then(function(result) {
                 if (result.success) {
                     showAlert(result.message, 'success');
-                    loadAllUsers();
+                    loadAllUsers().then(function() {
+                        var query = document.getElementById('userSearch').value.trim();
+                        if (query) {
+                            searchUsers();
+                        } else {
+                            document.getElementById('userListSection').style.display = 'none';
+                        }
+                    });
                 } else {
                     showAlert(result.message || 'Error deleting user.', 'error');
                 }
@@ -391,7 +454,14 @@
             .then(function(result) {
                 if (result.success) {
                     showAlert(result.message, 'success');
-                    loadAllUsers();
+                    loadAllUsers().then(function() {
+                        var query = document.getElementById('userSearch').value.trim();
+                        if (query) {
+                            searchUsers();
+                        } else {
+                            document.getElementById('userListSection').style.display = 'none';
+                        }
+                    });
                 } else {
                     showAlert(result.message || 'Error deleting users.', 'error');
                 }
