@@ -89,7 +89,15 @@
                         <p class="text-muted">No items added yet. Search and add drugs.</p>
                     </div>
 
-                    <div style="display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;">
+                    <!-- ============================================================
+                    NOTES SECTION - NEW
+                    ============================================================ -->
+                    <div style="margin-top:15px;border-top:1px solid #eee;padding-top:12px;">
+                        <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Order Notes</label>
+                        <textarea id="orderNotes" placeholder="Add notes for the admin (e.g., urgency, reason, special instructions)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;"></textarea>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
                         <button class="btn" onclick="submitOrder()">📤 Submit Order</button>
                         <button class="btn" onclick="clearOrder()" style="color:#c00;">🗑️ Cancel Order</button>
                     </div>
@@ -171,6 +179,7 @@
                 btn.textContent = '➕ New Order';
                 isNewOrderOpen = false;
                 document.getElementById('orderIdDisplay').textContent = '';
+                document.getElementById('orderNotes').value = '';
                 renderOrderList();
                 if (isDrugListVisible) renderDrugList();
             } else {
@@ -180,6 +189,7 @@
                 isNewOrderOpen = true;
                 currentOrderId = generateOrderId();
                 document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
+                document.getElementById('orderNotes').value = '';
                 renderOrderList();
             }
         }
@@ -503,6 +513,7 @@
             if (!confirm('Clear all items from your order?')) return;
 
             orderItems = [];
+            document.getElementById('orderNotes').value = '';
             renderOrderList();
             if (isDrugListVisible) renderDrugList();
             showAlert('Order cleared.', 'info');
@@ -522,6 +533,8 @@
 
             showLoading('Submitting order...');
 
+            var notes = document.getElementById('orderNotes').value.trim();
+
             var orderData = {
                 action: 'submitorder',
                 user: currentUser.username,
@@ -534,6 +547,7 @@
                         quantity: item.quantity
                     };
                 }),
+                notes: notes,
                 timestamp: new Date().toISOString()
             };
 
@@ -544,6 +558,7 @@
                 '&department=' + encodeURIComponent(orderData.department) +
                 '&orderId=' + encodeURIComponent(orderData.orderId) +
                 '&items=' + encodeURIComponent(JSON.stringify(orderData.items)) +
+                '&notes=' + encodeURIComponent(orderData.notes) +
                 '&timestamp=' + encodeURIComponent(orderData.timestamp);
 
             fetch(url)
@@ -553,14 +568,13 @@
                 if (result.success) {
                     showAlert('Order submitted successfully! Order ID: ' + currentOrderId, 'success');
                     orderItems = [];
+                    document.getElementById('orderNotes').value = '';
                     renderOrderList();
                     if (isDrugListVisible) renderDrugList();
 
-                    // Reset order panel
+                    // Generate new Order ID for next order
                     currentOrderId = generateOrderId();
                     document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
-
-                    // Keep order panel open
                 } else {
                     showAlert(result.message || 'Error submitting order.', 'error');
                 }
