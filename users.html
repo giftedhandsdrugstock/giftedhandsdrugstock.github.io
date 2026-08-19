@@ -16,6 +16,7 @@
                 <span id="userDisplay"></span>
                 <span id="roleDisplay" class="text-muted"></span>
                 <a href="search.html">Search</a>
+                <a href="profile.html">Profile</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -26,9 +27,10 @@
         <div class="section-box">
             <div class="flex flex-wrap gap-10" style="align-items:center;">
                 <div style="flex:1;min-width:200px;">
-                    <input type="text" id="userSearch" placeholder="Search users..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
+                    <input type="text" id="userSearch" placeholder="Search by ID, Name, Email or Department..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
                 </div>
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <label><input type="checkbox" id="searchId" checked> User ID</label>
                     <label><input type="checkbox" id="searchName" checked> Name</label>
                     <label><input type="checkbox" id="searchEmail" checked> Email</label>
                     <label><input type="checkbox" id="searchDept" checked> Department</label>
@@ -40,7 +42,7 @@
             </div>
         </div>
 
-        <!-- USER LIST - Only appears after search or show all -->
+        <!-- USER LIST -->
         <div id="userListSection" class="section-box" style="display:none;">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
                 <h2>Users</h2>
@@ -83,6 +85,7 @@
                 return;
             }
 
+            showLoading('Loading users...');
             loadAllUsers();
         }
 
@@ -92,6 +95,8 @@
                     '?action=getusers&adminUsername=' + encodeURIComponent('admin'));
                 var results = await response.json();
 
+                hideLoading();
+
                 if (!results.success && results.message) {
                     allUsers = [];
                     return;
@@ -100,27 +105,29 @@
                 allUsers = results;
 
             } catch (error) {
+                hideLoading();
                 console.error('Error:', error);
                 allUsers = [];
             }
         }
 
-        function renderUsers(users, title) {
+        function renderUsers(users) {
             var container = document.getElementById('usersContainer');
             var section = document.getElementById('userListSection');
             var count = document.getElementById('resultCount');
 
             if (users.length === 0) {
-                container.innerHTML = '<p class="text-muted">No users found.</p>';
-                count.textContent = '0 users';
+                container.innerHTML = '<p class="text-muted">No users found matching your search.</p>';
+                count.textContent = '0 users found';
                 section.style.display = 'block';
                 return;
             }
 
-            count.textContent = users.length + ' user(s)';
+            count.textContent = users.length + ' user(s) found';
 
             var html = '<table>';
             html += '<tr>';
+            html += '<th>User ID</th>';
             html += '<th>Username</th>';
             html += '<th>First Name</th>';
             html += '<th>Last Name</th>';
@@ -135,6 +142,7 @@
                 var isProtected = isAdmin;
 
                 html += '<tr id="user-row-' + originalIndex + '">';
+                html += '<td><span class="text-muted" style="font-size:12px;">' + user.userId + '</span></td>';
                 html += '<td><strong>' + user.username + '</strong></td>';
 
                 html += '<td>';
@@ -186,17 +194,13 @@
             section.style.display = 'block';
         }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
-
         // ============================================================
         // SEARCH USERS
         // ============================================================
 
         function searchUsers() {
             var query = document.getElementById('userSearch').value.toLowerCase().trim();
+            var searchId = document.getElementById('searchId').checked;
             var searchName = document.getElementById('searchName').checked;
             var searchEmail = document.getElementById('searchEmail').checked;
             var searchDept = document.getElementById('searchDept').checked;
@@ -207,26 +211,29 @@
                 return;
             }
 
-            if (!searchName && !searchEmail && !searchDept && !searchUsername) {
+            if (!searchId && !searchName && !searchEmail && !searchDept && !searchUsername) {
                 showAlert('Please select at least one search field.', 'error');
                 return;
             }
 
             if (allUsers.length === 0) {
+                showLoading('Searching...');
                 loadAllUsers().then(function() {
-                    performSearch(query, searchName, searchEmail, searchDept, searchUsername);
+                    hideLoading();
+                    performSearch(query, searchId, searchName, searchEmail, searchDept, searchUsername);
                 });
                 return;
             }
 
-            performSearch(query, searchName, searchEmail, searchDept, searchUsername);
+            performSearch(query, searchId, searchName, searchEmail, searchDept, searchUsername);
         }
 
-        function performSearch(query, searchName, searchEmail, searchDept, searchUsername) {
+        function performSearch(query, searchId, searchName, searchEmail, searchDept, searchUsername) {
             isShowingAll = false;
 
             var filtered = allUsers.filter(function(user) {
                 var match = false;
+                if (searchId && user.userId.toLowerCase().indexOf(query) !== -1) match = true;
                 if (searchName && (user.firstName.toLowerCase().indexOf(query) !== -1 || user.lastName.toLowerCase().indexOf(query) !== -1)) match = true;
                 if (searchEmail && user.email.toLowerCase().indexOf(query) !== -1) match = true;
                 if (searchDept && user.department.toLowerCase().indexOf(query) !== -1) match = true;
@@ -238,22 +245,16 @@
             renderUsers(filtered);
         }
 
-        // ============================================================
-        // CLEAR SEARCH BAR (results stay visible)
-        // ============================================================
-
         function clearSearchBar() {
             document.getElementById('userSearch').value = '';
             document.getElementById('userSearch').focus();
         }
 
-        // ============================================================
-        // SHOW ALL USERS
-        // ============================================================
-
         function showAllUsers() {
             if (allUsers.length === 0) {
+                showLoading('Loading users...');
                 loadAllUsers().then(function() {
+                    hideLoading();
                     isShowingAll = true;
                     filteredUsers = allUsers;
                     renderUsers(allUsers);
@@ -266,10 +267,6 @@
             renderUsers(allUsers);
         }
 
-        // ============================================================
-        // CLOSE USER LIST
-        // ============================================================
-
         function closeUserList() {
             document.getElementById('userListSection').style.display = 'none';
             document.getElementById('usersContainer').innerHTML = '<p class="text-muted">No users found.</p>';
@@ -279,7 +276,7 @@
         }
 
         // ============================================================
-        // SAVE SINGLE USER
+        // SAVE FUNCTIONS
         // ============================================================
 
         function saveUser(index) {
@@ -296,6 +293,7 @@
                 return;
             }
 
+            showLoading('Saving...');
             adminUpdateUser(user.username, firstName, lastName, email, department);
         }
 
@@ -311,6 +309,7 @@
                     '&department=' + encodeURIComponent(department));
 
                 var result = await response.json();
+                hideLoading();
 
                 if (result.success) {
                     showAlert('User ' + username + ' updated successfully!', 'success');
@@ -321,6 +320,7 @@
                 }
 
             } catch (error) {
+                hideLoading();
                 console.error('Error:', error);
                 showAlert('Error connecting to server.', 'error');
             }
@@ -338,6 +338,8 @@
             }
 
             if (!confirm('Save all changes for all displayed users?')) return;
+
+            showLoading('Saving all changes...');
 
             var usersToUpdate = [];
             var displayUsers = isShowingAll ? allUsers : filteredUsers;
@@ -366,6 +368,7 @@
             });
 
             if (usersToUpdate.length === 0) {
+                hideLoading();
                 showAlert('No changes to save.', 'info');
                 return;
             }
@@ -389,6 +392,7 @@
                         errors.push(user.username + ': ' + result.message);
                     }
                     if (completed === usersToUpdate.length) {
+                        hideLoading();
                         if (errors.length === 0) {
                             showAlert('All users updated successfully!', 'success');
                         } else {
@@ -403,6 +407,7 @@
                     completed++;
                     errors.push(user.username + ': ' + error.message);
                     if (completed === usersToUpdate.length) {
+                        hideLoading();
                         showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
                         loadAllUsers().then(function() {
                             refreshDisplay();
@@ -411,10 +416,6 @@
                 });
             });
         }
-
-        // ============================================================
-        // REFRESH DISPLAY
-        // ============================================================
 
         function refreshDisplay() {
             if (isShowingAll) {
@@ -430,7 +431,7 @@
         }
 
         // ============================================================
-        // DELETE USER
+        // DELETE FUNCTIONS
         // ============================================================
 
         function deleteUser(username) {
@@ -438,12 +439,15 @@
                 return;
             }
 
+            showLoading('Deleting user...');
+
             fetch(API_URL +
                 '?action=deleteuser' +
                 '&username=' + encodeURIComponent(username) +
                 '&adminUsername=' + encodeURIComponent('admin'))
             .then(function(response) { return response.json(); })
             .then(function(result) {
+                hideLoading();
                 if (result.success) {
                     showAlert(result.message, 'success');
                     loadAllUsers().then(function() {
@@ -454,14 +458,11 @@
                 }
             })
             .catch(function(error) {
+                hideLoading();
                 console.error('Error:', error);
                 showAlert('Error connecting to server.', 'error');
             });
         }
-
-        // ============================================================
-        // DELETE ALL USERS
-        // ============================================================
 
         function deleteAllUsers() {
             if (!confirm('Delete ALL non-admin users? This cannot be undone.')) {
@@ -472,10 +473,13 @@
                 return;
             }
 
+            showLoading('Deleting all users...');
+
             fetch(API_URL +
                 '?action=deleteallusers&adminUsername=' + encodeURIComponent('admin'))
             .then(function(response) { return response.json(); })
             .then(function(result) {
+                hideLoading();
                 if (result.success) {
                     showAlert(result.message, 'success');
                     loadAllUsers().then(function() {
@@ -486,14 +490,11 @@
                 }
             })
             .catch(function(error) {
+                hideLoading();
                 console.error('Error:', error);
                 showAlert('Error connecting to server.', 'error');
             });
         }
-
-        // ============================================================
-        // ENTER KEY FOR SEARCH
-        // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
             initUsers();
