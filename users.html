@@ -12,6 +12,7 @@
             <h1>User Management</h1>
             <div>
                 <span id="userDisplay" style="margin-right:15px;"></span>
+                <span id="roleDisplay" style="margin-right:15px;font-size:12px;color:#666;"></span>
                 <a href="search.html">Search</a>
                 <a href="movement.html" style="margin-left:10px;">Movement</a>
                 <button onclick="logout()" style="margin-left:10px;">Logout</button>
@@ -20,18 +21,71 @@
 
         <div id="alert" style="display:none;padding:10px;margin:10px 0;border:1px solid #ccc;"></div>
 
-        <div style="margin:10px 0;">
-            <button onclick="loadUsers()">Refresh Users</button>
-            <button onclick="deleteAllUsers()" style="margin-left:10px;color:red;">Delete All Users</button>
+        <!-- Edit Own Profile (visible to all users) -->
+        <div style="margin:20px 0;padding:15px;border:1px solid #ccc;border-radius:5px;">
+            <h2>My Profile</h2>
+            <form onsubmit="updateProfile(event)">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div>
+                        <label>First Name</label>
+                        <input type="text" id="editFirstName" required>
+                    </div>
+                    <div>
+                        <label>Last Name</label>
+                        <input type="text" id="editLastName" required>
+                    </div>
+                    <div>
+                        <label>Email</label>
+                        <input type="email" id="editEmail" required>
+                    </div>
+                    <div>
+                        <label>Department</label>
+                        <input type="text" id="editDepartment" list="deptList" required>
+                        <datalist id="deptList">
+                            <option value="Pharmacy">
+                            <option value="Ward A">
+                            <option value="Ward B">
+                            <option value="Ward C">
+                            <option value="Outpatient">
+                            <option value="Emergency">
+                            <option value="Surgical">
+                            <option value="Maternity">
+                            <option value="Paediatric">
+                            <option value="Private">
+                            <option value="Administration">
+                            <option value="Other">
+                        </datalist>
+                    </div>
+                </div>
+                <div style="margin-top:10px;">
+                    <label>Username (cannot be changed)</label>
+                    <input type="text" id="editUsername" disabled style="background:#f0f0f0;padding:8px;width:100%;">
+                </div>
+                <div style="margin-top:10px;">
+                    <label>New Password (leave blank to keep current)</label>
+                    <input type="password" id="editPassword" placeholder="Min 6 characters" style="width:100%;padding:8px;">
+                </div>
+                <button type="submit" style="margin-top:10px;padding:8px 20px;">Update Profile</button>
+            </form>
         </div>
 
-        <div id="usersContainer">
-            <p>Loading users...</p>
+        <!-- Admin Only: Manage All Users -->
+        <div id="adminSection" style="display:none;margin:20px 0;padding:15px;border:1px solid #ccc;border-radius:5px;">
+            <h2>Manage Users (Admin)</h2>
+            <div style="margin:10px 0;">
+                <button onclick="loadAllUsers()">Refresh Users</button>
+                <button onclick="deleteAllUsers()" style="margin-left:10px;color:red;">Delete All Users</button>
+            </div>
+            <div id="usersContainer">
+                <p>Loading users...</p>
+            </div>
         </div>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwlcUEZ9hWV1TPF2Fv5a1k8pJUqZ8cZ2R5QI4lAhogADGHVzsOsgvv3TEmQkSHFJkx1/exec";
+
+        let currentUser = {};
 
         function checkAuth() {
             if (localStorage.getItem('loggedIn') !== 'true') {
@@ -40,13 +94,34 @@
             }
 
             const username = localStorage.getItem('username');
-            if (username !== 'admin') {
-                document.getElementById('usersContainer').innerHTML = '<p>Admin access required.</p>';
-                return;
-            }
+            const fullName = localStorage.getItem('fullName') || username || 'User';
+            const isAdmin = username === 'admin';
 
-            const fullName = localStorage.getItem('fullName') || localStorage.getItem('username') || 'User';
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + fullName + ' (Admin)';
+            currentUser = {
+                username: username,
+                fullName: fullName,
+                firstName: localStorage.getItem('firstName') || '',
+                lastName: localStorage.getItem('lastName') || '',
+                email: localStorage.getItem('email') || '',
+                department: localStorage.getItem('department') || '',
+                isAdmin: isAdmin
+            };
+
+            document.getElementById('userDisplay').textContent = 'Welcome, ' + fullName;
+            document.getElementById('roleDisplay').textContent = isAdmin ? '(Admin)' : '(User)';
+
+            // Load profile data
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editFirstName').value = currentUser.firstName;
+            document.getElementById('editLastName').value = currentUser.lastName;
+            document.getElementById('editEmail').value = currentUser.email;
+            document.getElementById('editDepartment').value = currentUser.department;
+
+            // Show admin section only for admin
+            if (isAdmin) {
+                document.getElementById('adminSection').style.display = 'block';
+                loadAllUsers();
+            }
         }
 
         function logout() {
@@ -66,15 +141,85 @@
             }, 5000);
         }
 
-        async function loadUsers() {
+        // ============================================================
+        // UPDATE PROFILE (Any user can update their own)
+        // ============================================================
+
+        async function updateProfile(event) {
+            event.preventDefault();
+
+            const firstName = document.getElementById('editFirstName').value.trim();
+            const lastName = document.getElementById('editLastName').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const department = document.getElementById('editDepartment').value.trim();
+            const password = document.getElementById('editPassword').value.trim();
+            const username = localStorage.getItem('username');
+
+            if (!firstName || !lastName || !email || !department) {
+                showAlert('All fields except password are required.', 'error');
+                return;
+            }
+
+            if (password && password.length < 6) {
+                showAlert('Password must be at least 6 characters.', 'error');
+                return;
+            }
+
+            try {
+                let url = API_URL +
+                    '?action=updateprofile' +
+                    '&username=' + encodeURIComponent(username) +
+                    '&firstName=' + encodeURIComponent(firstName) +
+                    '&lastName=' + encodeURIComponent(lastName) +
+                    '&email=' + encodeURIComponent(email) +
+                    '&department=' + encodeURIComponent(department);
+
+                if (password) {
+                    url += '&password=' + encodeURIComponent(password);
+                }
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update localStorage
+                    localStorage.setItem('fullName', firstName + ' ' + lastName);
+                    localStorage.setItem('firstName', firstName);
+                    localStorage.setItem('lastName', lastName);
+                    localStorage.setItem('email', email);
+                    localStorage.setItem('department', department);
+
+                    showAlert('Profile updated successfully!', 'success');
+                    document.getElementById('editPassword').value = '';
+                    document.getElementById('userDisplay').textContent = 'Welcome, ' + firstName + ' ' + lastName;
+
+                    // If admin, refresh user list
+                    if (currentUser.isAdmin) {
+                        loadAllUsers();
+                    }
+                } else {
+                    showAlert(result.message || 'Error updating profile.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Update error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        // ============================================================
+        // ADMIN: LOAD ALL USERS
+        // ============================================================
+
+        async function loadAllUsers() {
             const container = document.getElementById('usersContainer');
             container.innerHTML = '<p>Loading...</p>';
 
-            const username = localStorage.getItem('username');
+            const adminUsername = localStorage.getItem('username');
 
             try {
                 const response = await fetch(API_URL +
-                    '?action=getusers&adminUsername=' + encodeURIComponent(username));
+                    '?action=getusers&adminUsername=' + encodeURIComponent(adminUsername));
                 const results = await response.json();
 
                 if (!results.success && results.message) {
@@ -88,10 +233,12 @@
                 }
 
                 let html = '<table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;">';
-                html += '<tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Department</th><th>Created</th><th>Action</th></tr>';
+                html += '<tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Department</th><th>Created</th><th>Actions</th></tr>';
 
                 results.forEach(function(user) {
                     const date = user.created ? new Date(user.created).toLocaleDateString() : 'Unknown';
+                    const isCurrentUser = user.username === localStorage.getItem('username');
+
                     html += '<tr>';
                     html += '<td>' + user.username + '</td>';
                     html += '<td>' + user.email + '</td>';
@@ -100,10 +247,11 @@
                     html += '<td>' + user.department + '</td>';
                     html += '<td>' + date + '</td>';
                     html += '<td>';
-                    if (user.username !== 'admin') {
-                        html += '<button onclick="deleteUser(\'' + user.username + '\')">Delete</button>';
-                    } else {
+                    if (user.username === 'admin') {
                         html += '<span style="color:#888;">Protected</span>';
+                    } else {
+                        html += '<button onclick="adminEditUser(\'' + user.username + '\')">Edit</button>';
+                        html += ' <button onclick="adminDeleteUser(\'' + user.username + '\')" style="color:red;">Delete</button>';
                     }
                     html += '</td>';
                     html += '</tr>';
@@ -118,7 +266,62 @@
             }
         }
 
-        async function deleteUser(username) {
+        // ============================================================
+        // ADMIN: EDIT USER
+        // ============================================================
+
+        function adminEditUser(username) {
+            // Simple prompt-based edit for now
+            const newFirstName = prompt('Enter new first name for ' + username + ':');
+            if (newFirstName === null) return;
+            const newLastName = prompt('Enter new last name for ' + username + ':');
+            if (newLastName === null) return;
+            const newEmail = prompt('Enter new email for ' + username + ':');
+            if (newEmail === null) return;
+            const newDepartment = prompt('Enter new department for ' + username + ':');
+            if (newDepartment === null) return;
+
+            adminUpdateUser(username, newFirstName.trim(), newLastName.trim(), newEmail.trim(), newDepartment.trim());
+        }
+
+        async function adminUpdateUser(username, firstName, lastName, email, department) {
+            if (!firstName || !lastName || !email || !department) {
+                showAlert('All fields are required.', 'error');
+                return;
+            }
+
+            const adminUsername = localStorage.getItem('username');
+
+            try {
+                const response = await fetch(API_URL +
+                    '?action=adminupdateuser' +
+                    '&targetUsername=' + encodeURIComponent(username) +
+                    '&adminUsername=' + encodeURIComponent(adminUsername) +
+                    '&firstName=' + encodeURIComponent(firstName) +
+                    '&lastName=' + encodeURIComponent(lastName) +
+                    '&email=' + encodeURIComponent(email) +
+                    '&department=' + encodeURIComponent(department));
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('User updated successfully!', 'success');
+                    loadAllUsers();
+                } else {
+                    showAlert(result.message || 'Error updating user.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        // ============================================================
+        // ADMIN: DELETE USER
+        // ============================================================
+
+        async function adminDeleteUser(username) {
             if (!confirm('Delete user "' + username + '"? This cannot be undone.')) {
                 return;
             }
@@ -135,7 +338,7 @@
 
                 if (result.success) {
                     showAlert(result.message, 'success');
-                    loadUsers();
+                    loadAllUsers();
                 } else {
                     showAlert(result.message || 'Error deleting user.', 'error');
                 }
@@ -145,6 +348,10 @@
                 showAlert('Error connecting to server.', 'error');
             }
         }
+
+        // ============================================================
+        // ADMIN: DELETE ALL USERS
+        // ============================================================
 
         async function deleteAllUsers() {
             if (!confirm('Delete ALL non-admin users? This cannot be undone.')) {
@@ -165,7 +372,7 @@
 
                 if (result.success) {
                     showAlert(result.message, 'success');
-                    loadUsers();
+                    loadAllUsers();
                 } else {
                     showAlert(result.message || 'Error deleting users.', 'error');
                 }
@@ -176,9 +383,12 @@
             }
         }
 
+        // ============================================================
+        // INIT
+        // ============================================================
+
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
-            loadUsers();
         });
     </script>
 
