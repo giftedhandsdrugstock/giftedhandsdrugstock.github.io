@@ -62,8 +62,8 @@
                         <p class="text-muted">Search for a drug or click "Show All Drugs".</p>
                     </div>
 
-                    <!-- Pagination -->
-                    <div id="pagination" style="display:none;margin-top:15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <!-- Pagination - FIXED: removed duplicate display:flex -->
+                    <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
                         <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
                         <span id="pageInfo" class="text-muted"></span>
                         <button class="btn btn-small" onclick="nextPage()">Next ▶</button>
@@ -326,7 +326,7 @@
         }
 
         // ============================================================
-        // RENDER DRUG LIST - FIXED (pagination only when > 10 drugs)
+        // RENDER DRUG LIST
         // ============================================================
 
         function renderDrugList() {
