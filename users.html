@@ -14,7 +14,7 @@
             <h1>User Management</h1>
             <div class="header-right">
                 <span id="userDisplay"></span>
-                <span id="roleDisplay" class="role-badge"></span>
+                <span id="roleDisplay" class="text-muted"></span>
                 <a href="search.html">Search</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
@@ -68,16 +68,16 @@
                     <label>New Password (leave blank to keep current)</label>
                     <input type="password" id="editPassword" placeholder="Min 6 characters">
                 </div>
-                <button type="submit" class="btn btn-primary">Update Profile</button>
+                <button type="submit" class="btn">Update Profile</button>
             </form>
         </div>
 
         <!-- ADMIN SECTION -->
         <div id="adminSection" style="display:none;" class="section-box">
             <h2>Manage Users (Admin)</h2>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
-                <button class="btn btn-secondary" onclick="loadAllUsers()">Refresh Users</button>
-                <button class="btn btn-danger" onclick="deleteAllUsers()">Delete All Users</button>
+            <div class="flex flex-wrap gap-10 mb-10">
+                <button class="btn" onclick="loadAllUsers()">Refresh Users</button>
+                <button class="btn" onclick="deleteAllUsers()">Delete All Users</button>
             </div>
             <div id="usersContainer">
                 <p class="text-muted">Loading users...</p>
@@ -88,11 +88,7 @@
 
     <script src="script.js"></script>
     <script>
-        // ============================================================
-        // USERS.HTML SPECIFIC
-        // ============================================================
-
-        let currentUser = {};
+        var currentUser = {};
 
         function initUsers() {
             if (!checkAuth()) return;
@@ -102,14 +98,12 @@
             document.getElementById('userDisplay').textContent = 'Welcome, ' + currentUser.fullName;
             document.getElementById('roleDisplay').textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
 
-            // Load profile
             document.getElementById('editUsername').value = currentUser.username;
             document.getElementById('editFirstName').value = currentUser.firstName;
             document.getElementById('editLastName').value = currentUser.lastName;
             document.getElementById('editEmail').value = currentUser.email;
             document.getElementById('editDepartment').value = currentUser.department;
 
-            // Show admin section
             if (currentUser.isAdmin) {
                 document.getElementById('adminSection').style.display = 'block';
                 loadAllUsers();
@@ -119,12 +113,12 @@
         async function updateProfile(event) {
             event.preventDefault();
 
-            const firstName = document.getElementById('editFirstName').value.trim();
-            const lastName = document.getElementById('editLastName').value.trim();
-            const email = document.getElementById('editEmail').value.trim();
-            const department = document.getElementById('editDepartment').value.trim();
-            const password = document.getElementById('editPassword').value.trim();
-            const username = localStorage.getItem('username');
+            var firstName = document.getElementById('editFirstName').value.trim();
+            var lastName = document.getElementById('editLastName').value.trim();
+            var email = document.getElementById('editEmail').value.trim();
+            var department = document.getElementById('editDepartment').value.trim();
+            var password = document.getElementById('editPassword').value.trim();
+            var username = localStorage.getItem('username');
 
             if (!firstName || !lastName || !email || !department) {
                 showAlert('All fields except password are required.', 'error');
@@ -137,7 +131,7 @@
             }
 
             try {
-                let url = API_URL +
+                var url = API_URL +
                     '?action=updateprofile' +
                     '&username=' + encodeURIComponent(username) +
                     '&firstName=' + encodeURIComponent(firstName) +
@@ -149,8 +143,8 @@
                     url += '&password=' + encodeURIComponent(password);
                 }
 
-                const response = await fetch(url);
-                const result = await response.json();
+                var response = await fetch(url);
+                var result = await response.json();
 
                 if (result.success) {
                     localStorage.setItem('fullName', firstName + ' ' + lastName);
@@ -177,15 +171,15 @@
         }
 
         async function loadAllUsers() {
-            const container = document.getElementById('usersContainer');
+            var container = document.getElementById('usersContainer');
             container.innerHTML = '<p class="text-muted">Loading...</p>';
 
-            const adminUsername = localStorage.getItem('username');
+            var adminUsername = localStorage.getItem('username');
 
             try {
-                const response = await fetch(API_URL +
+                var response = await fetch(API_URL +
                     '?action=getusers&adminUsername=' + encodeURIComponent(adminUsername));
-                const results = await response.json();
+                var results = await response.json();
 
                 if (!results.success && results.message) {
                     container.innerHTML = '<p>' + results.message + '</p>';
@@ -197,10 +191,10 @@
                     return;
                 }
 
-                let html = '<table><tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Department</th><th>Created</th><th>Actions</th></tr>';
+                var html = '<table><tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Department</th><th>Created</th><th>Actions</th></tr>';
 
                 results.forEach(function(user) {
-                    const date = user.created ? new Date(user.created).toLocaleDateString() : 'Unknown';
+                    var date = user.created ? new Date(user.created).toLocaleDateString() : 'Unknown';
 
                     html += '<tr>';
                     html += '<td>' + user.username + '</td>';
@@ -213,8 +207,8 @@
                     if (user.username === 'admin') {
                         html += '<span class="text-muted">Protected</span>';
                     } else {
-                        html += '<button class="btn btn-secondary btn-small" onclick="adminEditUser(\'' + user.username + '\')">Edit</button>';
-                        html += ' <button class="btn btn-danger btn-small" onclick="adminDeleteUser(\'' + user.username + '\')">Delete</button>';
+                        html += '<button class="btn btn-small" onclick="adminEditUser(\'' + user.username + '\')">Edit</button>';
+                        html += ' <button class="btn btn-small" onclick="adminDeleteUser(\'' + user.username + '\')">Delete</button>';
                     }
                     html += '</td>';
                     html += '</tr>';
@@ -230,13 +224,13 @@
         }
 
         function adminEditUser(username) {
-            const newFirstName = prompt('Enter new first name for ' + username + ':');
+            var newFirstName = prompt('Enter new first name for ' + username + ':');
             if (newFirstName === null) return;
-            const newLastName = prompt('Enter new last name for ' + username + ':');
+            var newLastName = prompt('Enter new last name for ' + username + ':');
             if (newLastName === null) return;
-            const newEmail = prompt('Enter new email for ' + username + ':');
+            var newEmail = prompt('Enter new email for ' + username + ':');
             if (newEmail === null) return;
-            const newDepartment = prompt('Enter new department for ' + username + ':');
+            var newDepartment = prompt('Enter new department for ' + username + ':');
             if (newDepartment === null) return;
 
             adminUpdateUser(username, newFirstName.trim(), newLastName.trim(), newEmail.trim(), newDepartment.trim());
@@ -248,10 +242,10 @@
                 return;
             }
 
-            const adminUsername = localStorage.getItem('username');
+            var adminUsername = localStorage.getItem('username');
 
             try {
-                const response = await fetch(API_URL +
+                var response = await fetch(API_URL +
                     '?action=adminupdateuser' +
                     '&targetUsername=' + encodeURIComponent(username) +
                     '&adminUsername=' + encodeURIComponent(adminUsername) +
@@ -260,7 +254,7 @@
                     '&email=' + encodeURIComponent(email) +
                     '&department=' + encodeURIComponent(department));
 
-                const result = await response.json();
+                var result = await response.json();
 
                 if (result.success) {
                     showAlert('User updated successfully!', 'success');
@@ -280,15 +274,15 @@
                 return;
             }
 
-            const adminUsername = localStorage.getItem('username');
+            var adminUsername = localStorage.getItem('username');
 
             try {
-                const response = await fetch(API_URL +
+                var response = await fetch(API_URL +
                     '?action=deleteuser' +
                     '&username=' + encodeURIComponent(username) +
                     '&adminUsername=' + encodeURIComponent(adminUsername));
 
-                const result = await response.json();
+                var result = await response.json();
 
                 if (result.success) {
                     showAlert(result.message, 'success');
@@ -312,13 +306,13 @@
                 return;
             }
 
-            const adminUsername = localStorage.getItem('username');
+            var adminUsername = localStorage.getItem('username');
 
             try {
-                const response = await fetch(API_URL +
+                var response = await fetch(API_URL +
                     '?action=deleteallusers&adminUsername=' + encodeURIComponent(adminUsername));
 
-                const result = await response.json();
+                var result = await response.json();
 
                 if (result.success) {
                     showAlert(result.message, 'success');
@@ -333,7 +327,6 @@
             }
         }
 
-        // Enter key navigation
         document.addEventListener('DOMContentLoaded', function() {
             initUsers();
 
