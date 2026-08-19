@@ -8,6 +8,14 @@
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+            <div class="loading-spinner"></div>
+            <span class="loading-text" id="loadingText">Loading...</span>
+        </div>
+    </div>
+
     <div id="app">
 
         <div class="header">
@@ -16,6 +24,7 @@
                 <span id="userDisplay"></span>
                 <span id="roleDisplay" class="text-muted"></span>
                 <a href="search.html">Search</a>
+                <a href="orders.html">Orders</a>
                 <a href="profile.html">Profile</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
@@ -62,10 +71,6 @@
 
     <script src="script.js"></script>
     <script>
-        // ============================================================
-        // USERS.HTML SPECIFIC
-        // ============================================================
-
         var allUsers = [];
         var filteredUsers = [];
         var currentUser = {};
@@ -194,10 +199,6 @@
             section.style.display = 'block';
         }
 
-        // ============================================================
-        // SEARCH USERS
-        // ============================================================
-
         function searchUsers() {
             var query = document.getElementById('userSearch').value.toLowerCase().trim();
             var searchId = document.getElementById('searchId').checked;
@@ -275,10 +276,6 @@
             isShowingAll = false;
         }
 
-        // ============================================================
-        // SAVE FUNCTIONS
-        // ============================================================
-
         function saveUser(index) {
             var user = allUsers[index];
             if (!user || user.username === 'admin') return;
@@ -325,10 +322,6 @@
                 showAlert('Error connecting to server.', 'error');
             }
         }
-
-        // ============================================================
-        // SAVE ALL USERS
-        // ============================================================
 
         function saveAllUsers() {
             var visibleInputs = document.querySelectorAll('#usersContainer input');
@@ -429,10 +422,6 @@
                 }
             }
         }
-
-        // ============================================================
-        // DELETE FUNCTIONS
-        // ============================================================
 
         function deleteUser(username) {
             if (!confirm('Delete user "' + username + '"? This cannot be undone.')) {
