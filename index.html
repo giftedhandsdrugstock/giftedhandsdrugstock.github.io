@@ -8,6 +8,14 @@
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+            <div class="loading-spinner"></div>
+            <span class="loading-text" id="loadingText">Loading...</span>
+        </div>
+    </div>
+
     <div id="app">
         <div class="header">
             <h1>Drug Stock Management</h1>
@@ -20,8 +28,8 @@
             <h2>Login</h2>
             <form id="loginFormElement" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label>Username or Email</label>
-                    <input type="text" id="loginUsername" placeholder="Enter username or email" required>
+                    <label>User ID, Username or Email</label>
+                    <input type="text" id="loginUsername" placeholder="Enter User ID, Username or Email" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -131,22 +139,25 @@
 
         async function handleLogin(event) {
             event.preventDefault();
+            showLoading('Logging in...');
 
-            var username = document.getElementById('loginUsername').value.trim();
+            var loginId = document.getElementById('loginUsername').value.trim();
             var password = document.getElementById('loginPassword').value.trim();
 
-            if (!username || !password) {
-                showAlert('Please enter both username/email and password.', 'error');
+            if (!loginId || !password) {
+                hideLoading();
+                showAlert('Please enter your User ID, Username/Email and password.', 'error');
                 return;
             }
 
             try {
                 var response = await fetch(API_URL +
                     '?action=login' +
-                    '&username=' + encodeURIComponent(username) +
+                    '&username=' + encodeURIComponent(loginId) +
                     '&password=' + encodeURIComponent(password));
 
                 var result = await response.json();
+                hideLoading();
 
                 if (result.success) {
                     var user = result.user;
@@ -171,6 +182,7 @@
                 }
 
             } catch (error) {
+                hideLoading();
                 console.error('Login error:', error);
                 showAlert('Error connecting to server.', 'error');
             }
@@ -178,6 +190,7 @@
 
         async function handleRegister(event) {
             event.preventDefault();
+            showLoading('Creating account...');
 
             var firstName = document.getElementById('regFirstName').value.trim();
             var lastName = document.getElementById('regLastName').value.trim();
@@ -188,16 +201,19 @@
             var confirmPassword = document.getElementById('regConfirmPassword').value;
 
             if (!firstName || !lastName || !email || !username || !department || !password) {
+                hideLoading();
                 showAlert('Please fill in all fields.', 'error');
                 return;
             }
 
             if (password !== confirmPassword) {
+                hideLoading();
                 showAlert('Passwords do not match.', 'error');
                 return;
             }
 
             if (password.length < 6) {
+                hideLoading();
                 showAlert('Password must be at least 6 characters.', 'error');
                 return;
             }
@@ -213,17 +229,19 @@
                     '&password=' + encodeURIComponent(password));
 
                 var result = await response.json();
+                hideLoading();
 
                 if (result.success) {
-                    showAlert('Account created! Please login.', 'success');
+                    showAlert('Account created! Your User ID: ' + result.userId + '. Please login.', 'success');
                     showLogin();
-                    document.getElementById('loginUsername').value = username;
+                    document.getElementById('loginUsername').value = result.userId || username;
                     document.getElementById('loginPassword').focus();
                 } else {
                     showAlert(result.message || 'Registration failed.', 'error');
                 }
 
             } catch (error) {
+                hideLoading();
                 console.error('Register error:', error);
                 showAlert('Error connecting to server.', 'error');
             }
