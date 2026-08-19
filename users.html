@@ -35,18 +35,20 @@
                     <label><input type="checkbox" id="searchUsername" checked> Username</label>
                 </div>
                 <button class="btn" onclick="searchUsers()">Search</button>
-                <button class="btn" onclick="clearSearch()">Clear</button>
+                <button class="btn" onclick="clearSearchBar()">Clear</button>
+                <button class="btn" onclick="showAllUsers()">Show All Users</button>
             </div>
         </div>
 
-        <!-- USER LIST - Only appears after search -->
+        <!-- USER LIST - Only appears after search or show all -->
         <div id="userListSection" class="section-box" style="display:none;">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                <h2>Search Results</h2>
-                <div style="display:flex;gap:10px;">
+                <h2>Users</h2>
+                <div style="display:flex;gap:10px;align-items:center;">
                     <span id="resultCount" class="text-muted"></span>
                     <button class="btn" onclick="saveAllUsers()">Save All Changes</button>
                     <button class="btn" onclick="deleteAllUsers()" style="color:#c00;">Delete All Users</button>
+                    <button class="btn" onclick="closeUserList()" style="color:#c00;font-weight:bold;">✕ Close</button>
                 </div>
             </div>
             <div id="usersContainer">
@@ -65,6 +67,7 @@
         var allUsers = [];
         var filteredUsers = [];
         var currentUser = {};
+        var isShowingAll = false;
 
         function initUsers() {
             if (!checkAuth()) return;
@@ -80,7 +83,6 @@
                 return;
             }
 
-            // Load all users in background
             loadAllUsers();
         }
 
@@ -103,19 +105,19 @@
             }
         }
 
-        function renderUsers(users) {
+        function renderUsers(users, title) {
             var container = document.getElementById('usersContainer');
             var section = document.getElementById('userListSection');
             var count = document.getElementById('resultCount');
 
             if (users.length === 0) {
-                container.innerHTML = '<p class="text-muted">No users found matching your search.</p>';
-                count.textContent = '0 users found';
+                container.innerHTML = '<p class="text-muted">No users found.</p>';
+                count.textContent = '0 users';
                 section.style.display = 'block';
                 return;
             }
 
-            count.textContent = users.length + ' user(s) found';
+            count.textContent = users.length + ' user(s)';
 
             var html = '<table>';
             html += '<tr>';
@@ -127,7 +129,6 @@
             html += '<th>Actions</th>';
             html += '</tr>';
 
-            // Find the original index for each user to maintain edit references
             users.forEach(function(user) {
                 var originalIndex = allUsers.indexOf(allUsers.find(function(u) { return u.username === user.username; }));
                 var isAdmin = user.username === 'admin';
@@ -136,7 +137,6 @@
                 html += '<tr id="user-row-' + originalIndex + '">';
                 html += '<td><strong>' + user.username + '</strong></td>';
 
-                // First Name
                 html += '<td>';
                 if (isProtected) {
                     html += user.firstName;
@@ -145,7 +145,6 @@
                 }
                 html += '</td>';
 
-                // Last Name
                 html += '<td>';
                 if (isProtected) {
                     html += user.lastName;
@@ -154,7 +153,6 @@
                 }
                 html += '</td>';
 
-                // Email
                 html += '<td>';
                 if (isProtected) {
                     html += user.email;
@@ -163,7 +161,6 @@
                 }
                 html += '</td>';
 
-                // Department
                 html += '<td>';
                 if (isProtected) {
                     html += user.department;
@@ -172,7 +169,6 @@
                 }
                 html += '</td>';
 
-                // Actions
                 html += '<td>';
                 if (isProtected) {
                     html += '<span class="text-muted">Protected</span>';
@@ -206,19 +202,16 @@
             var searchDept = document.getElementById('searchDept').checked;
             var searchUsername = document.getElementById('searchUsername').checked;
 
-            // If no query, show nothing
             if (!query) {
-                document.getElementById('userListSection').style.display = 'none';
+                showAlert('Please enter a search term.', 'error');
                 return;
             }
 
-            // If no search criteria selected, show nothing
             if (!searchName && !searchEmail && !searchDept && !searchUsername) {
                 showAlert('Please select at least one search field.', 'error');
                 return;
             }
 
-            // If allUsers is empty, reload
             if (allUsers.length === 0) {
                 loadAllUsers().then(function() {
                     performSearch(query, searchName, searchEmail, searchDept, searchUsername);
@@ -230,6 +223,8 @@
         }
 
         function performSearch(query, searchName, searchEmail, searchDept, searchUsername) {
+            isShowingAll = false;
+
             var filtered = allUsers.filter(function(user) {
                 var match = false;
                 if (searchName && (user.firstName.toLowerCase().indexOf(query) !== -1 || user.lastName.toLowerCase().indexOf(query) !== -1)) match = true;
@@ -243,11 +238,44 @@
             renderUsers(filtered);
         }
 
-        function clearSearch() {
+        // ============================================================
+        // CLEAR SEARCH BAR (results stay visible)
+        // ============================================================
+
+        function clearSearchBar() {
             document.getElementById('userSearch').value = '';
+            document.getElementById('userSearch').focus();
+        }
+
+        // ============================================================
+        // SHOW ALL USERS
+        // ============================================================
+
+        function showAllUsers() {
+            if (allUsers.length === 0) {
+                loadAllUsers().then(function() {
+                    isShowingAll = true;
+                    filteredUsers = allUsers;
+                    renderUsers(allUsers);
+                });
+                return;
+            }
+
+            isShowingAll = true;
+            filteredUsers = allUsers;
+            renderUsers(allUsers);
+        }
+
+        // ============================================================
+        // CLOSE USER LIST
+        // ============================================================
+
+        function closeUserList() {
             document.getElementById('userListSection').style.display = 'none';
             document.getElementById('usersContainer').innerHTML = '<p class="text-muted">No users found.</p>';
             document.getElementById('resultCount').textContent = '';
+            document.getElementById('userSearch').value = '';
+            isShowingAll = false;
         }
 
         // ============================================================
@@ -286,15 +314,8 @@
 
                 if (result.success) {
                     showAlert('User ' + username + ' updated successfully!', 'success');
-                    // Reload users in background
                     await loadAllUsers();
-                    // Re-apply search
-                    var query = document.getElementById('userSearch').value.trim();
-                    if (query) {
-                        searchUsers();
-                    } else {
-                        document.getElementById('userListSection').style.display = 'none';
-                    }
+                    refreshDisplay();
                 } else {
                     showAlert(result.message || 'Error updating user.', 'error');
                 }
@@ -319,8 +340,9 @@
             if (!confirm('Save all changes for all displayed users?')) return;
 
             var usersToUpdate = [];
+            var displayUsers = isShowingAll ? allUsers : filteredUsers;
 
-            filteredUsers.forEach(function(user) {
+            displayUsers.forEach(function(user) {
                 if (user.username === 'admin') return;
 
                 var index = allUsers.indexOf(allUsers.find(function(u) { return u.username === user.username; }));
@@ -373,12 +395,7 @@
                             showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
                         }
                         loadAllUsers().then(function() {
-                            var query = document.getElementById('userSearch').value.trim();
-                            if (query) {
-                                searchUsers();
-                            } else {
-                                document.getElementById('userListSection').style.display = 'none';
-                            }
+                            refreshDisplay();
                         });
                     }
                 })
@@ -388,16 +405,28 @@
                     if (completed === usersToUpdate.length) {
                         showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
                         loadAllUsers().then(function() {
-                            var query = document.getElementById('userSearch').value.trim();
-                            if (query) {
-                                searchUsers();
-                            } else {
-                                document.getElementById('userListSection').style.display = 'none';
-                            }
+                            refreshDisplay();
                         });
                     }
                 });
             });
+        }
+
+        // ============================================================
+        // REFRESH DISPLAY
+        // ============================================================
+
+        function refreshDisplay() {
+            if (isShowingAll) {
+                renderUsers(allUsers);
+            } else {
+                var query = document.getElementById('userSearch').value.trim();
+                if (query) {
+                    searchUsers();
+                } else {
+                    document.getElementById('userListSection').style.display = 'none';
+                }
+            }
         }
 
         // ============================================================
@@ -418,12 +447,7 @@
                 if (result.success) {
                     showAlert(result.message, 'success');
                     loadAllUsers().then(function() {
-                        var query = document.getElementById('userSearch').value.trim();
-                        if (query) {
-                            searchUsers();
-                        } else {
-                            document.getElementById('userListSection').style.display = 'none';
-                        }
+                        refreshDisplay();
                     });
                 } else {
                     showAlert(result.message || 'Error deleting user.', 'error');
@@ -455,12 +479,7 @@
                 if (result.success) {
                     showAlert(result.message, 'success');
                     loadAllUsers().then(function() {
-                        var query = document.getElementById('userSearch').value.trim();
-                        if (query) {
-                            searchUsers();
-                        } else {
-                            document.getElementById('userListSection').style.display = 'none';
-                        }
+                        refreshDisplay();
                     });
                 } else {
                     showAlert(result.message || 'Error deleting users.', 'error');
