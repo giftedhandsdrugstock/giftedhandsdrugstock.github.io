@@ -14,8 +14,8 @@
             <h1>Drug Stock Search</h1>
             <div class="header-right">
                 <span id="userDisplay"></span>
-                <span id="roleDisplay" class="role-badge"></span>
-                <span id="deptDisplay" class="dept-badge"></span>
+                <span id="roleDisplay" class="text-muted"></span>
+                <span id="deptDisplay" class="text-muted"></span>
                 <a href="users.html" id="usersLink" style="display:none;">Users</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
@@ -33,17 +33,13 @@
 
     <script src="script.js"></script>
     <script>
-        // ============================================================
-        // SEARCH.HTML SPECIFIC
-        // ============================================================
-
         function initSearch() {
             if (!checkAuth()) return;
 
-            const user = getCurrentUser();
+            var user = getCurrentUser();
             document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
             document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
-            document.getElementById('deptDisplay').textContent = '🏢 ' + user.department;
+            document.getElementById('deptDisplay').textContent = 'Department: ' + user.department;
 
             if (user.isAdmin) {
                 document.getElementById('usersLink').style.display = 'inline';
@@ -51,28 +47,28 @@
         }
 
         async function searchDrugs() {
-            const query = document.getElementById('searchBox').value.trim();
+            var query = document.getElementById('searchBox').value.trim();
 
             if (!query) {
                 document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter.</p>';
                 return;
             }
 
-            const resultsDiv = document.getElementById('results');
+            var resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '<p>Searching...</p>';
 
             try {
-                const response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
-                const results = await response.json();
+                var response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
+                var results = await response.json();
 
                 if (results.length === 0) {
                     resultsDiv.innerHTML = '<p>No matching drugs found.</p>';
                     return;
                 }
 
-                let html = '<table><tr><th>Drug Name</th><th>Form</th><th>Balance</th></tr>';
+                var html = '<table><tr><th>Drug Name</th><th>Form</th><th>Balance</th></tr>';
                 results.forEach(function(record) {
-                    const balance = parseFloat(record[2]) || 0;
+                    var balance = parseFloat(record[2]) || 0;
                     html += '<tr>';
                     html += '<td>' + record[0] + '</td>';
                     html += '<td>' + record[1] + '</td>';
