@@ -46,9 +46,7 @@
             </div>
         </div>
 
-        <!-- ============================================================
-        MAIN CONTENT - 2/3 LEFT | 1/3 RIGHT (hidden by default)
-        ============================================================ -->
+        <!-- MAIN CONTENT - 2/3 LEFT | 1/3 RIGHT (hidden by default) -->
         <div class="orders-main" style="display:flex;gap:20px;">
 
             <!-- LEFT PANEL - 2/3 -->
@@ -74,9 +72,7 @@
 
             </div>
 
-            <!-- ============================================================
-            RIGHT PANEL - 1/3 (hidden by default)
-            ============================================================ -->
+            <!-- RIGHT PANEL - 1/3 (hidden by default) -->
             <div class="right-panel" style="flex:1;min-width:0;display:none;" id="orderPanel">
 
                 <div class="section-box">
@@ -166,7 +162,6 @@
             var btn = document.getElementById('newOrderBtn');
 
             if (isNewOrderOpen) {
-                // Close - check if there are items
                 if (orderItems.length > 0) {
                     if (!confirm('You have items in your order. Cancel order?')) {
                         return;
@@ -180,12 +175,9 @@
                 document.getElementById('orderNotes').value = '';
                 renderOrderList();
                 if (isDrugListVisible) renderDrugList();
-
-                // Clear search area
                 clearSearchArea();
 
             } else {
-                // Open
                 panel.style.display = 'block';
                 btn.textContent = '✕ Cancel Order';
                 isNewOrderOpen = true;
@@ -201,10 +193,8 @@
         // ============================================================
 
         function clearSearchArea() {
-            // Clear search input
             document.getElementById('drugSearch').value = '';
 
-            // Hide drug list
             var container = document.getElementById('drugListContainer');
             var btn = document.getElementById('toggleDrugsBtn');
 
@@ -213,8 +203,6 @@
             document.getElementById('pagination').style.display = 'none';
             btn.textContent = 'Show All Drugs';
             isDrugListVisible = false;
-
-            // Reset pagination
             currentPage = 1;
         }
 
@@ -338,7 +326,7 @@
         }
 
         // ============================================================
-        // RENDER DRUG LIST
+        // RENDER DRUG LIST - FIXED (pagination only when > 10 drugs)
         // ============================================================
 
         function renderDrugList() {
@@ -360,8 +348,14 @@
             var pageDrugs = filteredDrugs.slice(start, end);
 
             count.textContent = filteredDrugs.length + ' drugs';
-            pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
-            pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+
+            // Only show pagination if there are more than 10 drugs
+            if (filteredDrugs.length > pageSize) {
+                pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
+                pagination.style.display = 'flex';
+            } else {
+                pagination.style.display = 'none';
+            }
 
             var html = '<table>';
             html += '<tr><th>Drug Name</th><th>Form</th><th>Balance</th><th>Order Qty</th><th>Action</th></tr>';
@@ -540,8 +534,6 @@
             renderOrderList();
             if (isDrugListVisible) renderDrugList();
             showAlert('Order cleared.', 'info');
-
-            // Clear search area
             clearSearchArea();
         }
 
@@ -597,11 +589,8 @@
                     document.getElementById('orderNotes').value = '';
                     renderOrderList();
                     if (isDrugListVisible) renderDrugList();
-
-                    // Clear search area
                     clearSearchArea();
 
-                    // Generate new Order ID for next order
                     currentOrderId = generateOrderId();
                     document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
                 } else {
