@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="app">
+
+        <div class="header">
+            <h1>My Profile</h1>
+            <div class="header-right">
+                <span id="userDisplay"></span>
+                <span id="roleDisplay" class="text-muted"></span>
+                <a href="search.html">Search</a>
+                <a href="users.html" id="usersLink" style="display:none;">Users</a>
+                <a href="loginhistory.html" id="historyLink" style="display:none;">Login History</a>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <!-- PROFILE INFO -->
+        <div class="section-box">
+            <h2>Profile Information</h2>
+            <form id="profileForm" onsubmit="updateProfile(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>User ID</label>
+                        <input type="text" id="profileUserId" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="profileUsername" disabled>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="profileFirstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="profileLastName" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="profileEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input type="text" id="profileDepartment" list="profileDeptList" required>
+                        <datalist id="profileDeptList">
+                            <option value="Pharmacy">
+                            <option value="Ward A">
+                            <option value="Ward B">
+                            <option value="Ward C">
+                            <option value="Outpatient">
+                            <option value="Emergency">
+                            <option value="Surgical">
+                            <option value="Maternity">
+                            <option value="Paediatric">
+                            <option value="Private">
+                            <option value="Administration">
+                            <option value="Other">
+                        </datalist>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Account Created</label>
+                    <input type="text" id="profileCreated" disabled>
+                </div>
+                <button type="submit" class="btn">Update Profile</button>
+            </form>
+        </div>
+
+        <!-- CHANGE PASSWORD -->
+        <div class="section-box">
+            <h2>Change Password</h2>
+            <form id="passwordForm" onsubmit="changePassword(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="newPassword" placeholder="Min 6 characters" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="confirmNewPassword" placeholder="Confirm password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn">Change Password</button>
+            </form>
+        </div>
+
+        <!-- SESSION INFO -->
+        <div class="section-box">
+            <h2>Session Information</h2>
+            <div style="display:flex;flex-wrap:wrap;gap:20px;">
+                <div>
+                    <strong>Logged in as:</strong>
+                    <span id="sessionUser"></span>
+                </div>
+                <div>
+                    <strong>Department:</strong>
+                    <span id="sessionDept"></span>
+                </div>
+                <div>
+                    <strong>User ID:</strong>
+                    <span id="sessionUserId" style="font-family:monospace;font-size:13px;"></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // ============================================================
+        // PROFILE.HTML SPECIFIC
+        // ============================================================
+
+        function initProfile() {
+            if (!checkAuth()) return;
+
+            var user = getCurrentUser();
+
+            // Update header
+            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
+            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
+
+            // Show admin links
+            if (user.isAdmin) {
+                document.getElementById('usersLink').style.display = 'inline';
+                document.getElementById('historyLink').style.display = 'inline';
+            }
+
+            // Load profile data
+            document.getElementById('profileUserId').value = user.userId || 'N/A';
+            document.getElementById('profileUsername').value = user.username;
+            document.getElementById('profileFirstName').value = user.firstName;
+            document.getElementById('profileLastName').value = user.lastName;
+            document.getElementById('profileEmail').value = user.email;
+            document.getElementById('profileDepartment').value = user.department;
+            document.getElementById('profileCreated').value = user.created || 'Unknown';
+
+            // Session info
+            document.getElementById('sessionUser').textContent = user.fullName;
+            document.getElementById('sessionDept').textContent = user.department;
+            document.getElementById('sessionUserId').textContent = user.userId || 'N/A';
+        }
+
+        // ============================================================
+        // UPDATE PROFILE
+        // ============================================================
+
+        async function updateProfile(event) {
+            event.preventDefault();
+
+            var firstName = document.getElementById('profileFirstName').value.trim();
+            var lastName = document.getElementById('profileLastName').value.trim();
+            var email = document.getElementById('profileEmail').value.trim();
+            var department = document.getElementById('profileDepartment').value.trim();
+            var username = localStorage.getItem('username');
+
+            if (!firstName || !lastName || !email || !department) {
+                showAlert('All fields are required.', 'error');
+                return;
+            }
+
+            try {
+                var url = API_URL +
+                    '?action=updateprofile' +
+                    '&username=' + encodeURIComponent(username) +
+                    '&firstName=' + encodeURIComponent(firstName) +
+                    '&lastName=' + encodeURIComponent(lastName) +
+                    '&email=' + encodeURIComponent(email) +
+                    '&department=' + encodeURIComponent(department);
+
+                var response = await fetch(url);
+                var result = await response.json();
+
+                if (result.success) {
+                    // Update localStorage
+                    localStorage.setItem('fullName', firstName + ' ' + lastName);
+                    localStorage.setItem('firstName', firstName);
+                    localStorage.setItem('lastName', lastName);
+                    localStorage.setItem('email', email);
+                    localStorage.setItem('department', department);
+
+                    showAlert('Profile updated successfully!', 'success');
+
+                    // Update display
+                    var fullName = firstName + ' ' + lastName;
+                    document.getElementById('userDisplay').textContent = 'Welcome, ' + fullName;
+                    document.getElementById('sessionUser').textContent = fullName;
+                    document.getElementById('sessionDept').textContent = department;
+
+                } else {
+                    showAlert(result.message || 'Error updating profile.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Update error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        // ============================================================
+        // CHANGE PASSWORD
+        // ============================================================
+
+        async function changePassword(event) {
+            event.preventDefault();
+
+            var newPassword = document.getElementById('newPassword').value;
+            var confirmPassword = document.getElementById('confirmNewPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showAlert('Passwords do not match.', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showAlert('Password must be at least 6 characters.', 'error');
+                return;
+            }
+
+            var username = localStorage.getItem('username');
+
+            try {
+                var response = await fetch(API_URL +
+                    '?action=updateprofile' +
+                    '&username=' + encodeURIComponent(username) +
+                    '&password=' + encodeURIComponent(newPassword));
+
+                var result = await response.json();
+
+                if (result.success) {
+                    showAlert('Password changed successfully!', 'success');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    showAlert(result.message || 'Error changing password.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Password error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        // ============================================================
+        // ENTER KEY NAVIGATION
+        // ============================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initProfile();
+
+            // Profile form
+            setupEnterNavigation(
+                document.getElementById('profileForm'),
+                ['profileFirstName', 'profileLastName', 'profileEmail', 'profileDepartment']
+            );
+
+            // Password form
+            setupEnterNavigation(
+                document.getElementById('passwordForm'),
+                ['newPassword', 'confirmNewPassword']
+            );
+        });
+    </script>
+
+</body>
+</html>
