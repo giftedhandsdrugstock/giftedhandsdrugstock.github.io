@@ -7,7 +7,6 @@
 // ============================================================
 
 var API_URL = "https://script.google.com/macros/s/AKfycbwlcUEZ9hWV1TPF2Fv5a1k8pJUqZ8cZ2R5QI4lAhogADGHVzsOsgvv3TEmQkSHFJkx1/exec";
-
 // ============================================================
 // AUTH
 // ============================================================
