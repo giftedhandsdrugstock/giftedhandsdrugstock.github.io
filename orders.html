@@ -32,9 +32,7 @@
 
         <div id="alert" class="alert"></div>
 
-        <!-- ============================================================
-        SEARCH SECTION
-        ============================================================ -->
+        <!-- SEARCH SECTION -->
         <div class="section-box">
             <div class="flex flex-wrap gap-10" style="align-items:center;">
                 <div style="flex:1;min-width:200px;">
@@ -46,14 +44,10 @@
             </div>
         </div>
 
-        <!-- ============================================================
-        MAIN CONTENT - 2/3 LEFT | 1/3 RIGHT
-        ============================================================ -->
+        <!-- MAIN CONTENT - 2/3 LEFT | 1/3 RIGHT -->
         <div class="orders-main" style="display:flex;gap:20px;">
 
-            <!-- ============================================================
-            LEFT PANEL - 2/3 - Drug List
-            ============================================================ -->
+            <!-- LEFT PANEL - 2/3 -->
             <div class="left-panel" style="flex:2;min-width:0;">
 
                 <div class="section-box">
@@ -76,9 +70,7 @@
 
             </div>
 
-            <!-- ============================================================
-            RIGHT PANEL - 1/3 - Order List
-            ============================================================ -->
+            <!-- RIGHT PANEL - 1/3 -->
             <div class="right-panel" style="flex:1;min-width:0;">
 
                 <div class="section-box">
@@ -99,9 +91,7 @@
 
         </div>
 
-        <!-- ============================================================
-        MY ORDERS SECTION (Admin can see all)
-        ============================================================ -->
+        <!-- MY ORDERS -->
         <div class="section-box" style="margin-top:20px;">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
                 <h2>My Orders</h2>
@@ -116,10 +106,6 @@
 
     <script src="script.js"></script>
     <script>
-        // ============================================================
-        // ORDERS.HTML SPECIFIC
-        // ============================================================
-
         var allDrugs = [];
         var filteredDrugs = [];
         var currentPage = 1;
@@ -127,10 +113,6 @@
         var orderItems = [];
         var currentUser = {};
         var orderHistory = [];
-
-        // ============================================================
-        // INIT
-        // ============================================================
 
         function initOrders() {
             if (!checkAuth()) return;
@@ -142,10 +124,6 @@
 
             if (currentUser.isAdmin) {
                 document.getElementById('usersLink').style.display = 'inline';
-            }
-
-            // Check if user is admin - admin cannot order
-            if (currentUser.isAdmin) {
                 showAlert('Admin cannot place orders. Only approver rights.', 'info');
                 document.querySelector('.left-panel').style.display = 'none';
                 document.querySelector('.right-panel').style.display = 'none';
@@ -155,10 +133,6 @@
             loadDrugs();
             loadOrderHistory();
         }
-
-        // ============================================================
-        // LOAD DRUGS
-        // ============================================================
 
         async function loadDrugs() {
             showLoading('Loading drugs...');
@@ -185,10 +159,6 @@
                 showAlert('Error loading drugs.', 'error');
             }
         }
-
-        // ============================================================
-        // SEARCH DRUGS
-        // ============================================================
 
         function searchDrugs() {
             var query = document.getElementById('drugSearch').value.toLowerCase().trim();
@@ -221,10 +191,6 @@
             currentPage = 1;
             renderDrugList();
         }
-
-        // ============================================================
-        // RENDER DRUG LIST
-        // ============================================================
 
         function renderDrugList() {
             var container = document.getElementById('drugListContainer');
@@ -278,10 +244,6 @@
             container.innerHTML = html;
         }
 
-        // ============================================================
-        // PAGINATION
-        // ============================================================
-
         function prevPage() {
             if (currentPage > 1) {
                 currentPage--;
@@ -296,10 +258,6 @@
                 renderDrugList();
             }
         }
-
-        // ============================================================
-        // ADD TO ORDER
-        // ============================================================
 
         function addToOrder(drugName, maxStock) {
             var key = 'qty-' + drugName.replace(/[^a-zA-Z0-9]/g, '_');
@@ -332,10 +290,6 @@
             showAlert('Added ' + drugName + ' to your order.', 'success');
         }
 
-        // ============================================================
-        // RENDER ORDER LIST
-        // ============================================================
-
         function renderOrderList() {
             var container = document.getElementById('orderListContainer');
             var count = document.getElementById('orderCount');
@@ -366,10 +320,6 @@
             container.innerHTML = html;
         }
 
-        // ============================================================
-        // UPDATE ORDER QUANTITY
-        // ============================================================
-
         function updateOrderQty(index, newValue) {
             var qty = parseInt(newValue) || 1;
 
@@ -388,10 +338,6 @@
             renderOrderList();
         }
 
-        // ============================================================
-        // REMOVE FROM ORDER
-        // ============================================================
-
         function removeFromOrder(index) {
             var removed = orderItems[index].name;
             orderItems.splice(index, 1);
@@ -399,10 +345,6 @@
             renderDrugList();
             showAlert('Removed ' + removed + ' from your order.', 'info');
         }
-
-        // ============================================================
-        // CLEAR ORDER
-        // ============================================================
 
         function clearOrder() {
             if (orderItems.length === 0) {
@@ -417,10 +359,6 @@
             renderDrugList();
             showAlert('Order cleared.', 'info');
         }
-
-        // ============================================================
-        // SUBMIT ORDER
-        // ============================================================
 
         function submitOrder() {
             if (orderItems.length === 0) {
@@ -475,10 +413,6 @@
             });
         }
 
-        // ============================================================
-        // LOAD ORDER HISTORY
-        // ============================================================
-
         async function loadOrderHistory() {
             var container = document.getElementById('orderHistoryContainer');
             var count = document.getElementById('orderHistoryCount');
@@ -530,10 +464,6 @@
                 container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
             }
         }
-
-        // ============================================================
-        // INIT
-        // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
             initOrders();
