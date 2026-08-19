@@ -1,0 +1,104 @@
+// ============================================================
+// SCRIPT.JS - Shared Functions
+// ============================================================
+
+// ============================================================
+// API URL - UPDATE THIS
+// ============================================================
+
+const API_URL = "https://script.google.com/macros/s/AKfycbwlcUEZ9hWV1TPF2Fv5a1k8pJUqZ8cZ2R5QI4lAhogADGHVzsOsgvv3TEmQkSHFJkx1/exec";
+
+// ============================================================
+// AUTH
+// ============================================================
+
+function checkAuth() {
+    if (localStorage.getItem('loggedIn') !== 'true') {
+        window.location.href = 'index.html';
+        return false;
+    }
+    return true;
+}
+
+function getCurrentUser() {
+    return {
+        username: localStorage.getItem('username'),
+        fullName: localStorage.getItem('fullName') || localStorage.getItem('username') || 'User',
+        firstName: localStorage.getItem('firstName') || '',
+        lastName: localStorage.getItem('lastName') || '',
+        email: localStorage.getItem('email') || '',
+        department: localStorage.getItem('department') || '',
+        isAdmin: localStorage.getItem('username') === 'admin'
+    };
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+}
+
+// ============================================================
+// ALERT
+// ============================================================
+
+function showAlert(message, type) {
+    var alert = document.getElementById('alert');
+    if (!alert) return;
+
+    alert.textContent = message;
+    alert.className = 'alert alert-' + type + ' show';
+
+    clearTimeout(alert._timeout);
+    alert._timeout = setTimeout(function() {
+        alert.classList.remove('show');
+    }, 5000);
+}
+
+// ============================================================
+// ENTER KEY NAVIGATION
+// ============================================================
+
+function setupEnterNavigation(formElement, fieldIds) {
+    if (!formElement) return;
+
+    for (var i = 0; i < fieldIds.length; i++) {
+        var field = document.getElementById(fieldIds[i]);
+        if (!field) continue;
+
+        field.addEventListener('keydown', function(e, index) {
+            return function() {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+
+                    if (index === fieldIds.length - 1) {
+                        formElement.dispatchEvent(new Event('submit'));
+                        return;
+                    }
+
+                    var nextField = document.getElementById(fieldIds[index + 1]);
+                    if (nextField) {
+                        nextField.focus();
+                    }
+                }
+            };
+        }(i));
+    }
+}
+
+// ============================================================
+// SEARCH ENTER KEY
+// ============================================================
+
+function setupSearchEnter(searchBoxId, searchFunction) {
+    var searchBox = document.getElementById(searchBoxId);
+    if (!searchBox) return;
+
+    searchBox.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (typeof searchFunction === 'function') {
+                searchFunction();
+            }
+        }
+    });
+}
