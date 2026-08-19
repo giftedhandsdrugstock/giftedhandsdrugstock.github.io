@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Orders</title>
+    <title>Internal Orders</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,12 +19,12 @@
     <div id="app">
 
         <div class="header">
-            <h1>My Orders</h1>
+            <h1>Internal Orders</h1>
             <div class="header-right">
                 <span id="userDisplay"></span>
                 <span id="roleDisplay" class="text-muted"></span>
                 <a href="search.html">Search</a>
-                <a href="orders.html">New Order</a>
+                <a href="myorders.html">My Orders</a>
                 <a href="profile.html">Profile</a>
                 <a href="users.html" id="usersLink" style="display:none;">Users</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
@@ -33,54 +33,73 @@
 
         <div id="alert" class="alert"></div>
 
-        <!-- ============================================================
-        SEARCH SECTION
-        ============================================================ -->
+        <!-- SEARCH SECTION -->
         <div class="section-box">
             <div class="flex flex-wrap gap-10" style="align-items:center;">
-                <div style="flex:1;min-width:150px;">
-                    <input type="text" id="orderSearch" placeholder="Search by Order ID..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
+                <div style="flex:1;min-width:200px;">
+                    <input type="text" id="drugSearch" placeholder="Search by drug name or form..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
                 </div>
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                    <label>From:</label>
-                    <input type="date" id="dateFrom" style="padding:6px 8px;border:1px solid #ccc;">
-                    <label>To:</label>
-                    <input type="date" id="dateTo" style="padding:6px 8px;border:1px solid #ccc;">
-                </div>
-                <button class="btn" onclick="searchOrders()">Search</button>
+                <button class="btn" onclick="searchDrugs()">Search</button>
                 <button class="btn" onclick="clearSearch()">Clear</button>
-                <button class="btn" id="toggleViewBtn" onclick="toggleView()">📅 Show All Orders</button>
-            </div>
-            <div style="margin-top:10px;font-size:13px;color:#888;">
-                <span id="viewLabel">Showing: Today's Orders</span>
-                <span style="margin-left:15px;" id="resultCount">0 orders found</span>
+                <button class="btn" id="toggleDrugsBtn" onclick="toggleDrugList()">Show All Drugs</button>
+                <button class="btn" id="newOrderBtn" onclick="toggleNewOrder()">➕ New Order</button>
             </div>
         </div>
 
-        <!-- ============================================================
-        MAIN CONTENT - HALF AND HALF
-        ============================================================ -->
+        <!-- MAIN CONTENT -->
         <div class="orders-main" style="display:flex;gap:20px;">
 
-            <!-- LEFT PANEL - Order List -->
-            <div class="left-panel" style="flex:1;min-width:0;">
+            <!-- LEFT PANEL - 2/3 (hidden by default) -->
+            <div class="left-panel" style="flex:2;min-width:0;display:none;" id="drugListPanel">
 
                 <div class="section-box">
-                    <h2>Order List</h2>
-                    <div id="orderListContainer">
-                        <p class="text-muted">No orders found.</p>
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                        <h2>Drug List</h2>
+                        <div>
+                            <span id="drugCount" class="text-muted"></span>
+                            <button id="closeDrugListBtn" onclick="closeDrugList()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Drug List">✕</button>
+                        </div>
+                    </div>
+
+                    <div id="drugListContainer">
+                        <p class="text-muted">No drugs found.</p>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
+                        <span id="pageInfo" class="text-muted"></span>
+                        <button class="btn btn-small" onclick="nextPage()">Next ▶</button>
                     </div>
                 </div>
 
             </div>
 
-            <!-- RIGHT PANEL - Order Details -->
-            <div class="right-panel" style="flex:1;min-width:0;">
+            <!-- RIGHT PANEL - 1/3 (hidden by default) -->
+            <div class="right-panel" style="flex:1;min-width:0;display:none;" id="orderPanel">
 
                 <div class="section-box">
-                    <h2>Order Details</h2>
-                    <div id="orderDetailsContainer">
-                        <p class="text-muted">Select an order to view details.</p>
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                        <h2>New Order</h2>
+                        <div>
+                            <span id="orderIdDisplay" class="text-muted" style="font-size:13px;"></span>
+                            <button onclick="toggleNewOrder()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Order Panel">✕</button>
+                        </div>
+                    </div>
+
+                    <div id="orderListContainer" style="margin-top:10px;">
+                        <p class="text-muted">No items added yet. Search and add drugs.</p>
+                    </div>
+
+                    <!-- NOTES SECTION -->
+                    <div style="margin-top:15px;border-top:1px solid #eee;padding-top:12px;">
+                        <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Order Notes</label>
+                        <textarea id="orderNotes" placeholder="Add notes for the admin (e.g., urgency, reason, special instructions)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;"></textarea>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                        <button class="btn" onclick="submitOrder()">📤 Submit Order</button>
+                        <button class="btn" onclick="clearOrder()" style="color:#c00;">🗑️ Cancel Order</button>
                     </div>
                 </div>
 
@@ -93,165 +112,240 @@
     <script src="script.js"></script>
     <script>
         // ============================================================
-        // MYORDERS.HTML SPECIFIC
+        // ORDERS.HTML SPECIFIC
         // ============================================================
 
-        var allOrders = [];
-        var filteredOrders = [];
-        var selectedOrderId = null;
-        var showAllOrders = false;
+        var allDrugs = [];
+        var filteredDrugs = [];
+        var currentPage = 1;
+        var pageSize = 10;
+        var orderItems = [];
+        var currentUser = {};
+        var isDrugListVisible = false;
+        var isNewOrderOpen = false;
+        var currentOrderId = '';
+
+        // ============================================================
+        // GENERATE ORDER ID
+        // ============================================================
+
+        function generateOrderId() {
+            var timestamp = Date.now().toString(36).toUpperCase();
+            var random = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return 'ORD-' + timestamp + '-' + random;
+        }
 
         // ============================================================
         // INIT
         // ============================================================
 
-        function initMyOrders() {
+        function initOrders() {
             if (!checkAuth()) return;
 
-            var user = getCurrentUser();
+            currentUser = getCurrentUser();
 
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
-            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
+            document.getElementById('userDisplay').textContent = 'Welcome, ' + currentUser.fullName;
+            document.getElementById('roleDisplay').textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
 
-            if (user.isAdmin) {
+            if (currentUser.isAdmin) {
                 document.getElementById('usersLink').style.display = 'inline';
+                showAlert('Admin cannot place orders. Only approver rights.', 'info');
+                document.querySelector('.left-panel').style.display = 'none';
+                document.querySelector('.section-box:first-of-type').style.display = 'none';
+                document.getElementById('newOrderBtn').style.display = 'none';
+                return;
             }
 
-            loadAllOrders();
+            loadDrugsSilent();
         }
 
         // ============================================================
-        // LOAD ALL ORDERS
+        // TOGGLE NEW ORDER
         // ============================================================
 
-        async function loadAllOrders() {
-            var container = document.getElementById('orderListContainer');
-            container.innerHTML = '<p class="text-muted">Loading orders...</p>';
+        function toggleNewOrder() {
+            var panel = document.getElementById('orderPanel');
+            var btn = document.getElementById('newOrderBtn');
 
-            var user = getCurrentUser();
+            if (isNewOrderOpen) {
+                if (orderItems.length > 0) {
+                    if (!confirm('You have items in your order. Cancel order?')) {
+                        return;
+                    }
+                    orderItems = [];
+                }
+                panel.style.display = 'none';
+                btn.textContent = '➕ New Order';
+                isNewOrderOpen = false;
+                document.getElementById('orderIdDisplay').textContent = '';
+                document.getElementById('orderNotes').value = '';
+                renderOrderList();
+            } else {
+                panel.style.display = 'block';
+                btn.textContent = '✕ Cancel Order';
+                isNewOrderOpen = true;
+                currentOrderId = generateOrderId();
+                document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
+                document.getElementById('orderNotes').value = '';
+                renderOrderList();
+            }
+        }
 
+        // ============================================================
+        // SHOW/HIDE DRUG LIST (Toggle button)
+        // ============================================================
+
+        function toggleDrugList() {
+            var panel = document.getElementById('drugListPanel');
+            var container = document.getElementById('drugListContainer');
+            var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
+
+            if (isDrugListVisible) {
+                // Hide
+                panel.style.display = 'none';
+                btn.textContent = 'Show All Drugs';
+                closeBtn.style.display = 'none';
+                isDrugListVisible = false;
+                document.getElementById('drugSearch').value = '';
+            } else {
+                // Show
+                if (allDrugs.length === 0) {
+                    showLoading('Loading drugs...');
+                    loadDrugsSilent().then(function() {
+                        hideLoading();
+                        if (allDrugs.length === 0) {
+                            container.innerHTML = '<p class="text-muted">No drugs found.</p>';
+                            panel.style.display = 'block';
+                            btn.textContent = 'Hide Drugs';
+                            closeBtn.style.display = 'inline';
+                            isDrugListVisible = true;
+                        } else {
+                            filteredDrugs = allDrugs;
+                            currentPage = 1;
+                            renderDrugList();
+                            panel.style.display = 'block';
+                            btn.textContent = 'Hide Drugs';
+                            closeBtn.style.display = 'inline';
+                            isDrugListVisible = true;
+                        }
+                    });
+                    return;
+                }
+
+                filteredDrugs = allDrugs;
+                currentPage = 1;
+                renderDrugList();
+                panel.style.display = 'block';
+                btn.textContent = 'Hide Drugs';
+                closeBtn.style.display = 'inline';
+                isDrugListVisible = true;
+            }
+        }
+
+        // ============================================================
+        // CLOSE DRUG LIST (X button)
+        // ============================================================
+
+        function closeDrugList() {
+            var panel = document.getElementById('drugListPanel');
+            var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
+
+            panel.style.display = 'none';
+            btn.textContent = 'Show All Drugs';
+            closeBtn.style.display = 'none';
+            isDrugListVisible = false;
+            document.getElementById('drugSearch').value = '';
+        }
+
+        // ============================================================
+        // LOAD DRUGS SILENTLY
+        // ============================================================
+
+        async function loadDrugsSilent() {
             try {
-                var url = API_URL + '?action=getorders&user=' + encodeURIComponent(user.username);
-
-                var response = await fetch(url);
+                var response = await fetch(API_URL + '?search=');
                 var results = await response.json();
 
-                allOrders = results;
-                applyViewFilter();
+                allDrugs = results.map(function(item) {
+                    return {
+                        name: item[0] || 'Unknown',
+                        form: item[1] || 'Unknown',
+                        balance: parseFloat(item[2]) || 0
+                    };
+                });
+
+                filteredDrugs = allDrugs;
 
             } catch (error) {
-                console.error('Error loading orders:', error);
-                container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
-                showAlert('Error loading orders.', 'error');
+                console.error('Error loading drugs:', error);
             }
         }
 
         // ============================================================
-        // TOGGLE VIEW (Today vs All)
+        // SEARCH DRUGS
         // ============================================================
 
-        function toggleView() {
-            showAllOrders = !showAllOrders;
-            var btn = document.getElementById('toggleViewBtn');
-            var label = document.getElementById('viewLabel');
+        function searchDrugs() {
+            var query = document.getElementById('drugSearch').value.toLowerCase().trim();
 
-            if (showAllOrders) {
-                btn.textContent = '📅 Show Today';
-                label.textContent = 'Showing: All Orders';
+            if (!query) {
+                showAlert('Please enter a search term.', 'error');
+                return;
+            }
+
+            // Make drug list visible if hidden
+            var panel = document.getElementById('drugListPanel');
+            var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
+
+            if (!isDrugListVisible) {
+                if (allDrugs.length === 0) {
+                    showLoading('Loading drugs...');
+                    loadDrugsSilent().then(function() {
+                        hideLoading();
+                        performSearch(query);
+                        panel.style.display = 'block';
+                        btn.textContent = 'Hide Drugs';
+                        closeBtn.style.display = 'inline';
+                        isDrugListVisible = true;
+                    });
+                    return;
+                }
+
+                filteredDrugs = allDrugs;
+                currentPage = 1;
+                panel.style.display = 'block';
+                btn.textContent = 'Hide Drugs';
+                closeBtn.style.display = 'inline';
+                isDrugListVisible = true;
+                performSearch(query);
             } else {
-                btn.textContent = '📅 Show All Orders';
-                label.textContent = 'Showing: Today\'s Orders';
+                performSearch(query);
             }
-
-            // Clear date filters when toggling view
-            document.getElementById('dateFrom').value = '';
-            document.getElementById('dateTo').value = '';
-            document.getElementById('orderSearch').value = '';
-
-            applyViewFilter();
         }
 
-        // ============================================================
-        // APPLY VIEW FILTER
-        // ============================================================
+        function performSearch(query) {
+            showLoading('Searching for: ' + query);
 
-        function applyViewFilter() {
-            var today = new Date();
-            today.setHours(0, 0, 0, 0);
+            setTimeout(function() {
+                filteredDrugs = allDrugs.filter(function(drug) {
+                    return drug.name.toLowerCase().indexOf(query) !== -1 ||
+                           drug.form.toLowerCase().indexOf(query) !== -1;
+                });
 
-            var filtered = allOrders.filter(function(order) {
-                var orderDate = new Date(order.timestamp);
+                currentPage = 1;
+                hideLoading();
 
-                if (showAllOrders) {
-                    return true;
+                if (filteredDrugs.length === 0) {
+                    document.getElementById('drugListContainer').innerHTML = '<p class="text-muted">No drugs found matching "' + query + '".</p>';
+                    document.getElementById('drugCount').textContent = '0 drugs';
+                    document.getElementById('pagination').style.display = 'none';
                 } else {
-                    // Today's orders only
-                    return orderDate >= today;
+                    renderDrugList();
                 }
-            });
-
-            filteredOrders = filtered;
-            renderOrderList(filteredOrders);
-            updateResultCount();
-
-            // Clear selected order details
-            selectedOrderId = null;
-            document.getElementById('orderDetailsContainer').innerHTML = '<p class="text-muted">Select an order to view details.</p>';
-        }
-
-        // ============================================================
-        // SEARCH ORDERS
-        // ============================================================
-
-        function searchOrders() {
-            var searchTerm = document.getElementById('orderSearch').value.toLowerCase().trim();
-            var dateFrom = document.getElementById('dateFrom').value;
-            var dateTo = document.getElementById('dateTo').value;
-
-            // Start with the current view filter
-            var today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            var baseFiltered = allOrders.filter(function(order) {
-                var orderDate = new Date(order.timestamp);
-
-                if (showAllOrders) {
-                    return true;
-                } else {
-                    return orderDate >= today;
-                }
-            });
-
-            // Apply search and date filters
-            var filtered = baseFiltered.filter(function(order) {
-                var match = true;
-
-                if (searchTerm) {
-                    match = match && order.orderId.toLowerCase().indexOf(searchTerm) !== -1;
-                }
-
-                if (dateFrom) {
-                    var orderDate = new Date(order.timestamp);
-                    var fromDate = new Date(dateFrom);
-                    match = match && orderDate >= fromDate;
-                }
-
-                if (dateTo) {
-                    var orderDate = new Date(order.timestamp);
-                    var toDate = new Date(dateTo + 'T23:59:59');
-                    match = match && orderDate <= toDate;
-                }
-
-                return match;
-            });
-
-            filteredOrders = filtered;
-            renderOrderList(filtered);
-            updateResultCount();
-
-            // Clear selected order details
-            selectedOrderId = null;
-            document.getElementById('orderDetailsContainer').innerHTML = '<p class="text-muted">Select an order to view details.</p>';
+            }, 300);
         }
 
         // ============================================================
@@ -259,150 +353,296 @@
         // ============================================================
 
         function clearSearch() {
-            document.getElementById('orderSearch').value = '';
-            document.getElementById('dateFrom').value = '';
-            document.getElementById('dateTo').value = '';
-            applyViewFilter();
+            document.getElementById('drugSearch').value = '';
+
+            if (isDrugListVisible) {
+                renderDrugList();
+            } else {
+                var panel = document.getElementById('drugListPanel');
+                panel.style.display = 'none';
+                document.getElementById('drugListContainer').innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
+                document.getElementById('drugCount').textContent = '';
+                document.getElementById('pagination').style.display = 'none';
+            }
+
+            document.getElementById('drugSearch').focus();
             showAlert('Search cleared.', 'info');
         }
 
         // ============================================================
-        // UPDATE RESULT COUNT
+        // RENDER DRUG LIST
         // ============================================================
 
-        function updateResultCount() {
-            document.getElementById('resultCount').textContent = filteredOrders.length + ' order(s) found';
+        function renderDrugList() {
+            var container = document.getElementById('drugListContainer');
+            var count = document.getElementById('drugCount');
+            var pagination = document.getElementById('pagination');
+            var pageInfo = document.getElementById('pageInfo');
+
+            if (!filteredDrugs || filteredDrugs.length === 0) {
+                container.innerHTML = '<p class="text-muted">No drugs found.</p>';
+                count.textContent = '0 drugs';
+                pagination.style.display = 'none';
+                return;
+            }
+
+            var totalPages = Math.ceil(filteredDrugs.length / pageSize);
+            var start = (currentPage - 1) * pageSize;
+            var end = Math.min(start + pageSize, filteredDrugs.length);
+            var pageDrugs = filteredDrugs.slice(start, end);
+
+            count.textContent = filteredDrugs.length + ' drugs';
+
+            if (filteredDrugs.length > pageSize) {
+                pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
+                pagination.style.display = 'flex';
+            } else {
+                pagination.style.display = 'none';
+            }
+
+            var html = '<table>';
+            html += '<tr><th>Drug Name</th><th>Form</th><th>Balance</th><th>Order Qty</th><th>Action</th></tr>';
+
+            pageDrugs.forEach(function(drug, index) {
+                var globalIndex = start + index;
+                var inOrder = orderItems.some(function(item) { return item.name === drug.name; });
+                var safeId = 'qty-' + globalIndex;
+
+                html += '<tr>';
+                html += '<td><strong>' + drug.name + '</strong></td>';
+                html += '<td>' + drug.form + '</td>';
+                html += '<td>' + drug.balance + '</td>';
+                html += '<td>';
+                html += '<input type="number" id="' + safeId + '" ';
+                html += 'min="1" max="' + drug.balance + '" value="1" style="width:70px;padding:4px 6px;border:1px solid #ccc;text-align:center;">';
+                html += '</td>';
+                html += '<td>';
+                if (drug.balance === 0) {
+                    html += '<span class="text-muted">Out of Stock</span>';
+                } else if (inOrder) {
+                    html += '<span style="color:#0a0;">✅ Added</span>';
+                } else {
+                    html += '<button class="btn btn-small" onclick="addToOrder(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ',' + globalIndex + ')">Add</button>';
+                }
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // PAGINATION
+        // ============================================================
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderDrugList();
+            }
+        }
+
+        function nextPage() {
+            var totalPages = Math.ceil(filteredDrugs.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderDrugList();
+            }
+        }
+
+        // ============================================================
+        // ADD TO ORDER
+        // ============================================================
+
+        function addToOrder(drugName, maxStock, index) {
+            if (!isNewOrderOpen) {
+                showAlert('Please click "New Order" first.', 'warning');
+                return;
+            }
+
+            var qtyInput = document.getElementById('qty-' + index);
+            if (!qtyInput) {
+                showAlert('Error: Could not find quantity input.', 'error');
+                return;
+            }
+
+            var qty = parseInt(qtyInput.value) || 1;
+
+            if (qty < 1) {
+                showAlert('Quantity must be at least 1.', 'error');
+                return;
+            }
+
+            if (qty > maxStock) {
+                showAlert('Quantity exceeds available stock (' + maxStock + ').', 'error');
+                return;
+            }
+
+            if (orderItems.some(function(item) { return item.name === drugName; })) {
+                showAlert(drugName + ' is already in your order.', 'warning');
+                return;
+            }
+
+            orderItems.push({
+                name: drugName,
+                quantity: qty,
+                maxStock: maxStock
+            });
+
+            renderOrderList();
+            renderDrugList();
+            showAlert('Added ' + drugName + ' to your order.', 'success');
         }
 
         // ============================================================
         // RENDER ORDER LIST
         // ============================================================
 
-        function renderOrderList(orders) {
+        function renderOrderList() {
             var container = document.getElementById('orderListContainer');
 
-            if (orders.length === 0) {
-                container.innerHTML = '<p class="text-muted">No orders found.</p>';
+            if (orderItems.length === 0) {
+                container.innerHTML = '<p class="text-muted">No items added yet. Search and add drugs.</p>';
                 return;
             }
 
-            var html = '';
+            var html = '<table style="width:100%;">';
+            html += '<tr><th>Drug</th><th>Qty</th><th>Action</th></tr>';
 
-            orders.forEach(function(order) {
-                var date = order.timestamp ? new Date(order.timestamp).toLocaleDateString() : 'Unknown';
-                var time = order.timestamp ? new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                var itemCount = order.items ? order.items.length : 0;
-                var statusColor = getStatusColor(order.status);
-                var isSelected = selectedOrderId === order.orderId ? 'style="background:#e8f0fe;border-left:3px solid #2b6cb0;"' : '';
-
-                html += `
-                    <div class="order-list-item" onclick="selectOrder('${order.orderId}')" ${isSelected} style="padding:10px 12px;border-bottom:1px solid #eee;cursor:pointer;transition:background 0.2s;border-left:3px solid transparent;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">
-                            <div>
-                                <strong style="font-size:14px;">${order.orderId}</strong>
-                                <span style="font-size:12px;color:#888;margin-left:10px;">${date} ${time}</span>
-                            </div>
-                            <span style="color:${statusColor};font-weight:bold;font-size:13px;">${order.status.toUpperCase()}</span>
-                        </div>
-                        <div style="font-size:12px;color:#888;margin-top:4px;">
-                            ${itemCount} item(s) · ${order.department || 'N/A'}
-                        </div>
-                    </div>
-                `;
+            orderItems.forEach(function(item, index) {
+                html += '<tr>';
+                html += '<td><strong>' + item.name + '</strong></td>';
+                html += '<td>';
+                html += '<input type="number" id="order-qty-' + index + '" value="' + item.quantity + '" ';
+                html += 'min="1" max="' + item.maxStock + '" style="width:55px;padding:4px 6px;border:1px solid #ccc;text-align:center;" ';
+                html += 'onchange="updateOrderQty(' + index + ', this.value)">';
+                html += '</td>';
+                html += '<td><button class="btn btn-small" onclick="removeFromOrder(' + index + ')" style="color:#c00;">✕</button></td>';
+                html += '</tr>';
             });
 
+            html += '</table>';
             container.innerHTML = html;
         }
 
         // ============================================================
-        // SELECT ORDER
+        // UPDATE ORDER QUANTITY
         // ============================================================
 
-        function selectOrder(orderId) {
-            selectedOrderId = orderId;
+        function updateOrderQty(index, newValue) {
+            var qty = parseInt(newValue) || 1;
 
-            // Update list highlighting
-            var items = document.querySelectorAll('.order-list-item');
-            items.forEach(function(item) {
-                item.style.background = '';
-                item.style.borderLeft = '3px solid transparent';
-            });
-
-            var selectedItem = document.querySelector('.order-list-item[onclick="selectOrder(\'' + orderId + '\')"]');
-            if (selectedItem) {
-                selectedItem.style.background = '#e8f0fe';
-                selectedItem.style.borderLeft = '3px solid #2b6cb0';
+            if (qty < 1) {
+                showAlert('Quantity must be at least 1.', 'error');
+                qty = 1;
             }
 
-            var order = allOrders.find(function(o) { return o.orderId === orderId; });
-            if (order) {
-                renderOrderDetails(order);
+            var maxStock = orderItems[index].maxStock;
+            if (qty > maxStock) {
+                showAlert('Quantity exceeds available stock (' + maxStock + ').', 'warning');
+                qty = maxStock;
             }
+
+            orderItems[index].quantity = qty;
+            renderOrderList();
         }
 
         // ============================================================
-        // RENDER ORDER DETAILS
+        // REMOVE FROM ORDER
         // ============================================================
 
-        function renderOrderDetails(order) {
-            var container = document.getElementById('orderDetailsContainer');
-
-            var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
-            var statusColor = getStatusColor(order.status);
-
-            var itemsHtml = '';
-            if (order.items && order.items.length > 0) {
-                itemsHtml = '<table style="width:100%;margin-top:10px;">';
-                itemsHtml += '<tr><th>Drug</th><th>Quantity</th></tr>';
-                order.items.forEach(function(item) {
-                    itemsHtml += '<tr>';
-                    itemsHtml += '<td>' + item.drug + '</td>';
-                    itemsHtml += '<td style="text-align:center;">' + item.quantity + '</td>';
-                    itemsHtml += '</tr>';
-                });
-                itemsHtml += '</table>';
-            } else {
-                itemsHtml = '<p class="text-muted">No items in this order.</p>';
-            }
-
-            var statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
-
-            html = `
-                <div style="margin-bottom:15px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                        <h3 style="font-weight:normal;font-size:18px;">${order.orderId}</h3>
-                        <span style="color:${statusColor};font-weight:bold;font-size:16px;">${statusLabel}</span>
-                    </div>
-                    <div style="margin-top:10px;font-size:14px;color:#555;">
-                        <div><strong>Date:</strong> ${date}</div>
-                        <div><strong>Department:</strong> ${order.department || 'N/A'}</div>
-                        <div><strong>Requested By:</strong> ${order.username || 'Unknown'}</div>
-                        <div><strong>Approved By:</strong> ${order.approvedBy || 'Pending'}</div>
-                        ${order.notes ? `<div><strong>Notes:</strong> ${order.notes}</div>` : ''}
-                    </div>
-                </div>
-                <hr style="border:none;border-top:1px solid #eee;">
-                <div style="margin-top:10px;">
-                    <strong>Items:</strong>
-                    ${itemsHtml}
-                </div>
-            `;
-
-            container.innerHTML = html;
+        function removeFromOrder(index) {
+            var removed = orderItems[index].name;
+            orderItems.splice(index, 1);
+            renderOrderList();
+            if (isDrugListVisible) renderDrugList();
+            showAlert('Removed ' + removed + ' from your order.', 'info');
         }
 
         // ============================================================
-        // HELPERS
+        // CLEAR ORDER
         // ============================================================
 
-        function getStatusColor(status) {
-            var colors = {
-                'pending': '#d69e2e',
-                'approved': '#38a169',
-                'rejected': '#e53e3e',
-                'completed': '#2b6cb0'
+        function clearOrder() {
+            if (orderItems.length === 0) {
+                showAlert('Your order is already empty.', 'info');
+                return;
+            }
+
+            if (!confirm('Clear all items from your order?')) return;
+
+            orderItems = [];
+            document.getElementById('orderNotes').value = '';
+            renderOrderList();
+            if (isDrugListVisible) renderDrugList();
+            showAlert('Order cleared.', 'info');
+        }
+
+        // ============================================================
+        // SUBMIT ORDER
+        // ============================================================
+
+        function submitOrder() {
+            if (orderItems.length === 0) {
+                showAlert('Please add at least one item to your order.', 'warning');
+                return;
+            }
+
+            if (!confirm('Submit this order?')) return;
+
+            showLoading('Submitting order...');
+
+            var notes = document.getElementById('orderNotes').value.trim();
+
+            var orderData = {
+                action: 'submitorder',
+                user: currentUser.username,
+                userId: currentUser.userId,
+                department: currentUser.department,
+                orderId: currentOrderId,
+                items: orderItems.map(function(item) {
+                    return {
+                        drug: item.name,
+                        quantity: item.quantity
+                    };
+                }),
+                notes: notes,
+                timestamp: new Date().toISOString()
             };
-            return colors[status] || '#666';
+
+            var url = API_URL +
+                '?action=submitorder' +
+                '&user=' + encodeURIComponent(orderData.user) +
+                '&userId=' + encodeURIComponent(orderData.userId) +
+                '&department=' + encodeURIComponent(orderData.department) +
+                '&orderId=' + encodeURIComponent(orderData.orderId) +
+                '&items=' + encodeURIComponent(JSON.stringify(orderData.items)) +
+                '&notes=' + encodeURIComponent(orderData.notes) +
+                '&timestamp=' + encodeURIComponent(orderData.timestamp);
+
+            fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
+                hideLoading();
+                if (result.success) {
+                    showAlert('Order submitted successfully! Order ID: ' + currentOrderId, 'success');
+                    orderItems = [];
+                    document.getElementById('orderNotes').value = '';
+                    renderOrderList();
+                    if (isDrugListVisible) renderDrugList();
+
+                    currentOrderId = generateOrderId();
+                    document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
+                } else {
+                    showAlert(result.message || 'Error submitting order.', 'error');
+                }
+            })
+            .catch(function(error) {
+                hideLoading();
+                console.error('Error:', error);
+                showAlert('Error connecting to server.', 'error');
+            });
         }
 
         // ============================================================
@@ -410,12 +650,12 @@
         // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
-            initMyOrders();
+            initOrders();
 
-            document.getElementById('orderSearch').addEventListener('keydown', function(e) {
+            document.getElementById('drugSearch').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    searchOrders();
+                    searchDrugs();
                 }
             });
         });
