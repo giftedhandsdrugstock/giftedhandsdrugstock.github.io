@@ -51,7 +51,10 @@
                 </div>
                 <div>
                     <label>Department</label>
-                    <input type="text" id="regDepartment" list="departmentList" placeholder="Select or type a department" required>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <input type="text" id="regDepartment" list="departmentList" placeholder="Select or type a department" required style="flex:1;padding:8px;">
+                        <button type="button" onclick="clearDepartment()" style="padding:4px 10px;cursor:pointer;">Clear</button>
+                    </div>
                     <datalist id="departmentList">
                         <option value="Pharmacy">
                         <option value="Ward A">
@@ -109,6 +112,11 @@
             document.getElementById('registerForm').style.display = 'block';
             document.getElementById('alert').style.display = 'none';
             document.getElementById('regFirstName').focus();
+        }
+
+        function clearDepartment() {
+            document.getElementById('regDepartment').value = '';
+            document.getElementById('regDepartment').focus();
         }
 
         function showAlert(message, type) {
