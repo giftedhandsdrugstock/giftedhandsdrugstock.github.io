@@ -4,41 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="app">
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ccc;padding-bottom:10px;">
+
+        <div class="header">
             <h1>User Management</h1>
-            <div>
-                <span id="userDisplay" style="margin-right:15px;"></span>
-                <span id="roleDisplay" style="margin-right:15px;font-size:12px;color:#666;"></span>
+            <div class="header-right">
+                <span id="userDisplay"></span>
+                <span id="roleDisplay" class="role-badge"></span>
                 <a href="search.html">Search</a>
-                <a href="movement.html" style="margin-left:10px;">Movement</a>
-                <button onclick="logout()" style="margin-left:10px;">Logout</button>
+                <a href="movement.html">Movement</a>
+                <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
 
-        <div id="alert" style="display:none;padding:10px;margin:10px 0;border:1px solid #ccc;"></div>
+        <div id="alert" class="alert"></div>
 
-        <!-- Edit Own Profile (visible to all users) -->
-        <div style="margin:20px 0;padding:15px;border:1px solid #ccc;border-radius:5px;">
+        <!-- MY PROFILE -->
+        <div class="section-box">
             <h2>My Profile</h2>
-            <form onsubmit="updateProfile(event)">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div>
+            <form id="profileForm" onsubmit="updateProfile(event)">
+                <div class="form-row">
+                    <div class="form-group">
                         <label>First Name</label>
                         <input type="text" id="editFirstName" required>
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label>Last Name</label>
                         <input type="text" id="editLastName" required>
                     </div>
-                    <div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label>Email</label>
                         <input type="email" id="editEmail" required>
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label>Department</label>
                         <input type="text" id="editDepartment" list="deptList" required>
                         <datalist id="deptList">
@@ -57,93 +61,61 @@
                         </datalist>
                     </div>
                 </div>
-                <div style="margin-top:10px;">
+                <div class="form-group">
                     <label>Username (cannot be changed)</label>
-                    <input type="text" id="editUsername" disabled style="background:#f0f0f0;padding:8px;width:100%;">
+                    <input type="text" id="editUsername" disabled>
                 </div>
-                <div style="margin-top:10px;">
+                <div class="form-group">
                     <label>New Password (leave blank to keep current)</label>
-                    <input type="password" id="editPassword" placeholder="Min 6 characters" style="width:100%;padding:8px;">
+                    <input type="password" id="editPassword" placeholder="Min 6 characters">
                 </div>
-                <button type="submit" style="margin-top:10px;padding:8px 20px;">Update Profile</button>
+                <button type="submit" class="btn btn-primary">Update Profile</button>
             </form>
         </div>
 
-        <!-- Admin Only: Manage All Users -->
-        <div id="adminSection" style="display:none;margin:20px 0;padding:15px;border:1px solid #ccc;border-radius:5px;">
+        <!-- ADMIN SECTION -->
+        <div id="adminSection" style="display:none;" class="section-box">
             <h2>Manage Users (Admin)</h2>
-            <div style="margin:10px 0;">
-                <button onclick="loadAllUsers()">Refresh Users</button>
-                <button onclick="deleteAllUsers()" style="margin-left:10px;color:red;">Delete All Users</button>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+                <button class="btn btn-secondary" onclick="loadAllUsers()">Refresh Users</button>
+                <button class="btn btn-danger" onclick="deleteAllUsers()">Delete All Users</button>
             </div>
             <div id="usersContainer">
-                <p>Loading users...</p>
+                <p class="text-muted">Loading users...</p>
             </div>
         </div>
+
     </div>
 
+    <script src="script.js"></script>
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwlcUEZ9hWV1TPF2Fv5a1k8pJUqZ8cZ2R5QI4lAhogADGHVzsOsgvv3TEmQkSHFJkx1/exec";
+        // ============================================================
+        // USERS.HTML SPECIFIC
+        // ============================================================
 
         let currentUser = {};
 
-        function checkAuth() {
-            if (localStorage.getItem('loggedIn') !== 'true') {
-                window.location.href = 'index.html';
-                return;
-            }
+        function initUsers() {
+            if (!checkAuth()) return;
 
-            const username = localStorage.getItem('username');
-            const fullName = localStorage.getItem('fullName') || username || 'User';
-            const isAdmin = username === 'admin';
+            currentUser = getCurrentUser();
 
-            currentUser = {
-                username: username,
-                fullName: fullName,
-                firstName: localStorage.getItem('firstName') || '',
-                lastName: localStorage.getItem('lastName') || '',
-                email: localStorage.getItem('email') || '',
-                department: localStorage.getItem('department') || '',
-                isAdmin: isAdmin
-            };
+            document.getElementById('userDisplay').textContent = 'Welcome, ' + currentUser.fullName;
+            document.getElementById('roleDisplay').textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
 
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + fullName;
-            document.getElementById('roleDisplay').textContent = isAdmin ? '(Admin)' : '(User)';
-
-            // Load profile data
-            document.getElementById('editUsername').value = username;
+            // Load profile
+            document.getElementById('editUsername').value = currentUser.username;
             document.getElementById('editFirstName').value = currentUser.firstName;
             document.getElementById('editLastName').value = currentUser.lastName;
             document.getElementById('editEmail').value = currentUser.email;
             document.getElementById('editDepartment').value = currentUser.department;
 
-            // Show admin section only for admin
-            if (isAdmin) {
+            // Show admin section
+            if (currentUser.isAdmin) {
                 document.getElementById('adminSection').style.display = 'block';
                 loadAllUsers();
             }
         }
-
-        function logout() {
-            localStorage.clear();
-            window.location.href = 'index.html';
-        }
-
-        function showAlert(message, type) {
-            const alert = document.getElementById('alert');
-            alert.textContent = message;
-            alert.style.display = 'block';
-            alert.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
-            alert.style.color = type === 'error' ? '#721c24' : '#155724';
-            alert.style.borderColor = type === 'error' ? '#f5c6cb' : '#c3e6cb';
-            setTimeout(function() {
-                alert.style.display = 'none';
-            }, 5000);
-        }
-
-        // ============================================================
-        // UPDATE PROFILE (Any user can update their own)
-        // ============================================================
 
         async function updateProfile(event) {
             event.preventDefault();
@@ -182,7 +154,6 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Update localStorage
                     localStorage.setItem('fullName', firstName + ' ' + lastName);
                     localStorage.setItem('firstName', firstName);
                     localStorage.setItem('lastName', lastName);
@@ -193,7 +164,6 @@
                     document.getElementById('editPassword').value = '';
                     document.getElementById('userDisplay').textContent = 'Welcome, ' + firstName + ' ' + lastName;
 
-                    // If admin, refresh user list
                     if (currentUser.isAdmin) {
                         loadAllUsers();
                     }
@@ -207,13 +177,9 @@
             }
         }
 
-        // ============================================================
-        // ADMIN: LOAD ALL USERS
-        // ============================================================
-
         async function loadAllUsers() {
             const container = document.getElementById('usersContainer');
-            container.innerHTML = '<p>Loading...</p>';
+            container.innerHTML = '<p class="text-muted">Loading...</p>';
 
             const adminUsername = localStorage.getItem('username');
 
@@ -228,16 +194,14 @@
                 }
 
                 if (results.length === 0) {
-                    container.innerHTML = '<p>No users found.</p>';
+                    container.innerHTML = '<p class="text-muted">No users found.</p>';
                     return;
                 }
 
-                let html = '<table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;">';
-                html += '<tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Department</th><th>Created</th><th>Actions</th></tr>';
+                let html = '<table><tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Department</th><th>Created</th><th>Actions</th></tr>';
 
                 results.forEach(function(user) {
                     const date = user.created ? new Date(user.created).toLocaleDateString() : 'Unknown';
-                    const isCurrentUser = user.username === localStorage.getItem('username');
 
                     html += '<tr>';
                     html += '<td>' + user.username + '</td>';
@@ -248,10 +212,10 @@
                     html += '<td>' + date + '</td>';
                     html += '<td>';
                     if (user.username === 'admin') {
-                        html += '<span style="color:#888;">Protected</span>';
+                        html += '<span class="text-muted">Protected</span>';
                     } else {
-                        html += '<button onclick="adminEditUser(\'' + user.username + '\')">Edit</button>';
-                        html += ' <button onclick="adminDeleteUser(\'' + user.username + '\')" style="color:red;">Delete</button>';
+                        html += '<button class="btn btn-secondary btn-small" onclick="adminEditUser(\'' + user.username + '\')">Edit</button>';
+                        html += ' <button class="btn btn-danger btn-small" onclick="adminDeleteUser(\'' + user.username + '\')">Delete</button>';
                     }
                     html += '</td>';
                     html += '</tr>';
@@ -266,12 +230,7 @@
             }
         }
 
-        // ============================================================
-        // ADMIN: EDIT USER
-        // ============================================================
-
         function adminEditUser(username) {
-            // Simple prompt-based edit for now
             const newFirstName = prompt('Enter new first name for ' + username + ':');
             if (newFirstName === null) return;
             const newLastName = prompt('Enter new last name for ' + username + ':');
@@ -317,10 +276,6 @@
             }
         }
 
-        // ============================================================
-        // ADMIN: DELETE USER
-        // ============================================================
-
         async function adminDeleteUser(username) {
             if (!confirm('Delete user "' + username + '"? This cannot be undone.')) {
                 return;
@@ -348,10 +303,6 @@
                 showAlert('Error connecting to server.', 'error');
             }
         }
-
-        // ============================================================
-        // ADMIN: DELETE ALL USERS
-        // ============================================================
 
         async function deleteAllUsers() {
             if (!confirm('Delete ALL non-admin users? This cannot be undone.')) {
@@ -383,12 +334,14 @@
             }
         }
 
-        // ============================================================
-        // INIT
-        // ============================================================
-
+        // Enter key navigation
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuth();
+            initUsers();
+
+            setupEnterNavigation(
+                document.getElementById('profileForm'),
+                ['editFirstName', 'editLastName', 'editEmail', 'editDepartment', 'editPassword']
+            );
         });
     </script>
 
