@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+</head>
+<body>
+
+    <div id="app">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ccc;padding-bottom:10px;">
+            <h1>User Management</h1>
+            <div>
+                <span id="userDisplay" style="margin-right:15px;"></span>
+                <a href="search.html">Search</a>
+                <a href="movement.html" style="margin-left:10px;">Movement</a>
+                <button onclick="logout()" style="margin-left:10px;">Logout</button>
+            </div>
+        </div>
+
+        <div id="alert" style="display:none;padding:10px;margin:10px 0;border:1px solid #ccc;"></div>
+
+        <div style="margin:10px 0;">
+            <button onclick="loadUsers()">Refresh Users</button>
+            <button onclick="deleteAllUsers()" style="margin-left:10px;color:red;">Delete All Users</button>
+        </div>
+
+        <div id="usersContainer">
+            <p>Loading users...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwlcUEZ9hWV1TPF2Fv5a1k8pJUqZ8cZ2R5QI4lAhogADGHVzsOsgvv3TEmQkSHFJkx1/exec";
+
+        function checkAuth() {
+            if (localStorage.getItem('loggedIn') !== 'true') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const username = localStorage.getItem('username');
+            if (username !== 'admin') {
+                document.getElementById('usersContainer').innerHTML = '<p>Admin access required.</p>';
+                return;
+            }
+
+            const fullName = localStorage.getItem('fullName') || localStorage.getItem('username') || 'User';
+            document.getElementById('userDisplay').textContent = 'Welcome, ' + fullName + ' (Admin)';
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.style.display = 'block';
+            alert.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
+            alert.style.color = type === 'error' ? '#721c24' : '#155724';
+            alert.style.borderColor = type === 'error' ? '#f5c6cb' : '#c3e6cb';
+            setTimeout(function() {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        async function loadUsers() {
+            const container = document.getElementById('usersContainer');
+            container.innerHTML = '<p>Loading...</p>';
+
+            const username = localStorage.getItem('username');
+
+            try {
+                const response = await fetch(API_URL +
+                    '?action=getusers&adminUsername=' + encodeURIComponent(username));
+                const results = await response.json();
+
+                if (!results.success && results.message) {
+                    container.innerHTML = '<p>' + results.message + '</p>';
+                    return;
+                }
+
+                if (results.length === 0) {
+                    container.innerHTML = '<p>No users found.</p>';
+                    return;
+                }
+
+                let html = '<table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;">';
+                html += '<tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Department</th><th>Created</th><th>Action</th></tr>';
+
+                results.forEach(function(user) {
+                    const date = user.created ? new Date(user.created).toLocaleDateString() : 'Unknown';
+                    html += '<tr>';
+                    html += '<td>' + user.username + '</td>';
+                    html += '<td>' + user.email + '</td>';
+                    html += '<td>' + user.firstName + '</td>';
+                    html += '<td>' + user.lastName + '</td>';
+                    html += '<td>' + user.department + '</td>';
+                    html += '<td>' + date + '</td>';
+                    html += '<td>';
+                    if (user.username !== 'admin') {
+                        html += '<button onclick="deleteUser(\'' + user.username + '\')">Delete</button>';
+                    } else {
+                        html += '<span style="color:#888;">Protected</span>';
+                    }
+                    html += '</td>';
+                    html += '</tr>';
+                });
+
+                html += '</table>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<p>Error loading users.</p>';
+            }
+        }
+
+        async function deleteUser(username) {
+            if (!confirm('Delete user "' + username + '"? This cannot be undone.')) {
+                return;
+            }
+
+            const adminUsername = localStorage.getItem('username');
+
+            try {
+                const response = await fetch(API_URL +
+                    '?action=deleteuser' +
+                    '&username=' + encodeURIComponent(username) +
+                    '&adminUsername=' + encodeURIComponent(adminUsername));
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    loadUsers();
+                } else {
+                    showAlert(result.message || 'Error deleting user.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        async function deleteAllUsers() {
+            if (!confirm('Delete ALL non-admin users? This cannot be undone.')) {
+                return;
+            }
+
+            if (!confirm('Are you absolutely sure? All user accounts (except admin) will be deleted.')) {
+                return;
+            }
+
+            const adminUsername = localStorage.getItem('username');
+
+            try {
+                const response = await fetch(API_URL +
+                    '?action=deleteallusers&adminUsername=' + encodeURIComponent(adminUsername));
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    loadUsers();
+                } else {
+                    showAlert(result.message || 'Error deleting users.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadUsers();
+        });
+    </script>
+
+</body>
+</html>
