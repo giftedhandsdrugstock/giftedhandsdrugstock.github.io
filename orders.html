@@ -202,14 +202,12 @@
             var closeBtn = document.getElementById('closeDrugListBtn');
 
             if (isDrugListVisible) {
-                // Hide
                 panel.style.display = 'none';
                 btn.textContent = 'Show All Drugs';
                 closeBtn.style.display = 'none';
                 isDrugListVisible = false;
                 document.getElementById('drugSearch').value = '';
             } else {
-                // Show
                 if (allDrugs.length === 0) {
                     showLoading('Loading drugs...');
                     loadDrugsSilent().then(function() {
@@ -295,7 +293,6 @@
                 return;
             }
 
-            // Make drug list visible if hidden
             var panel = document.getElementById('drugListPanel');
             var btn = document.getElementById('toggleDrugsBtn');
             var closeBtn = document.getElementById('closeDrugListBtn');
@@ -452,15 +449,10 @@
         }
 
         // ============================================================
-        // ADD TO ORDER
+        // ADD TO ORDER - AUTO-OPENS ORDER PANEL
         // ============================================================
 
         function addToOrder(drugName, maxStock, index) {
-            if (!isNewOrderOpen) {
-                showAlert('Please click "New Order" first.', 'warning');
-                return;
-            }
-
             var qtyInput = document.getElementById('qty-' + index);
             if (!qtyInput) {
                 showAlert('Error: Could not find quantity input.', 'error');
@@ -482,6 +474,21 @@
             if (orderItems.some(function(item) { return item.name === drugName; })) {
                 showAlert(drugName + ' is already in your order.', 'warning');
                 return;
+            }
+
+            // ============================================================
+            // AUTO-OPEN NEW ORDER PANEL IF CLOSED
+            // ============================================================
+            if (!isNewOrderOpen) {
+                var panel = document.getElementById('orderPanel');
+                var btn = document.getElementById('newOrderBtn');
+
+                panel.style.display = 'block';
+                btn.textContent = '✕ Cancel Order';
+                isNewOrderOpen = true;
+                currentOrderId = generateOrderId();
+                document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
+                document.getElementById('orderNotes').value = '';
             }
 
             orderItems.push({
