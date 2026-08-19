@@ -7,58 +7,91 @@
 </head>
 <body>
 
-    <h1>Drug Stock Management</h1>
+    <div id="app">
+        <h1>Drug Stock Management</h1>
 
-    <div id="alert" style="display:none;padding:10px;margin:10px 0;border:1px solid #ccc;"></div>
+        <div id="alert" style="display:none;padding:10px;margin:10px 0;border:1px solid #ccc;"></div>
 
-    <!-- LOGIN -->
-    <div id="loginForm">
-        <h2>Login</h2>
-        <form onsubmit="handleLogin(event)">
-            <div>
-                <label>Username or Email</label>
-                <input type="text" id="loginUsername" placeholder="Enter username or email" required>
-            </div>
-            <div>
-                <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-        <p>Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
-    </div>
+        <!-- LOGIN FORM -->
+        <div id="loginForm">
+            <h2>Login</h2>
+            <form onsubmit="handleLogin(event)">
+                <div>
+                    <label>Username or Email</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username or email" required>
+                </div>
+                <div>
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+            <p>Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+        </div>
 
-    <!-- REGISTER -->
-    <div id="registerForm" style="display:none;">
-        <h2>Register</h2>
-        <form onsubmit="handleRegister(event)">
-            <div>
-                <label>First Name</label>
-                <input type="text" id="regFirstName" placeholder="John" required>
-            </div>
-            <div>
-                <label>Last Name</label>
-                <input type="text" id="regLastName" placeholder="Doe" required>
-            </div>
-            <div>
-                <label>Email</label>
-                <input type="email" id="regEmail" placeholder="john@example.com" required>
-            </div>
-            <div>
-                <label>Username</label>
-                <input type="text" id="regUsername" placeholder="Choose a username" required>
-            </div>
-            <div>
-                <label>Password</label>
-                <input type="password" id="regPassword" placeholder="Min 6 characters" required minlength="6">
-            </div>
-            <div>
-                <label>Confirm Password</label>
-                <input type="password" id="regConfirmPassword" placeholder="Confirm password" required>
-            </div>
-            <button type="submit">Create Account</button>
-        </form>
-        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+        <!-- REGISTER FORM -->
+        <div id="registerForm" style="display:none;">
+            <h2>Register</h2>
+            <form onsubmit="handleRegister(event)">
+                <div>
+                    <label>First Name</label>
+                    <input type="text" id="regFirstName" placeholder="John" required>
+                </div>
+                <div>
+                    <label>Last Name</label>
+                    <input type="text" id="regLastName" placeholder="Doe" required>
+                </div>
+                <div>
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="john@example.com" required>
+                </div>
+                <div>
+                    <label>Username</label>
+                    <input type="text" id="regUsername" placeholder="Choose a username" required>
+                </div>
+                <div>
+                    <label>Department</label>
+                    <input type="text" id="regDepartment" list="departmentList" placeholder="Select or type a department" required>
+                    <datalist id="departmentList">
+                        <option value="Pharmacy">
+                        <option value="Ward A">
+                        <option value="Ward B">
+                        <option value="Ward C">
+                        <option value="Outpatient">
+                        <option value="Emergency">
+                        <option value="Surgical">
+                        <option value="Maternity">
+                        <option value="Paediatric">
+                        <option value="Private">
+                        <option value="Administration">
+                        <option value="Laboratory">
+                        <option value="Radiology">
+                        <option value="Physiotherapy">
+                        <option value="Dental">
+                        <option value="Optometry">
+                        <option value="Nutrition">
+                        <option value="Counseling">
+                        <option value="Records">
+                        <option value="Finance">
+                        <option value="HR">
+                        <option value="IT">
+                        <option value="Maintenance">
+                        <option value="Security">
+                        <option value="Other">
+                    </datalist>
+                </div>
+                <div>
+                    <label>Password</label>
+                    <input type="password" id="regPassword" placeholder="Min 6 characters" required minlength="6">
+                </div>
+                <div>
+                    <label>Confirm Password</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Confirm password" required>
+                </div>
+                <button type="submit">Create Account</button>
+            </form>
+            <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+        </div>
     </div>
 
     <script>
@@ -117,6 +150,7 @@
                     localStorage.setItem('firstName', user.firstName);
                     localStorage.setItem('lastName', user.lastName);
                     localStorage.setItem('email', user.email);
+                    localStorage.setItem('department', user.department);
 
                     showAlert('Welcome, ' + user.fullName + '!', 'success');
 
@@ -140,10 +174,11 @@
             const lastName = document.getElementById('regLastName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const username = document.getElementById('regUsername').value.trim();
+            const department = document.getElementById('regDepartment').value.trim();
             const password = document.getElementById('regPassword').value;
             const confirmPassword = document.getElementById('regConfirmPassword').value;
 
-            if (!firstName || !lastName || !email || !username || !password) {
+            if (!firstName || !lastName || !email || !username || !department || !password) {
                 showAlert('Please fill in all fields.', 'error');
                 return;
             }
@@ -165,6 +200,7 @@
                     '&lastName=' + encodeURIComponent(lastName) +
                     '&email=' + encodeURIComponent(email) +
                     '&username=' + encodeURIComponent(username) +
+                    '&department=' + encodeURIComponent(department) +
                     '&password=' + encodeURIComponent(password));
 
                 const result = await response.json();
