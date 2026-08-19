@@ -24,9 +24,9 @@
                 <span id="userDisplay"></span>
                 <span id="roleDisplay" class="text-muted"></span>
                 <span id="deptDisplay" class="text-muted"></span>
+                <a href="orders.html">Orders</a>
                 <a href="profile.html">Profile</a>
                 <a href="users.html" id="usersLink" style="display:none;">Users</a>
-                <a href="loginhistory.html" id="historyLink" style="display:none;">Login History</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -53,7 +53,6 @@
 
             if (user.isAdmin) {
                 document.getElementById('usersLink').style.display = 'inline';
-                document.getElementById('historyLink').style.display = 'inline';
             }
         }
 
