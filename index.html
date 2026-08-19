@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Stock - Login</title>
+</head>
+<body>
+
+    <h1>Drug Stock Management</h1>
+
+    <div id="alert" style="display:none;padding:10px;margin:10px 0;border:1px solid #ccc;"></div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+        <h2>Login</h2>
+        <form onsubmit="handleLogin(event)">
+            <div>
+                <label>Username or Email</label>
+                <input type="text" id="loginUsername" placeholder="Enter username or email" required>
+            </div>
+            <div>
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" style="display:none;">
+        <h2>Register</h2>
+        <form onsubmit="handleRegister(event)">
+            <div>
+                <label>First Name</label>
+                <input type="text" id="regFirstName" placeholder="John" required>
+            </div>
+            <div>
+                <label>Last Name</label>
+                <input type="text" id="regLastName" placeholder="Doe" required>
+            </div>
+            <div>
+                <label>Email</label>
+                <input type="email" id="regEmail" placeholder="john@example.com" required>
+            </div>
+            <div>
+                <label>Username</label>
+                <input type="text" id="regUsername" placeholder="Choose a username" required>
+            </div>
+            <div>
+                <label>Password</label>
+                <input type="password" id="regPassword" placeholder="Min 6 characters" required minlength="6">
+            </div>
+            <div>
+                <label>Confirm Password</label>
+                <input type="password" id="regConfirmPassword" placeholder="Confirm password" required>
+            </div>
+            <button type="submit">Create Account</button>
+        </form>
+        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwlcUEZ9hWV1TPF2Fv5a1k8pJUqZ8cZ2R5QI4lAhogADGHVzsOsgvv3TEmQkSHFJkx1/exec";
+
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('alert').style.display = 'none';
+            document.getElementById('loginUsername').focus();
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('alert').style.display = 'none';
+            document.getElementById('regFirstName').focus();
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.style.display = 'block';
+            alert.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
+            alert.style.color = type === 'error' ? '#721c24' : '#155724';
+            alert.style.borderColor = type === 'error' ? '#f5c6cb' : '#c3e6cb';
+            setTimeout(function() {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                showAlert('Please enter both username/email and password.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL +
+                    '?action=login' +
+                    '&username=' + encodeURIComponent(username) +
+                    '&password=' + encodeURIComponent(password));
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const user = result.user;
+                    localStorage.setItem('loggedIn', 'true');
+                    localStorage.setItem('username', user.username);
+                    localStorage.setItem('fullName', user.fullName);
+                    localStorage.setItem('firstName', user.firstName);
+                    localStorage.setItem('lastName', user.lastName);
+                    localStorage.setItem('email', user.email);
+
+                    showAlert('Welcome, ' + user.fullName + '!', 'success');
+
+                    setTimeout(function() {
+                        window.location.href = 'search.html';
+                    }, 500);
+                } else {
+                    showAlert(result.message || 'Invalid credentials.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+
+            const firstName = document.getElementById('regFirstName').value.trim();
+            const lastName = document.getElementById('regLastName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+            if (!firstName || !lastName || !email || !username || !password) {
+                showAlert('Please fill in all fields.', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match.', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL +
+                    '?action=register' +
+                    '&firstName=' + encodeURIComponent(firstName) +
+                    '&lastName=' + encodeURIComponent(lastName) +
+                    '&email=' + encodeURIComponent(email) +
+                    '&username=' + encodeURIComponent(username) +
+                    '&password=' + encodeURIComponent(password));
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Account created! Please login.', 'success');
+                    showLogin();
+                    document.getElementById('loginUsername').value = username;
+                    document.getElementById('loginPassword').focus();
+                } else {
+                    showAlert(result.message || 'Registration failed.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Register error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('loggedIn') === 'true') {
+                window.location.href = 'search.html';
+            } else {
+                document.getElementById('loginUsername').focus();
+            }
+        });
+    </script>
+
+</body>
+</html>
