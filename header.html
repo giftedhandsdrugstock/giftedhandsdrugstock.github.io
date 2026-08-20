@@ -1,0 +1,37 @@
+<!-- ============================================================
+    HEADER.HTML - Shared Header for All Pages
+    ============================================================ -->
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+        <div class="loading-spinner"></div>
+        <span class="loading-text" id="loadingText">Loading...</span>
+    </div>
+</div>
+
+<div id="app">
+
+    <!-- Header / Navigation -->
+    <div class="header">
+        <h1 id="pageTitle">Drug Stock Management</h1>
+        <div class="header-right">
+            <span id="userDisplay"></span>
+            <span id="roleDisplay" class="text-muted"></span>
+            <span id="deptDisplay" class="text-muted"></span>
+            <a href="search.html">Search</a>
+            <a href="orders.html">Orders</a>
+            <a href="myorders.html">My Orders</a>
+            <a href="profile.html">Profile</a>
+            <a href="approve.html" class="admin-link" style="display:none;">Approve</a>
+            <a href="reset.html" class="admin-link" style="display:none;">Reset</a>
+            <a href="users.html" class="admin-link" style="display:none;">Users</a>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Alert Div -->
+    <div id="alert" class="alert"></div>
+
+    <!-- Page content will be injected here -->
+    <div id="pageContent">
