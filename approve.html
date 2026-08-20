@@ -8,6 +8,7 @@
 </head>
 <body>
 
+    <!-- HEADER PLACEHOLDER -->
     <div id="header"></div>
 
     <!-- ===== PAGE CONTENT ===== -->
@@ -59,25 +60,54 @@
 
     </div>
 
+    <!-- FOOTER PLACEHOLDER -->
     <div id="footer"></div>
 
     <script>
         // ============================================================
-        // LOAD HEADER AND FOOTER
+        // LOAD HEADER AND FOOTER, THEN INITIALIZE
         // ============================================================
 
+        var headerLoaded = false;
+        var footerLoaded = false;
+
+        function checkReady() {
+            if (headerLoaded && footerLoaded) {
+                var script = document.createElement('script');
+                script.src = 'script.js';
+                script.onload = function() {
+                    if (typeof initPage === 'function') {
+                        initPage();
+                    }
+                };
+                document.body.appendChild(script);
+            }
+        }
+
         fetch('header.html')
-            .then(function(r) { return r.text(); })
+            .then(function(response) { return response.text(); })
             .then(function(html) {
                 document.getElementById('header').innerHTML = html;
-                return fetch('footer.html');
-            })
-            .then(function(r) { return r.text(); })
-            .then(function(html) {
-                document.getElementById('footer').innerHTML = html;
+                headerLoaded = true;
+                checkReady();
             })
             .catch(function(error) {
-                console.error('Error loading header/footer:', error);
+                console.error('Error loading header:', error);
+                headerLoaded = true;
+                checkReady();
+            });
+
+        fetch('footer.html')
+            .then(function(response) { return response.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+                footerLoaded = true;
+                checkReady();
+            })
+            .catch(function(error) {
+                console.error('Error loading footer:', error);
+                footerLoaded = true;
+                checkReady();
             });
 
         // ============================================================
@@ -94,22 +124,39 @@
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
-            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
+            var userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = 'Welcome, ' + user.fullName;
+
+            var roleDisplay = document.getElementById('roleDisplay');
+            if (roleDisplay) roleDisplay.textContent = user.isAdmin ? '(Admin)' : '(User)';
+
+            if (typeof initNav === 'function') initNav();
 
             if (!user.isAdmin) {
-                document.getElementById('orderListContainer').innerHTML = '<p class="text-muted">Admin access required.</p>';
-                document.querySelector('.right-panel').style.display = 'none';
+                var container = document.getElementById('orderListContainer');
+                if (container) container.innerHTML = '<p class="text-muted">Admin access required.</p>';
+                var rightPanel = document.querySelector('.right-panel');
+                if (rightPanel) rightPanel.style.display = 'none';
                 return;
             }
 
-            initNav();
             loadPendingOrders();
+
+            // Set up search enter key
+            var orderSearch = document.getElementById('orderSearch');
+            if (orderSearch) {
+                orderSearch.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        searchOrders();
+                    }
+                });
+            }
         }
 
         async function loadPendingOrders() {
             var container = document.getElementById('orderListContainer');
-            container.innerHTML = '<p class="text-muted">Loading pending orders...</p>';
+            if (container) container.innerHTML = '<p class="text-muted">Loading pending orders...</p>';
 
             try {
                 var response = await fetch(API_URL + '?action=getorders&status=pending');
@@ -124,8 +171,8 @@
 
             } catch (error) {
                 console.error('Error loading orders:', error);
-                container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
-                showAlert('Error loading orders.', 'error');
+                if (container) container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
+                if (typeof showAlert === 'function') showAlert('Error loading orders.', 'error');
             }
         }
 
@@ -149,17 +196,19 @@
         }
 
         function clearSearch() {
-            document.getElementById('orderSearch').value = '';
+            var orderSearch = document.getElementById('orderSearch');
+            if (orderSearch) orderSearch.value = '';
             filteredOrders = pendingOrders;
             currentPage = 1;
             renderOrderList();
             updateResultCount();
             closeOrderDetails();
-            showAlert('Search cleared.', 'info');
+            if (typeof showAlert === 'function') showAlert('Search cleared.', 'info');
         }
 
         function updateResultCount() {
-            document.getElementById('resultCount').textContent = filteredOrders.length + ' pending order(s)';
+            var count = document.getElementById('resultCount');
+            if (count) count.textContent = filteredOrders.length + ' pending order(s)';
         }
 
         function renderOrderList() {
@@ -167,9 +216,11 @@
             var pagination = document.getElementById('pagination');
             var pageInfo = document.getElementById('pageInfo');
 
+            if (!container) return;
+
             if (filteredOrders.length === 0) {
                 container.innerHTML = '<p class="text-muted">No pending orders found.</p>';
-                pagination.style.display = 'none';
+                if (pagination) pagination.style.display = 'none';
                 return;
             }
 
@@ -179,10 +230,10 @@
             var pageOrders = filteredOrders.slice(start, end);
 
             if (filteredOrders.length > pageSize) {
-                pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
-                pagination.style.display = 'flex';
+                if (pageInfo) pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
+                if (pagination) pagination.style.display = 'flex';
             } else {
-                pagination.style.display = 'none';
+                if (pagination) pagination.style.display = 'none';
             }
 
             var html = '';
@@ -244,17 +295,21 @@
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (order) {
                 renderOrderDetails(order);
-                document.getElementById('orderDetailsPanel').style.display = 'block';
+                var panel = document.getElementById('orderDetailsPanel');
+                if (panel) panel.style.display = 'block';
             }
         }
 
         function closeOrderDetails() {
-            document.getElementById('orderDetailsPanel').style.display = 'none';
+            var panel = document.getElementById('orderDetailsPanel');
+            if (panel) panel.style.display = 'none';
             selectedOrderId = null;
         }
 
         function renderOrderDetails(order) {
             var container = document.getElementById('orderDetailsContainer');
+
+            if (!container) return;
 
             var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
 
@@ -328,19 +383,19 @@
                 order.items.splice(index, 1);
                 renderOrderDetails(order);
                 renderOrderList();
-                showAlert('Item removed from order.', 'info');
+                if (typeof showAlert === 'function') showAlert('Item removed from order.', 'info');
             }
         }
 
         function approveOrder(orderId) {
             if (!confirm('Approve this order?')) return;
 
-            showLoading('Approving order...');
+            if (typeof showLoading === 'function') showLoading('Approving order...');
 
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (!order) {
-                hideLoading();
-                showAlert('Order not found.', 'error');
+                if (typeof hideLoading === 'function') hideLoading();
+                if (typeof showAlert === 'function') showAlert('Order not found.', 'error');
                 return;
             }
 
@@ -367,22 +422,22 @@
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    showAlert('Order approved successfully!', 'success');
+                    if (typeof showAlert === 'function') showAlert('Order approved successfully!', 'success');
                     pendingOrders = pendingOrders.filter(function(o) { return o.orderId !== orderId; });
                     filteredOrders = filteredOrders.filter(function(o) { return o.orderId !== orderId; });
                     closeOrderDetails();
                     renderOrderList();
                     updateResultCount();
                 } else {
-                    showAlert(result.message || 'Error approving order.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error approving order.', 'error');
                 }
             })
             .catch(function(error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
         }
 
@@ -390,7 +445,7 @@
             var reason = prompt('Reason for declining (optional):');
             if (reason === null) return;
 
-            showLoading('Declining order...');
+            if (typeof showLoading === 'function') showLoading('Declining order...');
 
             var replyNote = document.getElementById('replyNote-' + orderId);
             var note = replyNote ? replyNote.value.trim() : '';
@@ -405,22 +460,22 @@
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    showAlert('Order declined.', 'info');
+                    if (typeof showAlert === 'function') showAlert('Order declined.', 'info');
                     pendingOrders = pendingOrders.filter(function(o) { return o.orderId !== orderId; });
                     filteredOrders = filteredOrders.filter(function(o) { return o.orderId !== orderId; });
                     closeOrderDetails();
                     renderOrderList();
                     updateResultCount();
                 } else {
-                    showAlert(result.message || 'Error declining order.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error declining order.', 'error');
                 }
             })
             .catch(function(error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
         }
     </script>
