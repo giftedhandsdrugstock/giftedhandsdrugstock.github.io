@@ -120,6 +120,26 @@
         var API_URL = "https://script.google.com/macros/s/AKfycbxj00eyfQIzUlGqxaw86tQgzxNSxKoKzvcTyMNWYoDnPFBZCrQYvDrUCpBJx2sH4Nak/exec";
 
         // ============================================================
+        // LOADING INDICATOR
+        // ============================================================
+
+        function showLoading(message) {
+            var overlay = document.getElementById('loadingOverlay');
+            if (!overlay) return;
+
+            var text = document.getElementById('loadingText');
+            if (text) text.textContent = message || 'Loading...';
+            overlay.classList.add('show');
+        }
+
+        function hideLoading() {
+            var overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+        }
+
+        // ============================================================
         // UI HELPERS
         // ============================================================
 
@@ -156,6 +176,37 @@
         }
 
         // ============================================================
+        // ENTER KEY NAVIGATION
+        // ============================================================
+
+        function setupEnterNavigation(formElement, fieldIds) {
+            if (!formElement) return;
+
+            for (var i = 0; i < fieldIds.length; i++) {
+                var field = document.getElementById(fieldIds[i]);
+                if (!field) continue;
+
+                field.addEventListener('keydown', (function(index) {
+                    return function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+
+                            if (index === fieldIds.length - 1) {
+                                formElement.dispatchEvent(new Event('submit'));
+                                return;
+                            }
+
+                            var nextField = document.getElementById(fieldIds[index + 1]);
+                            if (nextField) {
+                                nextField.focus();
+                            }
+                        }
+                    };
+                })(i));
+            }
+        }
+
+        // ============================================================
         // LOGIN
         // ============================================================
 
@@ -170,6 +221,8 @@
                 return;
             }
 
+            showLoading('Logging in...');
+
             try {
                 var response = await fetch(API_URL +
                     '?action=login' +
@@ -177,6 +230,7 @@
                     '&password=' + encodeURIComponent(password));
 
                 var result = await response.json();
+                hideLoading();
 
                 if (result.success) {
                     var user = result.user;
@@ -201,6 +255,7 @@
                 }
 
             } catch (error) {
+                hideLoading();
                 console.error('Login error:', error);
                 showAlert('Error connecting to server.', 'error');
             }
@@ -236,6 +291,8 @@
                 return;
             }
 
+            showLoading('Creating account...');
+
             try {
                 var response = await fetch(API_URL +
                     '?action=register' +
@@ -247,6 +304,7 @@
                     '&password=' + encodeURIComponent(password));
 
                 var result = await response.json();
+                hideLoading();
 
                 if (result.success) {
                     showAlert('Account created! Your User ID: ' + result.userId + '. Please login.', 'success');
@@ -258,39 +316,9 @@
                 }
 
             } catch (error) {
+                hideLoading();
                 console.error('Register error:', error);
                 showAlert('Error connecting to server.', 'error');
-            }
-        }
-
-        // ============================================================
-        // ENTER KEY NAVIGATION
-        // ============================================================
-
-        function setupEnterNavigation(formElement, fieldIds) {
-            if (!formElement) return;
-
-            for (var i = 0; i < fieldIds.length; i++) {
-                var field = document.getElementById(fieldIds[i]);
-                if (!field) continue;
-
-                field.addEventListener('keydown', (function(index) {
-                    return function(e) {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-
-                            if (index === fieldIds.length - 1) {
-                                formElement.dispatchEvent(new Event('submit'));
-                                return;
-                            }
-
-                            var nextField = document.getElementById(fieldIds[index + 1]);
-                            if (nextField) {
-                                nextField.focus();
-                            }
-                        }
-                    };
-                })(i));
             }
         }
 
@@ -304,16 +332,19 @@
                 return;
             }
 
+            // Set up Enter key navigation for Login
             setupEnterNavigation(
                 document.getElementById('loginFormElement'),
                 ['loginUsername', 'loginPassword']
             );
 
+            // Set up Enter key navigation for Register
             setupEnterNavigation(
                 document.getElementById('registerFormElement'),
                 ['regFirstName', 'regLastName', 'regEmail', 'regUsername', 'regDepartment', 'regPassword', 'regConfirmPassword']
             );
 
+            // Focus on username field
             document.getElementById('loginUsername').focus();
         });
     </script>
