@@ -8,6 +8,14 @@
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+            <div class="loading-spinner"></div>
+            <span class="loading-text" id="loadingText">Loading...</span>
+        </div>
+    </div>
+
     <div id="app">
         <div class="header">
             <h1>Drug Stock Management</h1>
@@ -104,8 +112,17 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
     <script>
+        // ============================================================
+        // API URL
+        // ============================================================
+
+        var API_URL = "https://script.google.com/macros/s/AKfycbxj00eyfQIzUlGqxaw86tQgzxNSxKoKzvcTyMNWYoDnPFBZCrQYvDrUCpBJx2sH4Nak/exec";
+
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
+
         function showLogin() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
@@ -124,6 +141,23 @@
             document.getElementById('regDepartment').value = '';
             document.getElementById('regDepartment').focus();
         }
+
+        function showAlert(message, type) {
+            var alert = document.getElementById('alert');
+            if (!alert) return;
+
+            alert.textContent = message;
+            alert.className = 'alert alert-' + type + ' show';
+
+            clearTimeout(alert._timeout);
+            alert._timeout = setTimeout(function() {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // ============================================================
+        // LOGIN
+        // ============================================================
 
         async function handleLogin(event) {
             event.preventDefault();
@@ -171,6 +205,10 @@
                 showAlert('Error connecting to server.', 'error');
             }
         }
+
+        // ============================================================
+        // REGISTER
+        // ============================================================
 
         async function handleRegister(event) {
             event.preventDefault();
@@ -224,6 +262,41 @@
                 showAlert('Error connecting to server.', 'error');
             }
         }
+
+        // ============================================================
+        // ENTER KEY NAVIGATION
+        // ============================================================
+
+        function setupEnterNavigation(formElement, fieldIds) {
+            if (!formElement) return;
+
+            for (var i = 0; i < fieldIds.length; i++) {
+                var field = document.getElementById(fieldIds[i]);
+                if (!field) continue;
+
+                field.addEventListener('keydown', (function(index) {
+                    return function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+
+                            if (index === fieldIds.length - 1) {
+                                formElement.dispatchEvent(new Event('submit'));
+                                return;
+                            }
+
+                            var nextField = document.getElementById(fieldIds[index + 1]);
+                            if (nextField) {
+                                nextField.focus();
+                            }
+                        }
+                    };
+                })(i));
+            }
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
             if (localStorage.getItem('loggedIn') === 'true') {
