@@ -914,15 +914,15 @@
                 if (typeof showAlert === 'function') showAlert('Please add at least one item to receive.', 'warning');
                 return;
             }
-
+        
             if (!confirm('Submit this receive? This will add stock to inventory.')) return;
-
+        
             if (typeof showLoading === 'function') showLoading('Submitting receive...');
-
+        
             var supplier = document.getElementById('receiveSupplier') ? document.getElementById('receiveSupplier').value.trim() : '';
             var invoice = document.getElementById('receiveInvoice') ? document.getElementById('receiveInvoice').value.trim() : '';
             var notes = document.getElementById('receiveNotes') ? document.getElementById('receiveNotes').value.trim() : '';
-
+        
             var receiveData = {
                 action: 'submitreceive',
                 admin: currentUser.username,
@@ -938,7 +938,7 @@
                 notes: notes,
                 timestamp: new Date().toISOString()
             };
-
+        
             var url = API_URL +
                 '?action=submitreceive' +
                 '&admin=' + encodeURIComponent(receiveData.admin) +
@@ -948,13 +948,15 @@
                 '&invoice=' + encodeURIComponent(receiveData.invoice) +
                 '&notes=' + encodeURIComponent(receiveData.notes) +
                 '&timestamp=' + encodeURIComponent(receiveData.timestamp);
-
+        
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
                 if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    if (typeof showAlert === 'function') showAlert('Receive completed successfully! Stock added.', 'success');
+                    if (typeof showAlert === 'function') showAlert('✅ Receive completed successfully! Stock added. Refreshing...', 'success');
+                    
+                    // Clear the receive items
                     receiveItems = [];
                     var receiveNotes = document.getElementById('receiveNotes');
                     if (receiveNotes) receiveNotes.value = '';
@@ -964,10 +966,17 @@
                     if (receiveInvoice) receiveInvoice.value = '';
                     renderReceiveList();
                     if (isDrugListVisible) renderDrugList();
-
+        
                     currentReceiveId = generateReceiveId();
                     var receiveIdDisplay = document.getElementById('receiveIdDisplay');
                     if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
+        
+                    // ============================================================
+                    // REFRESH THE PAGE AFTER 1.5 SECONDS
+                    // ============================================================
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);
                 } else {
                     if (typeof showAlert === 'function') showAlert(result.message || 'Error submitting receive.', 'error');
                 }
@@ -978,7 +987,6 @@
                 if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
         }
-
         // ============================================================
         // INITIALIZE NEW DRUG MODAL ENTER KEY
         // ============================================================
