@@ -8,6 +8,7 @@
 </head>
 <body>
 
+    <!-- HEADER PLACEHOLDER -->
     <div id="header"></div>
 
     <!-- ===== PAGE CONTENT ===== -->
@@ -58,25 +59,54 @@
 
     </div>
 
+    <!-- FOOTER PLACEHOLDER -->
     <div id="footer"></div>
 
     <script>
         // ============================================================
-        // LOAD HEADER AND FOOTER
+        // LOAD HEADER AND FOOTER, THEN INITIALIZE
         // ============================================================
 
+        var headerLoaded = false;
+        var footerLoaded = false;
+
+        function checkReady() {
+            if (headerLoaded && footerLoaded) {
+                var script = document.createElement('script');
+                script.src = 'script.js';
+                script.onload = function() {
+                    if (typeof initPage === 'function') {
+                        initPage();
+                    }
+                };
+                document.body.appendChild(script);
+            }
+        }
+
         fetch('header.html')
-            .then(function(r) { return r.text(); })
+            .then(function(response) { return response.text(); })
             .then(function(html) {
                 document.getElementById('header').innerHTML = html;
-                return fetch('footer.html');
-            })
-            .then(function(r) { return r.text(); })
-            .then(function(html) {
-                document.getElementById('footer').innerHTML = html;
+                headerLoaded = true;
+                checkReady();
             })
             .catch(function(error) {
-                console.error('Error loading header/footer:', error);
+                console.error('Error loading header:', error);
+                headerLoaded = true;
+                checkReady();
+            });
+
+        fetch('footer.html')
+            .then(function(response) { return response.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+                footerLoaded = true;
+                checkReady();
+            })
+            .catch(function(error) {
+                console.error('Error loading footer:', error);
+                footerLoaded = true;
+                checkReady();
             });
 
         // ============================================================
@@ -96,11 +126,26 @@
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
-            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
+            var userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = 'Welcome, ' + user.fullName;
 
-            initNav();
+            var roleDisplay = document.getElementById('roleDisplay');
+            if (roleDisplay) roleDisplay.textContent = user.isAdmin ? '(Admin)' : '(User)';
+
+            if (typeof initNav === 'function') initNav();
+
             loadAllOrders();
+
+            // Set up search enter key
+            var orderSearch = document.getElementById('orderSearch');
+            if (orderSearch) {
+                orderSearch.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        searchOrders();
+                    }
+                });
+            }
         }
 
         // ============================================================
@@ -109,7 +154,7 @@
 
         async function loadAllOrders() {
             var container = document.getElementById('orderListContainer');
-            container.innerHTML = '<p class="text-muted">Loading orders...</p>';
+            if (container) container.innerHTML = '<p class="text-muted">Loading orders...</p>';
 
             var user = getCurrentUser();
 
@@ -124,8 +169,8 @@
 
             } catch (error) {
                 console.error('Error loading orders:', error);
-                container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
-                showAlert('Error loading orders.', 'error');
+                if (container) container.innerHTML = '<p class="text-muted">Error loading orders.</p>';
+                if (typeof showAlert === 'function') showAlert('Error loading orders.', 'error');
             }
         }
 
@@ -139,16 +184,19 @@
             var label = document.getElementById('viewLabel');
 
             if (showAllOrders) {
-                btn.textContent = '📅 Show Today';
-                label.textContent = 'Showing: All Orders';
+                if (btn) btn.textContent = '📅 Show Today';
+                if (label) label.textContent = 'Showing: All Orders';
             } else {
-                btn.textContent = '📅 Show All Orders';
-                label.textContent = 'Showing: Today\'s Orders';
+                if (btn) btn.textContent = '📅 Show All Orders';
+                if (label) label.textContent = 'Showing: Today\'s Orders';
             }
 
-            document.getElementById('dateFrom').value = '';
-            document.getElementById('dateTo').value = '';
-            document.getElementById('orderSearch').value = '';
+            var dateFrom = document.getElementById('dateFrom');
+            var dateTo = document.getElementById('dateTo');
+            var orderSearch = document.getElementById('orderSearch');
+            if (dateFrom) dateFrom.value = '';
+            if (dateTo) dateTo.value = '';
+            if (orderSearch) orderSearch.value = '';
 
             applyViewFilter();
         }
@@ -176,7 +224,8 @@
             updateResultCount();
 
             selectedOrderId = null;
-            document.getElementById('orderDetailsContainer').innerHTML = '<p class="text-muted">Select an order to view details.</p>';
+            var detailsContainer = document.getElementById('orderDetailsContainer');
+            if (detailsContainer) detailsContainer.innerHTML = '<p class="text-muted">Select an order to view details.</p>';
         }
 
         // ============================================================
@@ -228,7 +277,8 @@
             updateResultCount();
 
             selectedOrderId = null;
-            document.getElementById('orderDetailsContainer').innerHTML = '<p class="text-muted">Select an order to view details.</p>';
+            var detailsContainer = document.getElementById('orderDetailsContainer');
+            if (detailsContainer) detailsContainer.innerHTML = '<p class="text-muted">Select an order to view details.</p>';
         }
 
         // ============================================================
@@ -236,11 +286,16 @@
         // ============================================================
 
         function clearSearch() {
-            document.getElementById('orderSearch').value = '';
-            document.getElementById('dateFrom').value = '';
-            document.getElementById('dateTo').value = '';
+            var orderSearch = document.getElementById('orderSearch');
+            var dateFrom = document.getElementById('dateFrom');
+            var dateTo = document.getElementById('dateTo');
+
+            if (orderSearch) orderSearch.value = '';
+            if (dateFrom) dateFrom.value = '';
+            if (dateTo) dateTo.value = '';
             applyViewFilter();
-            showAlert('Search cleared.', 'info');
+
+            if (typeof showAlert === 'function') showAlert('Search cleared.', 'info');
         }
 
         // ============================================================
@@ -248,7 +303,8 @@
         // ============================================================
 
         function updateResultCount() {
-            document.getElementById('resultCount').textContent = filteredOrders.length + ' order(s) found';
+            var count = document.getElementById('resultCount');
+            if (count) count.textContent = filteredOrders.length + ' order(s) found';
         }
 
         // ============================================================
@@ -257,6 +313,8 @@
 
         function renderOrderList(orders) {
             var container = document.getElementById('orderListContainer');
+
+            if (!container) return;
 
             if (orders.length === 0) {
                 container.innerHTML = '<p class="text-muted">No orders found.</p>';
@@ -323,6 +381,8 @@
         function renderOrderDetails(order) {
             var container = document.getElementById('orderDetailsContainer');
 
+            if (!container) return;
+
             var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
             var statusColor = getStatusColor(order.status);
 
@@ -343,7 +403,7 @@
 
             var statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
 
-            html = `
+            var html = `
                 <div style="margin-bottom:15px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
                         <h3 style="font-weight:normal;font-size:18px;">${order.orderId}</h3>
