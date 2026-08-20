@@ -8,6 +8,7 @@
 </head>
 <body>
 
+    <!-- HEADER PLACEHOLDER -->
     <div id="header"></div>
 
     <!-- ===== PAGE CONTENT ===== -->
@@ -46,25 +47,54 @@
         </div>
     </div>
 
+    <!-- FOOTER PLACEHOLDER -->
     <div id="footer"></div>
 
     <script>
         // ============================================================
-        // LOAD HEADER AND FOOTER
+        // LOAD HEADER AND FOOTER, THEN INITIALIZE
         // ============================================================
 
+        var headerLoaded = false;
+        var footerLoaded = false;
+
+        function checkReady() {
+            if (headerLoaded && footerLoaded) {
+                var script = document.createElement('script');
+                script.src = 'script.js';
+                script.onload = function() {
+                    if (typeof initPage === 'function') {
+                        initPage();
+                    }
+                };
+                document.body.appendChild(script);
+            }
+        }
+
         fetch('header.html')
-            .then(function(r) { return r.text(); })
+            .then(function(response) { return response.text(); })
             .then(function(html) {
                 document.getElementById('header').innerHTML = html;
-                return fetch('footer.html');
-            })
-            .then(function(r) { return r.text(); })
-            .then(function(html) {
-                document.getElementById('footer').innerHTML = html;
+                headerLoaded = true;
+                checkReady();
             })
             .catch(function(error) {
-                console.error('Error loading header/footer:', error);
+                console.error('Error loading header:', error);
+                headerLoaded = true;
+                checkReady();
+            });
+
+        fetch('footer.html')
+            .then(function(response) { return response.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+                footerLoaded = true;
+                checkReady();
+            })
+            .catch(function(error) {
+                console.error('Error loading footer:', error);
+                footerLoaded = true;
+                checkReady();
             });
 
         // ============================================================
@@ -80,18 +110,35 @@
             if (!checkAuth()) return;
 
             currentUser = getCurrentUser();
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + currentUser.fullName;
-            document.getElementById('roleDisplay').textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
+            var userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = 'Welcome, ' + currentUser.fullName;
+
+            var roleDisplay = document.getElementById('roleDisplay');
+            if (roleDisplay) roleDisplay.textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
+
+            if (typeof initNav === 'function') initNav();
 
             if (!currentUser.isAdmin) {
-                document.getElementById('usersContainer').innerHTML = '<p>Admin access required.</p>';
-                document.getElementById('userListSection').style.display = 'block';
+                var container = document.getElementById('usersContainer');
+                if (container) container.innerHTML = '<p>Admin access required.</p>';
+                var section = document.getElementById('userListSection');
+                if (section) section.style.display = 'block';
                 return;
             }
 
-            initNav();
-            showLoading('Loading users...');
+            if (typeof showLoading === 'function') showLoading('Loading users...');
             loadAllUsers();
+
+            // Set up search enter key
+            var userSearch = document.getElementById('userSearch');
+            if (userSearch) {
+                userSearch.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        searchUsers();
+                    }
+                });
+            }
         }
 
         async function loadAllUsers() {
@@ -100,7 +147,7 @@
                     '?action=getusers&adminUsername=' + encodeURIComponent('admin'));
                 var results = await response.json();
 
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
 
                 if (!results.success && results.message) {
                     allUsers = [];
@@ -110,7 +157,7 @@
                 allUsers = results;
 
             } catch (error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
                 allUsers = [];
             }
@@ -121,14 +168,16 @@
             var section = document.getElementById('userListSection');
             var count = document.getElementById('resultCount');
 
+            if (!container) return;
+
             if (users.length === 0) {
                 container.innerHTML = '<p class="text-muted">No users found matching your search.</p>';
-                count.textContent = '0 users found';
-                section.style.display = 'block';
+                if (count) count.textContent = '0 users found';
+                if (section) section.style.display = 'block';
                 return;
             }
 
-            count.textContent = users.length + ' user(s) found';
+            if (count) count.textContent = users.length + ' user(s) found';
 
             var html = '<table>';
             html += '<tr>';
@@ -196,7 +245,7 @@
 
             html += '</table>';
             container.innerHTML = html;
-            section.style.display = 'block';
+            if (section) section.style.display = 'block';
         }
 
         function searchUsers() {
@@ -208,19 +257,19 @@
             var searchUsername = document.getElementById('searchUsername').checked;
 
             if (!query) {
-                showAlert('Please enter a search term.', 'error');
+                if (typeof showAlert === 'function') showAlert('Please enter a search term.', 'error');
                 return;
             }
 
             if (!searchId && !searchName && !searchEmail && !searchDept && !searchUsername) {
-                showAlert('Please select at least one search field.', 'error');
+                if (typeof showAlert === 'function') showAlert('Please select at least one search field.', 'error');
                 return;
             }
 
             if (allUsers.length === 0) {
-                showLoading('Searching...');
+                if (typeof showLoading === 'function') showLoading('Searching...');
                 loadAllUsers().then(function() {
-                    hideLoading();
+                    if (typeof hideLoading === 'function') hideLoading();
                     performSearch(query, searchId, searchName, searchEmail, searchDept, searchUsername);
                 });
                 return;
@@ -247,15 +296,16 @@
         }
 
         function clearSearchBar() {
-            document.getElementById('userSearch').value = '';
-            document.getElementById('userSearch').focus();
+            var userSearch = document.getElementById('userSearch');
+            if (userSearch) userSearch.value = '';
+            if (userSearch) userSearch.focus();
         }
 
         function showAllUsers() {
             if (allUsers.length === 0) {
-                showLoading('Loading users...');
+                if (typeof showLoading === 'function') showLoading('Loading users...');
                 loadAllUsers().then(function() {
-                    hideLoading();
+                    if (typeof hideLoading === 'function') hideLoading();
                     isShowingAll = true;
                     filteredUsers = allUsers;
                     renderUsers(allUsers);
@@ -269,10 +319,15 @@
         }
 
         function closeUserList() {
-            document.getElementById('userListSection').style.display = 'none';
-            document.getElementById('usersContainer').innerHTML = '<p class="text-muted">No users found.</p>';
-            document.getElementById('resultCount').textContent = '';
-            document.getElementById('userSearch').value = '';
+            var section = document.getElementById('userListSection');
+            var container = document.getElementById('usersContainer');
+            var count = document.getElementById('resultCount');
+            var search = document.getElementById('userSearch');
+
+            if (section) section.style.display = 'none';
+            if (container) container.innerHTML = '<p class="text-muted">No users found.</p>';
+            if (count) count.textContent = '';
+            if (search) search.value = '';
             isShowingAll = false;
         }
 
@@ -286,11 +341,11 @@
             var department = document.getElementById('dp-' + index).value.trim();
 
             if (!firstName || !lastName || !email || !department) {
-                showAlert('All fields are required.', 'error');
+                if (typeof showAlert === 'function') showAlert('All fields are required.', 'error');
                 return;
             }
 
-            showLoading('Saving...');
+            if (typeof showLoading === 'function') showLoading('Saving...');
             adminUpdateUser(user.username, firstName, lastName, email, department);
         }
 
@@ -306,33 +361,33 @@
                     '&department=' + encodeURIComponent(department));
 
                 var result = await response.json();
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
 
                 if (result.success) {
-                    showAlert('User ' + username + ' updated successfully!', 'success');
+                    if (typeof showAlert === 'function') showAlert('User ' + username + ' updated successfully!', 'success');
                     await loadAllUsers();
                     refreshDisplay();
                 } else {
-                    showAlert(result.message || 'Error updating user.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error updating user.', 'error');
                 }
 
             } catch (error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             }
         }
 
         function saveAllUsers() {
             var visibleInputs = document.querySelectorAll('#usersContainer input');
             if (visibleInputs.length === 0) {
-                showAlert('No editable users found.', 'info');
+                if (typeof showAlert === 'function') showAlert('No editable users found.', 'info');
                 return;
             }
 
             if (!confirm('Save all changes for all displayed users?')) return;
 
-            showLoading('Saving all changes...');
+            if (typeof showLoading === 'function') showLoading('Saving all changes...');
 
             var usersToUpdate = [];
             var displayUsers = isShowingAll ? allUsers : filteredUsers;
@@ -347,7 +402,7 @@
                 var department = document.getElementById('dp-' + index).value.trim();
 
                 if (!firstName || !lastName || !email || !department) {
-                    showAlert('All fields are required for ' + user.username, 'error');
+                    if (typeof showAlert === 'function') showAlert('All fields are required for ' + user.username, 'error');
                     return;
                 }
 
@@ -361,8 +416,8 @@
             });
 
             if (usersToUpdate.length === 0) {
-                hideLoading();
-                showAlert('No changes to save.', 'info');
+                if (typeof hideLoading === 'function') hideLoading();
+                if (typeof showAlert === 'function') showAlert('No changes to save.', 'info');
                 return;
             }
 
@@ -385,11 +440,11 @@
                         errors.push(user.username + ': ' + result.message);
                     }
                     if (completed === usersToUpdate.length) {
-                        hideLoading();
+                        if (typeof hideLoading === 'function') hideLoading();
                         if (errors.length === 0) {
-                            showAlert('All users updated successfully!', 'success');
+                            if (typeof showAlert === 'function') showAlert('All users updated successfully!', 'success');
                         } else {
-                            showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
+                            if (typeof showAlert === 'function') showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
                         }
                         loadAllUsers().then(function() {
                             refreshDisplay();
@@ -400,8 +455,8 @@
                     completed++;
                     errors.push(user.username + ': ' + error.message);
                     if (completed === usersToUpdate.length) {
-                        hideLoading();
-                        showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
+                        if (typeof hideLoading === 'function') hideLoading();
+                        if (typeof showAlert === 'function') showAlert('Some errors occurred:\n' + errors.join('\n'), 'error');
                         loadAllUsers().then(function() {
                             refreshDisplay();
                         });
@@ -418,7 +473,8 @@
                 if (query) {
                     searchUsers();
                 } else {
-                    document.getElementById('userListSection').style.display = 'none';
+                    var section = document.getElementById('userListSection');
+                    if (section) section.style.display = 'none';
                 }
             }
         }
@@ -428,7 +484,7 @@
                 return;
             }
 
-            showLoading('Deleting user...');
+            if (typeof showLoading === 'function') showLoading('Deleting user...');
 
             fetch(API_URL +
                 '?action=deleteuser' +
@@ -436,20 +492,20 @@
                 '&adminUsername=' + encodeURIComponent('admin'))
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    showAlert(result.message, 'success');
+                    if (typeof showAlert === 'function') showAlert(result.message, 'success');
                     loadAllUsers().then(function() {
                         refreshDisplay();
                     });
                 } else {
-                    showAlert(result.message || 'Error deleting user.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error deleting user.', 'error');
                 }
             })
             .catch(function(error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
         }
 
@@ -462,26 +518,26 @@
                 return;
             }
 
-            showLoading('Deleting all users...');
+            if (typeof showLoading === 'function') showLoading('Deleting all users...');
 
             fetch(API_URL +
                 '?action=deleteallusers&adminUsername=' + encodeURIComponent('admin'))
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    showAlert(result.message, 'success');
+                    if (typeof showAlert === 'function') showAlert(result.message, 'success');
                     loadAllUsers().then(function() {
                         refreshDisplay();
                     });
                 } else {
-                    showAlert(result.message || 'Error deleting users.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error deleting users.', 'error');
                 }
             })
             .catch(function(error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
         }
     </script>
