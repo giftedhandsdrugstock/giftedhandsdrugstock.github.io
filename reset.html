@@ -8,114 +8,97 @@
 </head>
 <body>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-            <div class="loading-spinner"></div>
-            <span class="loading-text" id="loadingText">Loading...</span>
+    <div id="header"></div>
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <div class="section-box">
+        <h2>Reset Options</h2>
+        <p class="text-muted" style="margin-bottom:15px;">Select what you want to reset. All actions require confirmation.</p>
+
+        <!-- Reset Users -->
+        <div style="border:1px solid #eee;padding:15px;margin-bottom:15px;border-radius:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <div>
+                    <strong>Reset Users</strong>
+                    <div style="font-size:13px;color:#888;">Deletes all users except admin. Admin account is protected.</div>
+                </div>
+                <button class="btn" onclick="resetUsers()" style="background:#e53e3e;color:white;">🗑️ Reset Users</button>
+            </div>
+        </div>
+
+        <!-- Reset Orders -->
+        <div style="border:1px solid #eee;padding:15px;margin-bottom:15px;border-radius:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <div>
+                    <strong>Reset Orders</strong>
+                    <div style="font-size:13px;color:#888;">Deletes ALL orders from the system. This cannot be undone.</div>
+                </div>
+                <button class="btn" onclick="resetOrders()" style="background:#e53e3e;color:white;">🗑️ Reset Orders</button>
+            </div>
+        </div>
+
+        <!-- Reset Dummy Master -->
+        <div style="border:1px solid #eee;padding:15px;margin-bottom:15px;border-radius:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <div>
+                    <strong>Reset Dummy Master</strong>
+                    <div style="font-size:13px;color:#888;">Reloads Dummy Master from Online Master. Clears all transactions.</div>
+                </div>
+                <button class="btn" onclick="resetDummyMaster()" style="background:#d69e2e;color:white;">🔄 Reset Dummy Master</button>
+            </div>
+        </div>
+
+        <!-- Reset Everything -->
+        <div style="border:2px solid #c00;padding:15px;border-radius:4px;background:#fff5f5;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <div>
+                    <strong style="color:#c00;">⚠️ Reset Everything</strong>
+                    <div style="font-size:13px;color:#888;">Resets Users (except admin), Orders, and Dummy Master all at once.</div>
+                </div>
+                <button class="btn" onclick="resetEverything()" style="background:#c00;color:white;font-weight:bold;">⚠️ Reset Everything</button>
+            </div>
         </div>
     </div>
 
-    <div id="app">
-
-        <div class="header">
-            <h1>Reset - Admin</h1>
-            <div class="header-right">
-                <span id="userDisplay"></span>
-                <span id="roleDisplay" class="text-muted"></span>
-                <a href="search.html">Search</a>
-                <a href="orders.html">Orders</a>
-                <a href="myorders.html">My Orders</a>
-                <a href="approve.html">Approve</a>
-                <a href="profile.html">Profile</a>
-                <a href="users.html" id="usersLink" style="display:none;">Users</a>
-                <button class="btn-logout" onclick="logout()">Logout</button>
-            </div>
+    <!-- RESET LOG -->
+    <div class="section-box">
+        <h2>Reset Log</h2>
+        <div id="resetLog" style="font-size:13px;color:#555;max-height:200px;overflow-y:auto;background:#f7fafc;padding:10px;border-radius:4px;">
+            <p class="text-muted">No resets performed yet.</p>
         </div>
-
-        <div id="alert" class="alert"></div>
-
-        <!-- ============================================================
-        RESET OPTIONS
-        ============================================================ -->
-        <div class="section-box">
-            <h2>Reset Options</h2>
-            <p class="text-muted" style="margin-bottom:15px;">Select what you want to reset. All actions require confirmation.</p>
-
-            <!-- Reset Users -->
-            <div style="border:1px solid #eee;padding:15px;margin-bottom:15px;border-radius:4px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                    <div>
-                        <strong>Reset Users</strong>
-                        <div style="font-size:13px;color:#888;">Deletes all users except admin. Admin account is protected.</div>
-                    </div>
-                    <button class="btn" onclick="resetUsers()" style="background:#e53e3e;color:white;">🗑️ Reset Users</button>
-                </div>
-            </div>
-
-            <!-- Reset Orders -->
-            <div style="border:1px solid #eee;padding:15px;margin-bottom:15px;border-radius:4px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                    <div>
-                        <strong>Reset Orders</strong>
-                        <div style="font-size:13px;color:#888;">Deletes ALL orders from the system. This cannot be undone.</div>
-                    </div>
-                    <button class="btn" onclick="resetOrders()" style="background:#e53e3e;color:white;">🗑️ Reset Orders</button>
-                </div>
-            </div>
-
-            <!-- Reset Dummy Master -->
-            <div style="border:1px solid #eee;padding:15px;margin-bottom:15px;border-radius:4px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                    <div>
-                        <strong>Reset Dummy Master</strong>
-                        <div style="font-size:13px;color:#888;">Reloads Dummy Master from Online Master. Clears all transactions.</div>
-                    </div>
-                    <button class="btn" onclick="resetDummyMaster()" style="background:#d69e2e;color:white;">🔄 Reset Dummy Master</button>
-                </div>
-            </div>
-
-            <!-- Reset Everything -->
-            <div style="border:2px solid #c00;padding:15px;border-radius:4px;background:#fff5f5;">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                    <div>
-                        <strong style="color:#c00;">⚠️ Reset Everything</strong>
-                        <div style="font-size:13px;color:#888;">Resets Users (except admin), Orders, and Dummy Master all at once.</div>
-                    </div>
-                    <button class="btn" onclick="resetEverything()" style="background:#c00;color:white;font-weight:bold;">⚠️ Reset Everything</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================
-        RESULT LOG
-        ============================================================ -->
-        <div class="section-box">
-            <h2>Reset Log</h2>
-            <div id="resetLog" style="font-size:13px;color:#555;max-height:200px;overflow-y:auto;background:#f7fafc;padding:10px;border-radius:4px;">
-                <p class="text-muted">No resets performed yet.</p>
-            </div>
-        </div>
-
     </div>
 
-    <script src="script.js"></script>
+    <div id="footer"></div>
+
     <script>
+        // ============================================================
+        // LOAD HEADER AND FOOTER
+        // ============================================================
+
+        fetch('header.html')
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                document.getElementById('header').innerHTML = html;
+                return fetch('footer.html');
+            })
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+            })
+            .catch(function(error) {
+                console.error('Error loading header/footer:', error);
+            });
+
         // ============================================================
         // RESET.HTML SPECIFIC
         // ============================================================
 
         var logEntries = [];
 
-        // ============================================================
-        // INIT
-        // ============================================================
-
-        function initReset() {
+        function initPage() {
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
-
             document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
             document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
 
@@ -126,12 +109,8 @@
                 return;
             }
 
-            document.getElementById('usersLink').style.display = 'inline';
+            initNav();
         }
-
-        // ============================================================
-        // ADD TO LOG
-        // ============================================================
 
         function addToLog(message, type) {
             var timestamp = new Date().toLocaleString();
@@ -139,7 +118,6 @@
             logEntries.unshift(entry);
 
             var container = document.getElementById('resetLog');
-            var color = type === 'success' ? '#38a169' : (type === 'error' ? '#e53e3e' : '#d69e2e');
 
             if (logEntries.length === 0) {
                 container.innerHTML = '<p class="text-muted">No resets performed yet.</p>';
@@ -153,10 +131,6 @@
 
             container.innerHTML = html;
         }
-
-        // ============================================================
-        // RESET USERS
-        // ============================================================
 
         function resetUsers() {
             if (!confirm('⚠️ Delete ALL users except admin? This cannot be undone.')) return;
@@ -187,10 +161,6 @@
             });
         }
 
-        // ============================================================
-        // RESET ORDERS
-        // ============================================================
-
         function resetOrders() {
             if (!confirm('⚠️ Delete ALL orders? This cannot be undone.')) return;
             if (!confirm('Are you absolutely sure? ALL orders will be permanently deleted.')) return;
@@ -219,10 +189,6 @@
                 addToLog('❌ Connection error: ' + error.message, 'error');
             });
         }
-
-        // ============================================================
-        // RESET DUMMY MASTER
-        // ============================================================
 
         function resetDummyMaster() {
             if (!confirm('⚠️ Reload Dummy Master from Online Master? This will clear all transactions.')) return;
@@ -253,10 +219,6 @@
             });
         }
 
-        // ============================================================
-        // RESET EVERYTHING
-        // ============================================================
-
         function resetEverything() {
             if (!confirm('⚠️⚠️ RESET EVERYTHING? This will delete ALL users (except admin), ALL orders, and reset Dummy Master.')) return;
             if (!confirm('Are you absolutely sure? This action CANNOT be undone.')) return;
@@ -286,14 +248,6 @@
                 addToLog('❌ Connection error: ' + error.message, 'error');
             });
         }
-
-        // ============================================================
-        // INIT
-        // ============================================================
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initReset();
-        });
     </script>
 
 </body>
