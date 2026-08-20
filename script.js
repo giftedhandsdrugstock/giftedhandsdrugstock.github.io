@@ -3,10 +3,10 @@
 // ============================================================
 
 // ============================================================
-// API URL
+// API URL - UPDATE THIS
 // ============================================================
 
-var API_URL = "https://script.google.com/macros/s/AKfycbyybdqQbHlOLLp6mUHq36_Bq4sXRjEpO7NgxvSHU9nPew7CD51YMaO8BUmHpJywF7lG/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbxj00eyfQIzUlGqxaw86tQgzxNSxKoKzvcTyMNWYoDnPFBZCrQYvDrUCpBJx2sH4Nak/exec";
 
 // ============================================================
 // AUTH
@@ -77,7 +77,18 @@ function showAlert(message, type) {
 
 function showLoading(message) {
     var overlay = document.getElementById('loadingOverlay');
-    if (!overlay) return;
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                <div class="loading-spinner"></div>
+                <span class="loading-text" id="loadingText">Loading...</span>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
 
     var text = document.getElementById('loadingText');
     if (text) text.textContent = message || 'Loading...';
