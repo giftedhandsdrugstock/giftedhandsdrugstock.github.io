@@ -380,12 +380,34 @@
 
         function renderOrderDetails(order) {
             var container = document.getElementById('orderDetailsContainer');
-
+        
             if (!container) return;
-
+        
             var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
             var statusColor = getStatusColor(order.status);
-
+        
+            // ============================================================
+            // PARSE APPROVED BY FROM NOTES
+            // ============================================================
+        
+            var approvedBy = 'Pending';
+            var notesDisplay = order.notes || '';
+        
+            if (order.notes) {
+                // Look for [Approved By: xxx] pattern
+                var match = order.notes.match(/\[Approved By: ([^\]]+)\]/);
+                if (match) {
+                    approvedBy = match[1];
+                }
+                // Clean up notes for display (remove the Approved By tag)
+                notesDisplay = order.notes.replace(/\[Approved By: [^\]]+\]/, '').trim();
+                if (notesDisplay === '') notesDisplay = 'No notes';
+            }
+        
+            // ============================================================
+            // RENDER ITEMS
+            // ============================================================
+        
             var itemsHtml = '';
             if (order.items && order.items.length > 0) {
                 itemsHtml = '<table style="width:100%;margin-top:10px;">';
@@ -400,9 +422,9 @@
             } else {
                 itemsHtml = '<p class="text-muted">No items in this order.</p>';
             }
-
+        
             var statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
-
+        
             var html = `
                 <div style="margin-bottom:15px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
@@ -413,8 +435,8 @@
                         <div><strong>Date:</strong> ${date}</div>
                         <div><strong>Department:</strong> ${order.department || 'N/A'}</div>
                         <div><strong>Requested By:</strong> ${order.username || 'Unknown'}</div>
-                        <div><strong>Approved By:</strong> ${order.approvedBy || 'Pending'}</div>
-                        ${order.notes ? `<div><strong>Notes:</strong> ${order.notes}</div>` : ''}
+                        <div><strong>Approved By:</strong> ${approvedBy}</div>
+                        ${notesDisplay ? `<div><strong>Notes:</strong> ${notesDisplay}</div>` : ''}
                     </div>
                 </div>
                 <hr style="border:none;border-top:1px solid #eee;">
@@ -423,7 +445,7 @@
                     ${itemsHtml}
                 </div>
             `;
-
+        
             container.innerHTML = html;
         }
 
