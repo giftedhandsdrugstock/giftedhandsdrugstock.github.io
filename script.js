@@ -3,10 +3,11 @@
 // ============================================================
 
 // ============================================================
-// API URL - UPDATE THIS
+// API URL
 // ============================================================
 
-var API_URL = "https://script.google.com/macros/s/AKfycbxj00eyfQIzUlGqxaw86tQgzxNSxKoKzvcTyMNWYoDnPFBZCrQYvDrUCpBJx2sH4Nak/exec";
+var API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+
 // ============================================================
 // AUTH
 // ============================================================
@@ -68,6 +69,39 @@ function showAlert(message, type) {
     alert._timeout = setTimeout(function() {
         alert.classList.remove('show');
     }, 5000);
+}
+
+// ============================================================
+// LOADING INDICATOR
+// ============================================================
+
+function showLoading(message) {
+    var overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
+
+    var text = document.getElementById('loadingText');
+    if (text) text.textContent = message || 'Loading...';
+    overlay.classList.add('show');
+}
+
+function hideLoading() {
+    var overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.remove('show');
+    }
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function initNav() {
+    var user = getCurrentUser();
+    var isAdmin = user && user.isAdmin;
+
+    document.querySelectorAll('.admin-link').forEach(function(link) {
+        link.style.display = isAdmin ? 'inline' : 'none';
+    });
 }
 
 // ============================================================
@@ -140,67 +174,4 @@ function formatDate(dateString) {
 function escapeHtml(text) {
     if (!text) return '';
     return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-// ============================================================
-// LOADING INDICATOR
-// ============================================================
-
-function showLoading(message) {
-    var overlay = document.getElementById('loadingOverlay');
-    if (!overlay) {
-        // Create loading overlay if it doesn't exist
-        overlay = document.createElement('div');
-        overlay.id = 'loadingOverlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                <div class="loading-spinner"></div>
-                <span class="loading-text" id="loadingText">Loading...</span>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    }
-    
-    var text = document.getElementById('loadingText');
-    if (text) text.textContent = message || 'Loading...';
-    overlay.classList.add('show');
-}
-
-function hideLoading() {
-    var overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.remove('show');
-    }
-}
-
-// ============================================================
-// LOADING INDICATOR
-// ============================================================
-
-function showLoading(message) {
-    var overlay = document.getElementById('loadingOverlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'loadingOverlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                <div class="loading-spinner"></div>
-                <span class="loading-text" id="loadingText">Loading...</span>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    }
-
-    var text = document.getElementById('loadingText');
-    if (text) text.textContent = message || 'Loading...';
-    overlay.classList.add('show');
-}
-
-function hideLoading() {
-    var overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.remove('show');
-    }
 }
