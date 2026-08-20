@@ -308,30 +308,92 @@
 
         function renderOrderDetails(order) {
             var container = document.getElementById('orderDetailsContainer');
-
+        
             if (!container) return;
-
+        
             var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
-
+        
+            // ============================================================
+            // FETCH CURRENT STOCK FROM DUMMY MASTER
+            // ============================================================
+        
             var itemsHtml = '';
             if (order.items && order.items.length > 0) {
                 itemsHtml = '<div style="margin-top:10px;">';
-                order.items.forEach(function(item, index) {
-                    var itemId = 'item-' + order.orderId + '-' + index;
-                    itemsHtml += `
-                        <div id="${itemId}" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;">
-                            <span style="flex:1;font-weight:500;">${item.drug}</span>
-                            <span style="font-size:13px;color:#888;">Available: ${item.available || 'N/A'}</span>
-                            <input type="number" id="qty-${order.orderId}-${index}" value="${item.quantity}" min="1" max="${item.available || 999}" style="width:60px;padding:4px 6px;border:1px solid #ccc;text-align:center;">
-                            <button onclick="removeItem('${order.orderId}', ${index})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:16px;padding:0 5px;">✕</button>
-                        </div>
-                    `;
+        
+                // Fetch current stock for each item
+                var stockPromises = order.items.map(function(item) {
+                    return fetch(API_URL + '?search=' + encodeURIComponent(item.drug))
+                        .then(function(response) { return response.json(); })
+                        .then(function(result) {
+                            var currentStock = 0;
+                            if (result && result.length > 0) {
+                                currentStock = parseFloat(result[0][2]) || 0;
+                            }
+                            return {
+                                drug: item.drug,
+                                quantity: item.quantity,
+                                available: currentStock
+                            };
+                        })
+                        .catch(function() {
+                            return {
+                                drug: item.drug,
+                                quantity: item.quantity,
+                                available: 0
+                            };
+                        });
                 });
-                itemsHtml += '</div>';
+        
+                Promise.all(stockPromises).then(function(itemsWithStock) {
+                    // Re-render with current stock
+                    var html = '<div style="margin-top:10px;">';
+                    itemsWithStock.forEach(function(item, index) {
+                        var isOverStock = item.quantity > item.available;
+                        var warningColor = isOverStock ? '#c00' : '#555';
+        
+                        html += `
+                            <div id="item-${order.orderId}-${index}" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;">
+                                <span style="flex:1;font-weight:500;">${item.drug}</span>
+                                <span style="font-size:13px;color:${warningColor};">
+                                    Available: ${item.available}
+                                    ${isOverStock ? '⚠️ Insufficient stock' : '✅ OK'}
+                                </span>
+                                <input type="number" id="qty-${order.orderId}-${index}" 
+                                       value="${item.quantity}" min="1" max="${item.available || 1}" 
+                                       style="width:60px;padding:4px 6px;border:1px solid #ccc;text-align:center;">
+                                <button onclick="removeItem('${order.orderId}', ${index})" 
+                                        style="background:none;border:none;color:#c00;cursor:pointer;font-size:16px;padding:0 5px;">✕</button>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+        
+                    // Find the items container and replace
+                    var itemsContainer = container.querySelector('.items-container');
+                    if (itemsContainer) {
+                        itemsContainer.innerHTML = html;
+                    } else {
+                        // If container doesn't exist, append after the items label
+                        var label = container.querySelector('hr');
+                        if (label) {
+                            var div = document.createElement('div');
+                            div.className = 'items-container';
+                            div.innerHTML = html;
+                            label.parentNode.insertBefore(div, label.nextSibling);
+                        }
+                    }
+                });
+        
+                itemsHtml = '<div class="items-container"><p class="text-muted">Loading current stock...</p></div>';
             } else {
-                itemsHtml = '<p class="text-muted">No items in this order.</p>';
+                itemsHtml = '<div class="items-container"><p class="text-muted">No items in this order.</p></div>';
             }
 
+            // ============================================================
+            // BUILD THE REST OF THE DETAILS
+            // ============================================================
+        
             var notesHtml = '';
             if (order.notes) {
                 notesHtml = `
@@ -341,14 +403,14 @@
                     </div>
                 `;
             }
-
+        
             var replyHtml = `
                 <div style="margin-top:10px;">
                     <label style="font-weight:500;font-size:14px;">💬 Reply to User:</label>
                     <textarea id="replyNote-${order.orderId}" placeholder="Add a reply to the user (optional)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;margin-top:4px;"></textarea>
                 </div>
             `;
-
+        
             var html = `
                 <div style="margin-bottom:15px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
@@ -373,10 +435,10 @@
                     <button class="btn" onclick="declineOrder('${order.orderId}')" style="background:#e53e3e;color:white;border:none;">❌ Decline</button>
                 </div>
             `;
-
+        
             container.innerHTML = html;
         }
-
+        
         function removeItem(orderId, index) {
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (order && order.items && order.items.length > index) {
@@ -399,7 +461,6 @@
                 return;
             }
         
-            // Get updated quantities from the detail view
             var items = [];
             var hasError = false;
         
@@ -407,16 +468,8 @@
                 var qtyInput = document.getElementById('qty-' + orderId + '-' + index);
                 var qty = qtyInput ? parseInt(qtyInput.value) : item.quantity;
         
-                // Validate quantity
                 if (qty < 1) {
                     if (typeof showAlert === 'function') showAlert('Quantity for ' + item.drug + ' must be at least 1.', 'error');
-                    hasError = true;
-                    return;
-                }
-        
-                // Check if available stock is sufficient
-                if (qty > (item.available || 0)) {
-                    if (typeof showAlert === 'function') showAlert('Insufficient stock for ' + item.drug + '. Available: ' + (item.available || 0), 'error');
                     hasError = true;
                     return;
                 }
@@ -432,7 +485,6 @@
                 return;
             }
         
-            // Get reply note
             var replyNote = document.getElementById('replyNote-' + orderId);
             var note = replyNote ? replyNote.value.trim() : '';
         
@@ -449,7 +501,6 @@
                 if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
                     if (typeof showAlert === 'function') showAlert('Order approved successfully! Stock has been deducted.', 'success');
-                    // Remove from pending lists
                     pendingOrders = pendingOrders.filter(function(o) { return o.orderId !== orderId; });
                     filteredOrders = filteredOrders.filter(function(o) { return o.orderId !== orderId; });
                     closeOrderDetails();
