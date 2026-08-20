@@ -8,77 +8,98 @@
 </head>
 <body>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-            <div class="loading-spinner"></div>
-            <span class="loading-text" id="loadingText">Loading...</span>
+    <!-- HEADER PLACEHOLDER -->
+    <div id="header"></div>
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <div class="section-box">
+        <div class="search-box">
+            <input type="text" id="searchBox" placeholder="Search for a drug...">
+        </div>
+
+        <div id="results">
+            <p class="text-muted">Type a drug name and press Enter.</p>
         </div>
     </div>
 
-    <div id="app">
+    <!-- FOOTER PLACEHOLDER -->
+    <div id="footer"></div>
 
-        <div class="header">
-            <h1>Drug Stock Search</h1>
-            <div class="header-right">
-                <span id="userDisplay"></span>
-                <span id="roleDisplay" class="text-muted"></span>
-                <span id="deptDisplay" class="text-muted"></span>
-                <a href="search.html">Search</a>
-                <a href="orders.html">Orders</a>
-                <a href="myorders.html">My Orders</a>
-                <a href="profile.html">Profile</a>
-                <a href="approve.html" class="admin-link" style="display:none;">Approve</a>
-                <a href="reset.html" class="admin-link" style="display:none;">Reset</a>
-                <a href="users.html" class="admin-link" style="display:none;">Users</a>
-                <button class="btn-logout" onclick="logout()">Logout</button>
-            </div>
-        </div>
-
-        <div id="alert" class="alert"></div>
-
-        <!-- PAGE CONTENT -->
-        <div class="section-box">
-            <div class="search-box">
-                <input type="text" id="searchBox" placeholder="Search for a drug...">
-            </div>
-
-            <div id="results">
-                <p class="text-muted">Type a drug name and press Enter.</p>
-            </div>
-        </div>
-
-    </div>
-
-    <script src="script.js"></script>
     <script>
         // ============================================================
-        // PAGE INIT
+        // LOAD HEADER AND FOOTER, THEN INITIALIZE
+        // ============================================================
+
+        var headerLoaded = false;
+        var footerLoaded = false;
+
+        function checkReady() {
+            if (headerLoaded && footerLoaded) {
+                var script = document.createElement('script');
+                script.src = 'script.js';
+                script.onload = function() {
+                    if (typeof initPage === 'function') {
+                        initPage();
+                    }
+                };
+                document.body.appendChild(script);
+            }
+        }
+
+        fetch('header.html')
+            .then(function(response) { return response.text(); })
+            .then(function(html) {
+                document.getElementById('header').innerHTML = html;
+                headerLoaded = true;
+                checkReady();
+            })
+            .catch(function(error) {
+                console.error('Error loading header:', error);
+                headerLoaded = true;
+                checkReady();
+            });
+
+        fetch('footer.html')
+            .then(function(response) { return response.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+                footerLoaded = true;
+                checkReady();
+            })
+            .catch(function(error) {
+                console.error('Error loading footer:', error);
+                footerLoaded = true;
+                checkReady();
+            });
+
+        // ============================================================
+        // SEARCH.HTML SPECIFIC
         // ============================================================
 
         function initPage() {
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
-            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
-            document.getElementById('deptDisplay').textContent = 'Department: ' + user.department;
+            var userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = 'Welcome, ' + user.fullName;
 
-            initNav();
+            var roleDisplay = document.getElementById('roleDisplay');
+            if (roleDisplay) roleDisplay.textContent = user.isAdmin ? '(Admin)' : '(User)';
+
+            var deptDisplay = document.getElementById('deptDisplay');
+            if (deptDisplay) deptDisplay.textContent = 'Department: ' + user.department;
+
+            if (typeof initNav === 'function') initNav();
 
             var searchBox = document.getElementById('searchBox');
             if (searchBox) {
-                // Remove any existing listeners by cloning
-                var newSearchBox = searchBox.cloneNode(true);
-                searchBox.parentNode.replaceChild(newSearchBox, searchBox);
-                
-                newSearchBox.addEventListener('keydown', function(event) {
+                searchBox.addEventListener('keydown', function(event) {
                     if (event.key === 'Enter') {
                         event.preventDefault();
                         searchDrugs();
                     }
                 });
-                newSearchBox.focus();
+                searchBox.focus();
             }
         }
 
@@ -87,13 +108,7 @@
         // ============================================================
 
         async function searchDrugs() {
-            var searchBox = document.getElementById('searchBox');
-            if (!searchBox) {
-                console.error('Search box not found');
-                return;
-            }
-
-            var query = searchBox.value.trim();
+            var query = document.getElementById('searchBox').value.trim();
 
             if (!query) {
                 document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter.</p>';
@@ -102,12 +117,14 @@
 
             var resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '<p>Searching...</p>';
-            showLoading('Searching for: ' + query);
+
+            if (typeof showLoading === 'function') showLoading('Searching for: ' + query);
 
             try {
                 var response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
                 var results = await response.json();
-                hideLoading();
+
+                if (typeof hideLoading === 'function') hideLoading();
 
                 if (results.length === 0) {
                     resultsDiv.innerHTML = '<p>No matching drugs found.</p>';
@@ -127,19 +144,11 @@
                 resultsDiv.innerHTML = html;
 
             } catch (error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Search error:', error);
                 resultsDiv.innerHTML = '<p>Unable to retrieve stock information.</p>';
             }
         }
-
-        // ============================================================
-        // INIT
-        // ============================================================
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initPage();
-        });
     </script>
 
 </body>
