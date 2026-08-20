@@ -8,64 +8,63 @@
 </head>
 <body>
 
-    <div id="header"></div>
-
-    <!-- ===== PAGE CONTENT ===== -->
-    <div class="section-box">
-        <div class="search-box">
-            <input type="text" id="searchBox" placeholder="Search for a drug...">
-        </div>
-
-        <div id="results">
-            <p class="text-muted">Type a drug name and press Enter.</p>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+            <div class="loading-spinner"></div>
+            <span class="loading-text" id="loadingText">Loading...</span>
         </div>
     </div>
 
-    <div id="footer"></div>
+    <div id="app">
 
+        <div class="header">
+            <h1>Drug Stock Search</h1>
+            <div class="header-right">
+                <span id="userDisplay"></span>
+                <span id="roleDisplay" class="text-muted"></span>
+                <span id="deptDisplay" class="text-muted"></span>
+                <a href="search.html">Search</a>
+                <a href="orders.html">Orders</a>
+                <a href="myorders.html">My Orders</a>
+                <a href="profile.html">Profile</a>
+                <a href="approve.html" class="admin-link" style="display:none;">Approve</a>
+                <a href="reset.html" class="admin-link" style="display:none;">Reset</a>
+                <a href="users.html" class="admin-link" style="display:none;">Users</a>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <!-- PAGE CONTENT -->
+        <div class="section-box">
+            <div class="search-box">
+                <input type="text" id="searchBox" placeholder="Search for a drug...">
+            </div>
+
+            <div id="results">
+                <p class="text-muted">Type a drug name and press Enter.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
     <script>
-        // ============================================================
-        // LOAD HEADER AND FOOTER
-        // ============================================================
-
-        fetch('header.html')
-            .then(function(r) { return r.text(); })
-            .then(function(html) {
-                document.getElementById('header').innerHTML = html;
-                return fetch('footer.html');
-            })
-            .then(function(r) { return r.text(); })
-            .then(function(html) {
-                document.getElementById('footer').innerHTML = html;
-                // Load script.js after header and footer are loaded
-                var script = document.createElement('script');
-                script.src = 'script.js';
-                document.body.appendChild(script);
-            })
-            .catch(function(error) {
-                console.error('Error loading header/footer:', error);
-            });
-
         // ============================================================
         // PAGE INIT
         // ============================================================
 
         function initPage() {
-            if (typeof checkAuth !== 'function') return;
-
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
-            var userDisplay = document.getElementById('userDisplay');
-            if (userDisplay) userDisplay.textContent = 'Welcome, ' + user.fullName;
+            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
+            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
+            document.getElementById('deptDisplay').textContent = 'Department: ' + user.department;
 
-            var roleDisplay = document.getElementById('roleDisplay');
-            if (roleDisplay) roleDisplay.textContent = user.isAdmin ? '(Admin)' : '(User)';
-
-            var deptDisplay = document.getElementById('deptDisplay');
-            if (deptDisplay) deptDisplay.textContent = 'Department: ' + user.department;
-
-            if (typeof initNav === 'function') initNav();
+            initNav();
 
             var searchBox = document.getElementById('searchBox');
             if (searchBox) {
@@ -93,12 +92,12 @@
 
             var resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '<p>Searching...</p>';
-            if (typeof showLoading === 'function') showLoading('Searching for: ' + query);
+            showLoading('Searching for: ' + query);
 
             try {
                 var response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
                 var results = await response.json();
-                if (typeof hideLoading === 'function') hideLoading();
+                hideLoading();
 
                 if (results.length === 0) {
                     resultsDiv.innerHTML = '<p>No matching drugs found.</p>';
@@ -118,11 +117,19 @@
                 resultsDiv.innerHTML = html;
 
             } catch (error) {
-                if (typeof hideLoading === 'function') hideLoading();
+                hideLoading();
                 console.error('Search error:', error);
                 resultsDiv.innerHTML = '<p>Unable to retrieve stock information.</p>';
             }
         }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initPage();
+        });
     </script>
 
 </body>
