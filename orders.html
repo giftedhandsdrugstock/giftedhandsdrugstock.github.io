@@ -8,109 +8,93 @@
 </head>
 <body>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-            <div class="loading-spinner"></div>
-            <span class="loading-text" id="loadingText">Loading...</span>
+    <div id="header"></div>
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <!-- SEARCH SECTION -->
+    <div class="section-box">
+        <div class="flex flex-wrap gap-10" style="align-items:center;">
+            <div style="flex:1;min-width:200px;">
+                <input type="text" id="drugSearch" placeholder="Search by drug name or form..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
+            </div>
+            <button class="btn" onclick="searchDrugs()">Search</button>
+            <button class="btn" onclick="clearSearch()">Clear</button>
+            <button class="btn" id="toggleDrugsBtn" onclick="toggleDrugList()">Show All Drugs</button>
+            <button class="btn" id="newOrderBtn" onclick="toggleNewOrder()">➕ New Order</button>
         </div>
     </div>
 
-    <div id="app">
+    <!-- MAIN CONTENT -->
+    <div class="orders-main" style="display:flex;gap:20px;">
 
-        <div class="header">
-            <h1>Internal Orders</h1>
-            <div class="header-right">
-                <span id="userDisplay"></span>
-                <span id="roleDisplay" class="text-muted"></span>
-                <a href="search.html">Search</a>
-                <a href="myorders.html">My Orders</a>
-                <a href="profile.html">Profile</a>
-                <a href="users.html" id="usersLink" style="display:none;">Users</a>
-                <button class="btn-logout" onclick="logout()">Logout</button>
+        <!-- LEFT PANEL - 2/3 (hidden by default) -->
+        <div class="left-panel" style="flex:2;min-width:0;display:none;" id="drugListPanel">
+            <div class="section-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                    <h2>Drug List</h2>
+                    <div>
+                        <span id="drugCount" class="text-muted"></span>
+                        <button id="closeDrugListBtn" onclick="closeDrugList()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Drug List">✕</button>
+                    </div>
+                </div>
+                <div id="drugListContainer">
+                    <p class="text-muted">No drugs found.</p>
+                </div>
+                <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
+                    <span id="pageInfo" class="text-muted"></span>
+                    <button class="btn btn-small" onclick="nextPage()">Next ▶</button>
+                </div>
             </div>
         </div>
 
-        <div id="alert" class="alert"></div>
-
-        <!-- SEARCH SECTION -->
-        <div class="section-box">
-            <div class="flex flex-wrap gap-10" style="align-items:center;">
-                <div style="flex:1;min-width:200px;">
-                    <input type="text" id="drugSearch" placeholder="Search by drug name or form..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
-                </div>
-                <button class="btn" onclick="searchDrugs()">Search</button>
-                <button class="btn" onclick="clearSearch()">Clear</button>
-                <button class="btn" id="toggleDrugsBtn" onclick="toggleDrugList()">Show All Drugs</button>
-                <button class="btn" id="newOrderBtn" onclick="toggleNewOrder()">➕ New Order</button>
-            </div>
-        </div>
-
-        <!-- MAIN CONTENT -->
-        <div class="orders-main" style="display:flex;gap:20px;">
-
-            <!-- LEFT PANEL - 2/3 (hidden by default) -->
-            <div class="left-panel" style="flex:2;min-width:0;display:none;" id="drugListPanel">
-
-                <div class="section-box">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                        <h2>Drug List</h2>
-                        <div>
-                            <span id="drugCount" class="text-muted"></span>
-                            <button id="closeDrugListBtn" onclick="closeDrugList()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Drug List">✕</button>
-                        </div>
-                    </div>
-
-                    <div id="drugListContainer">
-                        <p class="text-muted">No drugs found.</p>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
-                        <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
-                        <span id="pageInfo" class="text-muted"></span>
-                        <button class="btn btn-small" onclick="nextPage()">Next ▶</button>
+        <!-- RIGHT PANEL - 1/3 (hidden by default) -->
+        <div class="right-panel" style="flex:1;min-width:0;display:none;" id="orderPanel">
+            <div class="section-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                    <h2>New Order</h2>
+                    <div>
+                        <span id="orderIdDisplay" class="text-muted" style="font-size:13px;"></span>
+                        <button onclick="toggleNewOrder()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Order Panel">✕</button>
                     </div>
                 </div>
-
-            </div>
-
-            <!-- RIGHT PANEL - 1/3 (hidden by default) -->
-            <div class="right-panel" style="flex:1;min-width:0;display:none;" id="orderPanel">
-
-                <div class="section-box">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                        <h2>New Order</h2>
-                        <div>
-                            <span id="orderIdDisplay" class="text-muted" style="font-size:13px;"></span>
-                            <button onclick="toggleNewOrder()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Order Panel">✕</button>
-                        </div>
-                    </div>
-
-                    <div id="orderListContainer" style="margin-top:10px;">
-                        <p class="text-muted">No items added yet. Search and add drugs.</p>
-                    </div>
-
-                    <!-- NOTES SECTION -->
-                    <div style="margin-top:15px;border-top:1px solid #eee;padding-top:12px;">
-                        <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Order Notes</label>
-                        <textarea id="orderNotes" placeholder="Add notes for the admin (e.g., urgency, reason, special instructions)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;"></textarea>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-                        <button class="btn" onclick="submitOrder()">📤 Submit Order</button>
-                        <button class="btn" onclick="clearOrder()" style="color:#c00;">🗑️ Cancel Order</button>
-                    </div>
+                <div id="orderListContainer" style="margin-top:10px;">
+                    <p class="text-muted">No items added yet. Search and add drugs.</p>
                 </div>
-
+                <div style="margin-top:15px;border-top:1px solid #eee;padding-top:12px;">
+                    <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Order Notes</label>
+                    <textarea id="orderNotes" placeholder="Add notes for the admin..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;"></textarea>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                    <button class="btn" onclick="submitOrder()">📤 Submit Order</button>
+                    <button class="btn" onclick="clearOrder()" style="color:#c00;">🗑️ Cancel Order</button>
+                </div>
             </div>
-
         </div>
 
     </div>
 
-    <script src="script.js"></script>
+    <div id="footer"></div>
+
     <script>
+        // ============================================================
+        // LOAD HEADER AND FOOTER
+        // ============================================================
+
+        fetch('header.html')
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                document.getElementById('header').innerHTML = html;
+                return fetch('footer.html');
+            })
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+            })
+            .catch(function(error) {
+                console.error('Error loading header/footer:', error);
+            });
+
         // ============================================================
         // ORDERS.HTML SPECIFIC
         // ============================================================
@@ -139,23 +123,21 @@
         // INIT
         // ============================================================
 
-        function initOrders() {
+        function initPage() {
             if (!checkAuth()) return;
 
             currentUser = getCurrentUser();
-
             document.getElementById('userDisplay').textContent = 'Welcome, ' + currentUser.fullName;
             document.getElementById('roleDisplay').textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
 
             if (currentUser.isAdmin) {
-                document.getElementById('usersLink').style.display = 'inline';
-                showAlert('Admin cannot place orders. Only approver rights.', 'info');
                 document.querySelector('.left-panel').style.display = 'none';
                 document.querySelector('.section-box:first-of-type').style.display = 'none';
                 document.getElementById('newOrderBtn').style.display = 'none';
-                return;
+                showAlert('Admin cannot place orders. Only approver rights.', 'info');
             }
 
+            initNav();
             loadDrugsSilent();
         }
 
@@ -192,7 +174,7 @@
         }
 
         // ============================================================
-        // SHOW/HIDE DRUG LIST (Toggle button)
+        // SHOW/HIDE DRUG LIST
         // ============================================================
 
         function toggleDrugList() {
@@ -242,7 +224,7 @@
         }
 
         // ============================================================
-        // CLOSE DRUG LIST (X button)
+        // CLOSE DRUG LIST
         // ============================================================
 
         function closeDrugList() {
@@ -406,267 +388,4 @@
                 var safeId = 'qty-' + globalIndex;
 
                 html += '<tr>';
-                html += '<td><strong>' + drug.name + '</strong></td>';
-                html += '<td>' + drug.form + '</td>';
-                html += '<td>' + drug.balance + '</td>';
-                html += '<td>';
-                html += '<input type="number" id="' + safeId + '" ';
-                html += 'min="1" max="' + drug.balance + '" value="1" style="width:70px;padding:4px 6px;border:1px solid #ccc;text-align:center;">';
-                html += '</td>';
-                html += '<td>';
-                if (drug.balance === 0) {
-                    html += '<span class="text-muted">Out of Stock</span>';
-                } else if (inOrder) {
-                    html += '<span style="color:#0a0;">✅ Added</span>';
-                } else {
-                    html += '<button class="btn btn-small" onclick="addToOrder(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ',' + globalIndex + ')">Add</button>';
-                }
-                html += '</td>';
-                html += '</tr>';
-            });
-
-            html += '</table>';
-            container.innerHTML = html;
-        }
-
-        // ============================================================
-        // PAGINATION
-        // ============================================================
-
-        function prevPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                renderDrugList();
-            }
-        }
-
-        function nextPage() {
-            var totalPages = Math.ceil(filteredDrugs.length / pageSize);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderDrugList();
-            }
-        }
-
-        // ============================================================
-        // ADD TO ORDER - AUTO-OPENS ORDER PANEL
-        // ============================================================
-
-        function addToOrder(drugName, maxStock, index) {
-            var qtyInput = document.getElementById('qty-' + index);
-            if (!qtyInput) {
-                showAlert('Error: Could not find quantity input.', 'error');
-                return;
-            }
-
-            var qty = parseInt(qtyInput.value) || 1;
-
-            if (qty < 1) {
-                showAlert('Quantity must be at least 1.', 'error');
-                return;
-            }
-
-            if (qty > maxStock) {
-                showAlert('Quantity exceeds available stock (' + maxStock + ').', 'error');
-                return;
-            }
-
-            if (orderItems.some(function(item) { return item.name === drugName; })) {
-                showAlert(drugName + ' is already in your order.', 'warning');
-                return;
-            }
-
-            // ============================================================
-            // AUTO-OPEN NEW ORDER PANEL IF CLOSED
-            // ============================================================
-            if (!isNewOrderOpen) {
-                var panel = document.getElementById('orderPanel');
-                var btn = document.getElementById('newOrderBtn');
-
-                panel.style.display = 'block';
-                btn.textContent = '✕ Cancel Order';
-                isNewOrderOpen = true;
-                currentOrderId = generateOrderId();
-                document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
-                document.getElementById('orderNotes').value = '';
-            }
-
-            orderItems.push({
-                name: drugName,
-                quantity: qty,
-                maxStock: maxStock
-            });
-
-            renderOrderList();
-            renderDrugList();
-            showAlert('Added ' + drugName + ' to your order.', 'success');
-        }
-
-        // ============================================================
-        // RENDER ORDER LIST
-        // ============================================================
-
-        function renderOrderList() {
-            var container = document.getElementById('orderListContainer');
-
-            if (orderItems.length === 0) {
-                container.innerHTML = '<p class="text-muted">No items added yet. Search and add drugs.</p>';
-                return;
-            }
-
-            var html = '<table style="width:100%;">';
-            html += '<tr><th>Drug</th><th>Qty</th><th>Action</th></tr>';
-
-            orderItems.forEach(function(item, index) {
-                html += '<tr>';
-                html += '<td><strong>' + item.name + '</strong></td>';
-                html += '<td>';
-                html += '<input type="number" id="order-qty-' + index + '" value="' + item.quantity + '" ';
-                html += 'min="1" max="' + item.maxStock + '" style="width:55px;padding:4px 6px;border:1px solid #ccc;text-align:center;" ';
-                html += 'onchange="updateOrderQty(' + index + ', this.value)">';
-                html += '</td>';
-                html += '<td><button class="btn btn-small" onclick="removeFromOrder(' + index + ')" style="color:#c00;">✕</button></td>';
-                html += '</tr>';
-            });
-
-            html += '</table>';
-            container.innerHTML = html;
-        }
-
-        // ============================================================
-        // UPDATE ORDER QUANTITY
-        // ============================================================
-
-        function updateOrderQty(index, newValue) {
-            var qty = parseInt(newValue) || 1;
-
-            if (qty < 1) {
-                showAlert('Quantity must be at least 1.', 'error');
-                qty = 1;
-            }
-
-            var maxStock = orderItems[index].maxStock;
-            if (qty > maxStock) {
-                showAlert('Quantity exceeds available stock (' + maxStock + ').', 'warning');
-                qty = maxStock;
-            }
-
-            orderItems[index].quantity = qty;
-            renderOrderList();
-        }
-
-        // ============================================================
-        // REMOVE FROM ORDER
-        // ============================================================
-
-        function removeFromOrder(index) {
-            var removed = orderItems[index].name;
-            orderItems.splice(index, 1);
-            renderOrderList();
-            if (isDrugListVisible) renderDrugList();
-            showAlert('Removed ' + removed + ' from your order.', 'info');
-        }
-
-        // ============================================================
-        // CLEAR ORDER
-        // ============================================================
-
-        function clearOrder() {
-            if (orderItems.length === 0) {
-                showAlert('Your order is already empty.', 'info');
-                return;
-            }
-
-            if (!confirm('Clear all items from your order?')) return;
-
-            orderItems = [];
-            document.getElementById('orderNotes').value = '';
-            renderOrderList();
-            if (isDrugListVisible) renderDrugList();
-            showAlert('Order cleared.', 'info');
-        }
-
-        // ============================================================
-        // SUBMIT ORDER
-        // ============================================================
-
-        function submitOrder() {
-            if (orderItems.length === 0) {
-                showAlert('Please add at least one item to your order.', 'warning');
-                return;
-            }
-
-            if (!confirm('Submit this order?')) return;
-
-            showLoading('Submitting order...');
-
-            var notes = document.getElementById('orderNotes').value.trim();
-
-            var orderData = {
-                action: 'submitorder',
-                user: currentUser.username,
-                userId: currentUser.userId,
-                department: currentUser.department,
-                orderId: currentOrderId,
-                items: orderItems.map(function(item) {
-                    return {
-                        drug: item.name,
-                        quantity: item.quantity
-                    };
-                }),
-                notes: notes,
-                timestamp: new Date().toISOString()
-            };
-
-            var url = API_URL +
-                '?action=submitorder' +
-                '&user=' + encodeURIComponent(orderData.user) +
-                '&userId=' + encodeURIComponent(orderData.userId) +
-                '&department=' + encodeURIComponent(orderData.department) +
-                '&orderId=' + encodeURIComponent(orderData.orderId) +
-                '&items=' + encodeURIComponent(JSON.stringify(orderData.items)) +
-                '&notes=' + encodeURIComponent(orderData.notes) +
-                '&timestamp=' + encodeURIComponent(orderData.timestamp);
-
-            fetch(url)
-            .then(function(response) { return response.json(); })
-            .then(function(result) {
-                hideLoading();
-                if (result.success) {
-                    showAlert('Order submitted successfully! Order ID: ' + currentOrderId, 'success');
-                    orderItems = [];
-                    document.getElementById('orderNotes').value = '';
-                    renderOrderList();
-                    if (isDrugListVisible) renderDrugList();
-
-                    currentOrderId = generateOrderId();
-                    document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
-                } else {
-                    showAlert(result.message || 'Error submitting order.', 'error');
-                }
-            })
-            .catch(function(error) {
-                hideLoading();
-                console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
-            });
-        }
-
-        // ============================================================
-        // INIT
-        // ============================================================
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initOrders();
-
-            document.getElementById('drugSearch').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    searchDrugs();
-                }
-            });
-        });
-    </script>
-
-</body>
-</html>
+                html += '<td><strong>' + drug.name + '</strong
