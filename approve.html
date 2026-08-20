@@ -8,92 +8,78 @@
 </head>
 <body>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-            <div class="loading-spinner"></div>
-            <span class="loading-text" id="loadingText">Loading...</span>
+    <div id="header"></div>
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <!-- SEARCH SECTION -->
+    <div class="section-box">
+        <div class="flex flex-wrap gap-10" style="align-items:center;">
+            <div style="flex:1;min-width:150px;">
+                <input type="text" id="orderSearch" placeholder="Search by Order ID or Department..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
+            </div>
+            <button class="btn" onclick="searchOrders()">Search</button>
+            <button class="btn" onclick="clearSearch()">Clear</button>
+            <button class="btn" onclick="loadPendingOrders()">Refresh</button>
+        </div>
+        <div style="margin-top:10px;font-size:13px;color:#888;">
+            <span id="resultCount">0 pending orders</span>
         </div>
     </div>
 
-    <div id="app">
+    <!-- MAIN CONTENT -->
+    <div class="orders-main" style="display:flex;gap:20px;">
 
-        <div class="header">
-            <h1>Approve Orders</h1>
-            <div class="header-right">
-                <span id="userDisplay"></span>
-                <span id="roleDisplay" class="text-muted"></span>
-                <a href="search.html">Search</a>
-                <a href="orders.html">Orders</a>
-                <a href="myorders.html">My Orders</a>
-                <a href="profile.html">Profile</a>
-                <a href="users.html" id="usersLink" style="display:none;">Users</a>
-                <a href="reset.html" id="resetLink" style="display:none;">Reset</a>
-                <button class="btn-logout" onclick="logout()">Logout</button>
+        <!-- LEFT PANEL -->
+        <div class="left-panel" style="flex:1;min-width:0;">
+            <div class="section-box">
+                <h2>Pending Orders</h2>
+                <div id="orderListContainer">
+                    <p class="text-muted">No pending orders.</p>
+                </div>
+                <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
+                    <span id="pageInfo" class="text-muted"></span>
+                    <button class="btn btn-small" onclick="nextPage()">Next ▶</button>
+                </div>
             </div>
         </div>
 
-        <div id="alert" class="alert"></div>
-
-        <!-- SEARCH SECTION -->
-        <div class="section-box">
-            <div class="flex flex-wrap gap-10" style="align-items:center;">
-                <div style="flex:1;min-width:150px;">
-                    <input type="text" id="orderSearch" placeholder="Search by Order ID or Department..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
+        <!-- RIGHT PANEL -->
+        <div class="right-panel" style="flex:1;min-width:0;display:none;" id="orderDetailsPanel">
+            <div class="section-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                    <h2>Order Details</h2>
+                    <button onclick="closeOrderDetails()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;" title="Close">✕</button>
                 </div>
-                <button class="btn" onclick="searchOrders()">Search</button>
-                <button class="btn" onclick="clearSearch()">Clear</button>
-                <button class="btn" onclick="loadPendingOrders()">Refresh</button>
-            </div>
-            <div style="margin-top:10px;font-size:13px;color:#888;">
-                <span id="resultCount">0 pending orders</span>
-            </div>
-        </div>
-
-        <!-- MAIN CONTENT - HALF AND HALF -->
-        <div class="orders-main" style="display:flex;gap:20px;">
-
-            <!-- LEFT PANEL - Order List -->
-            <div class="left-panel" style="flex:1;min-width:0;">
-
-                <div class="section-box">
-                    <h2>Pending Orders</h2>
-                    <div id="orderListContainer">
-                        <p class="text-muted">No pending orders.</p>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
-                        <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
-                        <span id="pageInfo" class="text-muted"></span>
-                        <button class="btn btn-small" onclick="nextPage()">Next ▶</button>
-                    </div>
+                <div id="orderDetailsContainer">
+                    <p class="text-muted">Select an order to view details.</p>
                 </div>
-
             </div>
-
-            <!-- RIGHT PANEL - Order Details (hidden by default) -->
-            <div class="right-panel" style="flex:1;min-width:0;display:none;" id="orderDetailsPanel">
-
-                <div class="section-box">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                        <h2>Order Details</h2>
-                        <button onclick="closeOrderDetails()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;" title="Close">✕</button>
-                    </div>
-
-                    <div id="orderDetailsContainer">
-                        <p class="text-muted">Select an order to view details.</p>
-                    </div>
-                </div>
-
-            </div>
-
         </div>
 
     </div>
 
-    <script src="script.js"></script>
+    <div id="footer"></div>
+
     <script>
+        // ============================================================
+        // LOAD HEADER AND FOOTER
+        // ============================================================
+
+        fetch('header.html')
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                document.getElementById('header').innerHTML = html;
+                return fetch('footer.html');
+            })
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+            })
+            .catch(function(error) {
+                console.error('Error loading header/footer:', error);
+            });
+
         // ============================================================
         // APPROVE.HTML SPECIFIC
         // ============================================================
@@ -104,11 +90,7 @@
         var currentPage = 1;
         var pageSize = 10;
 
-        // ============================================================
-        // INIT
-        // ============================================================
-
-        function initApprove() {
+        function initPage() {
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
@@ -120,16 +102,10 @@
                 document.querySelector('.right-panel').style.display = 'none';
                 return;
             }
-        
-            document.getElementById('usersLink').style.display = 'inline';
-            document.getElementById('resetLink').style.display = 'inline';
-        
+
+            initNav();
             loadPendingOrders();
         }
-
-        // ============================================================
-        // LOAD PENDING ORDERS
-        // ============================================================
 
         async function loadPendingOrders() {
             var container = document.getElementById('orderListContainer');
@@ -144,8 +120,6 @@
                 currentPage = 1;
                 renderOrderList();
                 updateResultCount();
-
-                // Close details panel if open
                 closeOrderDetails();
 
             } catch (error) {
@@ -154,10 +128,6 @@
                 showAlert('Error loading orders.', 'error');
             }
         }
-
-        // ============================================================
-        // SEARCH ORDERS
-        // ============================================================
 
         function searchOrders() {
             var searchTerm = document.getElementById('orderSearch').value.toLowerCase().trim();
@@ -188,17 +158,9 @@
             showAlert('Search cleared.', 'info');
         }
 
-        // ============================================================
-        // UPDATE RESULT COUNT
-        // ============================================================
-
         function updateResultCount() {
             document.getElementById('resultCount').textContent = filteredOrders.length + ' pending order(s)';
         }
-
-        // ============================================================
-        // RENDER ORDER LIST
-        // ============================================================
 
         function renderOrderList() {
             var container = document.getElementById('orderListContainer');
@@ -249,10 +211,6 @@
             container.innerHTML = html;
         }
 
-        // ============================================================
-        // PAGINATION
-        // ============================================================
-
         function prevPage() {
             if (currentPage > 1) {
                 currentPage--;
@@ -268,14 +226,9 @@
             }
         }
 
-        // ============================================================
-        // SELECT ORDER
-        // ============================================================
-
         function selectOrder(orderId) {
             selectedOrderId = orderId;
 
-            // Update list highlighting
             var items = document.querySelectorAll('.order-list-item');
             items.forEach(function(item) {
                 item.style.background = '';
@@ -295,25 +248,16 @@
             }
         }
 
-        // ============================================================
-        // CLOSE ORDER DETAILS
-        // ============================================================
-
         function closeOrderDetails() {
             document.getElementById('orderDetailsPanel').style.display = 'none';
             selectedOrderId = null;
         }
-
-        // ============================================================
-        // RENDER ORDER DETAILS
-        // ============================================================
 
         function renderOrderDetails(order) {
             var container = document.getElementById('orderDetailsContainer');
 
             var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
 
-            // Build items with quantity inputs and remove buttons
             var itemsHtml = '';
             if (order.items && order.items.length > 0) {
                 itemsHtml = '<div style="margin-top:10px;">';
@@ -333,7 +277,6 @@
                 itemsHtml = '<p class="text-muted">No items in this order.</p>';
             }
 
-            // Notes section
             var notesHtml = '';
             if (order.notes) {
                 notesHtml = `
@@ -344,7 +287,6 @@
                 `;
             }
 
-            // Reply text box
             var replyHtml = `
                 <div style="margin-top:10px;">
                     <label style="font-weight:500;font-size:14px;">💬 Reply to User:</label>
@@ -380,25 +322,15 @@
             container.innerHTML = html;
         }
 
-        // ============================================================
-        // REMOVE ITEM FROM ORDER
-        // ============================================================
-
         function removeItem(orderId, index) {
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (order && order.items && order.items.length > index) {
                 order.items.splice(index, 1);
-                // Re-render details
                 renderOrderDetails(order);
-                // Re-render list to update item count
                 renderOrderList();
                 showAlert('Item removed from order.', 'info');
             }
         }
-
-        // ============================================================
-        // APPROVE ORDER
-        // ============================================================
 
         function approveOrder(orderId) {
             if (!confirm('Approve this order?')) return;
@@ -412,7 +344,6 @@
                 return;
             }
 
-            // Get updated quantities from the detail view
             var items = [];
             order.items.forEach(function(item, index) {
                 var qtyInput = document.getElementById('qty-' + orderId + '-' + index);
@@ -423,7 +354,6 @@
                 });
             });
 
-            // Get reply note
             var replyNote = document.getElementById('replyNote-' + orderId);
             var note = replyNote ? replyNote.value.trim() : '';
 
@@ -440,7 +370,6 @@
                 hideLoading();
                 if (result.success) {
                     showAlert('Order approved successfully!', 'success');
-                    // Remove from pending list
                     pendingOrders = pendingOrders.filter(function(o) { return o.orderId !== orderId; });
                     filteredOrders = filteredOrders.filter(function(o) { return o.orderId !== orderId; });
                     closeOrderDetails();
@@ -457,17 +386,12 @@
             });
         }
 
-        // ============================================================
-        // DECLINE ORDER
-        // ============================================================
-
         function declineOrder(orderId) {
             var reason = prompt('Reason for declining (optional):');
             if (reason === null) return;
 
             showLoading('Declining order...');
 
-            // Get reply note
             var replyNote = document.getElementById('replyNote-' + orderId);
             var note = replyNote ? replyNote.value.trim() : '';
 
@@ -499,21 +423,6 @@
                 showAlert('Error connecting to server.', 'error');
             });
         }
-
-        // ============================================================
-        // INIT
-        // ============================================================
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initApprove();
-
-            document.getElementById('orderSearch').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    searchOrders();
-                }
-            });
-        });
     </script>
 
 </body>
