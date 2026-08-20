@@ -2,7 +2,6 @@
 
 </div> <!-- End app -->
 
-<script src="script.js"></script>
 <script>
     // ============================================================
     // PAGE TITLE
@@ -31,19 +30,8 @@
     if (typeof initPage === 'function') {
         initPage();
     }
-
-    // ============================================================
-    // NAVIGATION
-    // ============================================================
-
-    function initNav() {
-        var user = getCurrentUser();
-        var isAdmin = user && user.isAdmin;
-
-        document.querySelectorAll('.admin-link').forEach(function(link) {
-            link.style.display = isAdmin ? 'inline' : 'none';
-        });
-    }
 </script>
+
+<script src="script.js"></script>
 </body>
 </html>
