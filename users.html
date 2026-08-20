@@ -29,6 +29,7 @@
                 <a href="orders.html">New Order</a>
                 <a href="approve.html">Approve</a>
                 <a href="profile.html">Profile</a>
+                <a href="reset.html" id="resetLink" style="display:none;">Reset</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -90,6 +91,8 @@
             if (!currentUser.isAdmin) {
                 document.getElementById('usersContainer').innerHTML = '<p>Admin access required.</p>';
                 document.getElementById('userListSection').style.display = 'block';
+                document.getElementById('approveLink').style.display = 'inline';
+                document.getElementById('resetLink').style.display = 'inline';
                 return;
             }
 
