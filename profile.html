@@ -29,6 +29,7 @@
                 <a href="orders.html">New Order</a>
                 <a href="approve.html">Approve</a>
                 <a href="users.html" id="usersLink" style="display:none;">Users</a>
+                <a href="reset.html" id="resetLink" style="display:none;">Reset</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -142,6 +143,8 @@
 
             if (user.isAdmin) {
                 document.getElementById('usersLink').style.display = 'inline';
+                document.getElementById('approveLink').style.display = 'inline';
+                document.getElementById('resetLink').style.display = 'inline';
             }
 
             document.getElementById('profileUserId').value = user.userId || 'N/A';
