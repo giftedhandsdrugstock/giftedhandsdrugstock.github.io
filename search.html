@@ -37,6 +37,10 @@
             .then(function(r) { return r.text(); })
             .then(function(html) {
                 document.getElementById('footer').innerHTML = html;
+                // Load script.js after header and footer are loaded
+                var script = document.createElement('script');
+                script.src = 'script.js';
+                document.body.appendChild(script);
             })
             .catch(function(error) {
                 console.error('Error loading header/footer:', error);
@@ -47,23 +51,32 @@
         // ============================================================
 
         function initPage() {
+            if (typeof checkAuth !== 'function') return;
+
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
-            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
-            document.getElementById('deptDisplay').textContent = 'Department: ' + user.department;
+            var userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = 'Welcome, ' + user.fullName;
 
-            initNav();
+            var roleDisplay = document.getElementById('roleDisplay');
+            if (roleDisplay) roleDisplay.textContent = user.isAdmin ? '(Admin)' : '(User)';
+
+            var deptDisplay = document.getElementById('deptDisplay');
+            if (deptDisplay) deptDisplay.textContent = 'Department: ' + user.department;
+
+            if (typeof initNav === 'function') initNav();
 
             var searchBox = document.getElementById('searchBox');
-            searchBox.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    searchDrugs();
-                }
-            });
-            searchBox.focus();
+            if (searchBox) {
+                searchBox.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        searchDrugs();
+                    }
+                });
+                searchBox.focus();
+            }
         }
 
         // ============================================================
@@ -80,12 +93,12 @@
 
             var resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '<p>Searching...</p>';
-            showLoading('Searching for: ' + query);
+            if (typeof showLoading === 'function') showLoading('Searching for: ' + query);
 
             try {
                 var response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
                 var results = await response.json();
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
 
                 if (results.length === 0) {
                     resultsDiv.innerHTML = '<p>No matching drugs found.</p>';
@@ -105,7 +118,7 @@
                 resultsDiv.innerHTML = html;
 
             } catch (error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Search error:', error);
                 resultsDiv.innerHTML = '<p>Unable to retrieve stock information.</p>';
             }
