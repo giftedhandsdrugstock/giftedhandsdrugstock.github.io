@@ -6,7 +6,7 @@
 // API URL
 // ============================================================
 
-var API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbyybdqQbHlOLLp6mUHq36_Bq4sXRjEpO7NgxvSHU9nPew7CD51YMaO8BUmHpJywF7lG/exec";
 
 // ============================================================
 // AUTH
