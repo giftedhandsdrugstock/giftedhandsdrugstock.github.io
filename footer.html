@@ -1,0 +1,49 @@
+    </div> <!-- End pageContent -->
+
+</div> <!-- End app -->
+
+<script src="script.js"></script>
+<script>
+    // ============================================================
+    // PAGE TITLE
+    // ============================================================
+
+    var titles = {
+        'search.html': 'Drug Stock Search',
+        'orders.html': 'Internal Orders',
+        'myorders.html': 'My Orders',
+        'profile.html': 'My Profile',
+        'users.html': 'User Management',
+        'approve.html': 'Approve Orders',
+        'reset.html': 'Reset - Admin'
+    };
+
+    var currentPage = window.location.pathname.split('/').pop() || 'search.html';
+    var pageTitle = document.getElementById('pageTitle');
+    if (pageTitle && titles[currentPage]) {
+        pageTitle.textContent = titles[currentPage];
+    }
+
+    // ============================================================
+    // INITIALIZE PAGE
+    // ============================================================
+
+    if (typeof initPage === 'function') {
+        initPage();
+    }
+
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
+
+    function initNav() {
+        var user = getCurrentUser();
+        var isAdmin = user && user.isAdmin;
+
+        document.querySelectorAll('.admin-link').forEach(function(link) {
+            link.style.display = isAdmin ? 'inline' : 'none';
+        });
+    }
+</script>
+</body>
+</html>
