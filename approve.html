@@ -28,6 +28,7 @@
                 <a href="myorders.html">My Orders</a>
                 <a href="profile.html">Profile</a>
                 <a href="users.html" id="usersLink" style="display:none;">Users</a>
+                <a href="reset.html" id="resetLink" style="display:none;">Reset</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -111,7 +112,6 @@
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
-
             document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
             document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
 
@@ -120,10 +120,10 @@
                 document.querySelector('.right-panel').style.display = 'none';
                 return;
             }
-
-            // Show users link
+        
             document.getElementById('usersLink').style.display = 'inline';
-
+            document.getElementById('resetLink').style.display = 'inline';
+        
             loadPendingOrders();
         }
 
