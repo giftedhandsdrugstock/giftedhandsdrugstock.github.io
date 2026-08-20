@@ -388,43 +388,68 @@
         }
 
         function approveOrder(orderId) {
-            if (!confirm('Approve this order?')) return;
-
+            if (!confirm('Approve this order? This will deduct stock from inventory.')) return;
+        
             if (typeof showLoading === 'function') showLoading('Approving order...');
-
+        
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (!order) {
                 if (typeof hideLoading === 'function') hideLoading();
                 if (typeof showAlert === 'function') showAlert('Order not found.', 'error');
                 return;
             }
-
+        
+            // Get updated quantities from the detail view
             var items = [];
+            var hasError = false;
+        
             order.items.forEach(function(item, index) {
                 var qtyInput = document.getElementById('qty-' + orderId + '-' + index);
                 var qty = qtyInput ? parseInt(qtyInput.value) : item.quantity;
+        
+                // Validate quantity
+                if (qty < 1) {
+                    if (typeof showAlert === 'function') showAlert('Quantity for ' + item.drug + ' must be at least 1.', 'error');
+                    hasError = true;
+                    return;
+                }
+        
+                // Check if available stock is sufficient
+                if (qty > (item.available || 0)) {
+                    if (typeof showAlert === 'function') showAlert('Insufficient stock for ' + item.drug + '. Available: ' + (item.available || 0), 'error');
+                    hasError = true;
+                    return;
+                }
+        
                 items.push({
                     drug: item.drug,
                     quantity: qty
                 });
             });
-
+        
+            if (hasError) {
+                if (typeof hideLoading === 'function') hideLoading();
+                return;
+            }
+        
+            // Get reply note
             var replyNote = document.getElementById('replyNote-' + orderId);
             var note = replyNote ? replyNote.value.trim() : '';
-
+        
             var url = API_URL +
                 '?action=approveorder' +
                 '&orderId=' + encodeURIComponent(orderId) +
                 '&admin=' + encodeURIComponent(localStorage.getItem('username')) +
                 '&items=' + encodeURIComponent(JSON.stringify(items)) +
                 '&note=' + encodeURIComponent(note);
-
+        
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
                 if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    if (typeof showAlert === 'function') showAlert('Order approved successfully!', 'success');
+                    if (typeof showAlert === 'function') showAlert('Order approved successfully! Stock has been deducted.', 'success');
+                    // Remove from pending lists
                     pendingOrders = pendingOrders.filter(function(o) { return o.orderId !== orderId; });
                     filteredOrders = filteredOrders.filter(function(o) { return o.orderId !== orderId; });
                     closeOrderDetails();
@@ -440,7 +465,7 @@
                 if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
         }
-
+        
         function declineOrder(orderId) {
             var reason = prompt('Reason for declining (optional):');
             if (reason === null) return;
