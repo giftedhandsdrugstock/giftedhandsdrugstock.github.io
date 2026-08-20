@@ -38,14 +38,25 @@
             </div>
         </div>
 
-        <!-- Reset Dummy Master -->
+        <!-- Reset Dummy Master + Clear Logs -->
         <div style="border:1px solid #eee;padding:15px;margin-bottom:15px;border-radius:4px;">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
                 <div>
                     <strong>Reset Dummy Master</strong>
-                    <div style="font-size:13px;color:#888;">Reloads Dummy Master from Online Master. Clears all transactions.</div>
+                    <div style="font-size:13px;color:#888;">Reloads Dummy Master from Online Master. <strong>Clears ALL transaction logs</strong> (Issues Log, Receives Log).</div>
                 </div>
-                <button class="btn" onclick="resetDummyMaster()" style="background:#d69e2e;color:white;">🔄 Reset Dummy Master</button>
+                <button class="btn" onclick="resetDummyMaster()" style="background:#d69e2e;color:white;">🔄 Reset Dummy Master &amp; Logs</button>
+            </div>
+        </div>
+
+        <!-- Reset Sessions -->
+        <div style="border:1px solid #eee;padding:15px;margin-bottom:15px;border-radius:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <div>
+                    <strong>Reset Sessions</strong>
+                    <div style="font-size:13px;color:#888;">Clears ALL login session history. Users will need to log in again if they are currently logged in.</div>
+                </div>
+                <button class="btn" onclick="resetSessions()" style="background:#805ad5;color:white;">🗑️ Reset Sessions</button>
             </div>
         </div>
 
@@ -54,7 +65,7 @@
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
                 <div>
                     <strong style="color:#c00;">⚠️ Reset Everything</strong>
-                    <div style="font-size:13px;color:#888;">Resets Users (except admin), Orders, and Dummy Master all at once.</div>
+                    <div style="font-size:13px;color:#888;">Resets Users (except admin), Orders, Dummy Master + Logs, and Sessions all at once.</div>
                 </div>
                 <button class="btn" onclick="resetEverything()" style="background:#c00;color:white;font-weight:bold;">⚠️ Reset Everything</button>
             </div>
@@ -230,21 +241,21 @@
         }
 
         function resetDummyMaster() {
-            if (!confirm('⚠️ Reload Dummy Master from Online Master? This will clear all transactions.')) return;
-            if (!confirm('Are you sure? All transaction history in Dummy Master will be lost.')) return;
+            if (!confirm('⚠️ Reset Dummy Master from Online Master and clear ALL transaction logs?')) return;
+            if (!confirm('This will clear Issues Log and Receives Log. Are you sure?')) return;
 
-            if (typeof showLoading === 'function') showLoading('Resetting Dummy Master...');
+            if (typeof showLoading === 'function') showLoading('Resetting Dummy Master and clearing logs...');
 
             var adminUsername = localStorage.getItem('username');
 
             fetch(API_URL +
-                '?action=resetdummy&adminUsername=' + encodeURIComponent(adminUsername))
+                '?action=resetdummyfull&adminUsername=' + encodeURIComponent(adminUsername))
             .then(function(response) { return response.json(); })
             .then(function(result) {
                 if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    if (typeof showAlert === 'function') showAlert('Dummy Master reset successfully!', 'success');
-                    addToLog('✅ Dummy Master reset: ' + (result.count || 'Reloaded from Online Master'), 'success');
+                    if (typeof showAlert === 'function') showAlert('Dummy Master reset and logs cleared!', 'success');
+                    addToLog('✅ Dummy Master reset: ' + (result.count || 'Reloaded from Online Master') + ' | Logs cleared', 'success');
                 } else {
                     if (typeof showAlert === 'function') showAlert(result.message || 'Error resetting Dummy Master.', 'error');
                     addToLog('❌ Error resetting Dummy Master: ' + (result.message || 'Unknown error'), 'error');
@@ -258,8 +269,42 @@
             });
         }
 
+        function resetSessions() {
+            if (!confirm('⚠️ Clear ALL login session history? This cannot be undone.')) return;
+            if (!confirm('All users currently logged in will be logged out. Continue?')) return;
+
+            if (typeof showLoading === 'function') showLoading('Resetting sessions...');
+
+            var adminUsername = localStorage.getItem('username');
+
+            fetch(API_URL +
+                '?action=resetsessions&adminUsername=' + encodeURIComponent(adminUsername))
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
+                if (typeof hideLoading === 'function') hideLoading();
+                if (result.success) {
+                    if (typeof showAlert === 'function') showAlert('Sessions reset successfully!', 'success');
+                    addToLog('✅ Sessions reset: ' + (result.count || 'All sessions cleared'), 'success');
+                    // Logout the current admin
+                    setTimeout(function() {
+                        localStorage.clear();
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error resetting sessions.', 'error');
+                    addToLog('❌ Error resetting sessions: ' + (result.message || 'Unknown error'), 'error');
+                }
+            })
+            .catch(function(error) {
+                if (typeof hideLoading === 'function') hideLoading();
+                console.error('Error:', error);
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
+                addToLog('❌ Connection error: ' + error.message, 'error');
+            });
+        }
+
         function resetEverything() {
-            if (!confirm('⚠️⚠️ RESET EVERYTHING? This will delete ALL users (except admin), ALL orders, and reset Dummy Master.')) return;
+            if (!confirm('⚠️⚠️ RESET EVERYTHING? This will delete ALL users (except admin), ALL orders, reset Dummy Master + logs, and reset sessions.')) return;
             if (!confirm('Are you absolutely sure? This action CANNOT be undone.')) return;
             if (!confirm('Type "RESET" to confirm:')) return;
 
@@ -274,7 +319,12 @@
                 if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
                     if (typeof showAlert === 'function') showAlert('Everything reset successfully!', 'success');
-                    addToLog('✅ Everything reset: Users (except admin), Orders, Dummy Master', 'success');
+                    addToLog('✅ Everything reset: Users (except admin), Orders, Dummy Master + Logs, Sessions', 'success');
+                    // Logout the current admin
+                    setTimeout(function() {
+                        localStorage.clear();
+                        window.location.href = 'index.html';
+                    }, 3000);
                 } else {
                     if (typeof showAlert === 'function') showAlert(result.message || 'Error resetting.', 'error');
                     addToLog('❌ Error resetting everything: ' + (result.message || 'Unknown error'), 'error');
