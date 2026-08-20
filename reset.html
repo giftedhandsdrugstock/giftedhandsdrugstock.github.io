@@ -8,6 +8,7 @@
 </head>
 <body>
 
+    <!-- HEADER PLACEHOLDER -->
     <div id="header"></div>
 
     <!-- ===== PAGE CONTENT ===== -->
@@ -68,25 +69,54 @@
         </div>
     </div>
 
+    <!-- FOOTER PLACEHOLDER -->
     <div id="footer"></div>
 
     <script>
         // ============================================================
-        // LOAD HEADER AND FOOTER
+        // LOAD HEADER AND FOOTER, THEN INITIALIZE
         // ============================================================
 
+        var headerLoaded = false;
+        var footerLoaded = false;
+
+        function checkReady() {
+            if (headerLoaded && footerLoaded) {
+                var script = document.createElement('script');
+                script.src = 'script.js';
+                script.onload = function() {
+                    if (typeof initPage === 'function') {
+                        initPage();
+                    }
+                };
+                document.body.appendChild(script);
+            }
+        }
+
         fetch('header.html')
-            .then(function(r) { return r.text(); })
+            .then(function(response) { return response.text(); })
             .then(function(html) {
                 document.getElementById('header').innerHTML = html;
-                return fetch('footer.html');
-            })
-            .then(function(r) { return r.text(); })
-            .then(function(html) {
-                document.getElementById('footer').innerHTML = html;
+                headerLoaded = true;
+                checkReady();
             })
             .catch(function(error) {
-                console.error('Error loading header/footer:', error);
+                console.error('Error loading header:', error);
+                headerLoaded = true;
+                checkReady();
+            });
+
+        fetch('footer.html')
+            .then(function(response) { return response.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+                footerLoaded = true;
+                checkReady();
+            })
+            .catch(function(error) {
+                console.error('Error loading footer:', error);
+                footerLoaded = true;
+                checkReady();
             });
 
         // ============================================================
@@ -99,17 +129,24 @@
             if (!checkAuth()) return;
 
             var user = getCurrentUser();
-            document.getElementById('userDisplay').textContent = 'Welcome, ' + user.fullName;
-            document.getElementById('roleDisplay').textContent = user.isAdmin ? '(Admin)' : '(User)';
+            var userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = 'Welcome, ' + user.fullName;
+
+            var roleDisplay = document.getElementById('roleDisplay');
+            if (roleDisplay) roleDisplay.textContent = user.isAdmin ? '(Admin)' : '(User)';
+
+            if (typeof initNav === 'function') initNav();
 
             if (!user.isAdmin) {
-                document.getElementById('alert').textContent = 'Admin access required.';
-                document.getElementById('alert').className = 'alert alert-danger show';
-                document.querySelector('.section-box:first-of-type').style.display = 'none';
+                var alert = document.getElementById('alert');
+                if (alert) {
+                    alert.textContent = 'Admin access required.';
+                    alert.className = 'alert alert-danger show';
+                }
+                var firstSection = document.querySelector('.section-box:first-of-type');
+                if (firstSection) firstSection.style.display = 'none';
                 return;
             }
-
-            initNav();
         }
 
         function addToLog(message, type) {
@@ -118,6 +155,8 @@
             logEntries.unshift(entry);
 
             var container = document.getElementById('resetLog');
+
+            if (!container) return;
 
             if (logEntries.length === 0) {
                 container.innerHTML = '<p class="text-muted">No resets performed yet.</p>';
@@ -136,7 +175,7 @@
             if (!confirm('⚠️ Delete ALL users except admin? This cannot be undone.')) return;
             if (!confirm('Are you absolutely sure? All user accounts (except admin) will be deleted.')) return;
 
-            showLoading('Resetting users...');
+            if (typeof showLoading === 'function') showLoading('Resetting users...');
 
             var adminUsername = localStorage.getItem('username');
 
@@ -144,19 +183,19 @@
                 '?action=resetusers&adminUsername=' + encodeURIComponent(adminUsername))
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    showAlert('Users reset successfully!', 'success');
+                    if (typeof showAlert === 'function') showAlert('Users reset successfully!', 'success');
                     addToLog('✅ Users reset: ' + (result.count || 'All non-admin users deleted'), 'success');
                 } else {
-                    showAlert(result.message || 'Error resetting users.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error resetting users.', 'error');
                     addToLog('❌ Error resetting users: ' + (result.message || 'Unknown error'), 'error');
                 }
             })
             .catch(function(error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
                 addToLog('❌ Connection error: ' + error.message, 'error');
             });
         }
@@ -165,7 +204,7 @@
             if (!confirm('⚠️ Delete ALL orders? This cannot be undone.')) return;
             if (!confirm('Are you absolutely sure? ALL orders will be permanently deleted.')) return;
 
-            showLoading('Resetting orders...');
+            if (typeof showLoading === 'function') showLoading('Resetting orders...');
 
             var adminUsername = localStorage.getItem('username');
 
@@ -173,19 +212,19 @@
                 '?action=resetorders&adminUsername=' + encodeURIComponent(adminUsername))
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    showAlert('Orders reset successfully!', 'success');
+                    if (typeof showAlert === 'function') showAlert('Orders reset successfully!', 'success');
                     addToLog('✅ Orders reset: ' + (result.count || 'All orders deleted'), 'success');
                 } else {
-                    showAlert(result.message || 'Error resetting orders.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error resetting orders.', 'error');
                     addToLog('❌ Error resetting orders: ' + (result.message || 'Unknown error'), 'error');
                 }
             })
             .catch(function(error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
                 addToLog('❌ Connection error: ' + error.message, 'error');
             });
         }
@@ -194,7 +233,7 @@
             if (!confirm('⚠️ Reload Dummy Master from Online Master? This will clear all transactions.')) return;
             if (!confirm('Are you sure? All transaction history in Dummy Master will be lost.')) return;
 
-            showLoading('Resetting Dummy Master...');
+            if (typeof showLoading === 'function') showLoading('Resetting Dummy Master...');
 
             var adminUsername = localStorage.getItem('username');
 
@@ -202,19 +241,19 @@
                 '?action=resetdummy&adminUsername=' + encodeURIComponent(adminUsername))
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    showAlert('Dummy Master reset successfully!', 'success');
+                    if (typeof showAlert === 'function') showAlert('Dummy Master reset successfully!', 'success');
                     addToLog('✅ Dummy Master reset: ' + (result.count || 'Reloaded from Online Master'), 'success');
                 } else {
-                    showAlert(result.message || 'Error resetting Dummy Master.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error resetting Dummy Master.', 'error');
                     addToLog('❌ Error resetting Dummy Master: ' + (result.message || 'Unknown error'), 'error');
                 }
             })
             .catch(function(error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
                 addToLog('❌ Connection error: ' + error.message, 'error');
             });
         }
@@ -224,7 +263,7 @@
             if (!confirm('Are you absolutely sure? This action CANNOT be undone.')) return;
             if (!confirm('Type "RESET" to confirm:')) return;
 
-            showLoading('Resetting everything...');
+            if (typeof showLoading === 'function') showLoading('Resetting everything...');
 
             var adminUsername = localStorage.getItem('username');
 
@@ -232,19 +271,19 @@
                 '?action=reseteverything&adminUsername=' + encodeURIComponent(adminUsername))
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    showAlert('Everything reset successfully!', 'success');
+                    if (typeof showAlert === 'function') showAlert('Everything reset successfully!', 'success');
                     addToLog('✅ Everything reset: Users (except admin), Orders, Dummy Master', 'success');
                 } else {
-                    showAlert(result.message || 'Error resetting.', 'error');
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error resetting.', 'error');
                     addToLog('❌ Error resetting everything: ' + (result.message || 'Unknown error'), 'error');
                 }
             })
             .catch(function(error) {
-                hideLoading();
+                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
-                showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
                 addToLog('❌ Connection error: ' + error.message, 'error');
             });
         }
