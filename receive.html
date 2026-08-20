@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receive Stock</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- HEADER PLACEHOLDER -->
+    <div id="header"></div>
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <!-- SEARCH SECTION -->
+    <div class="section-box">
+        <div class="flex flex-wrap gap-10" style="align-items:center;">
+            <div style="flex:1;min-width:200px;">
+                <input type="text" id="drugSearch" placeholder="Search by drug name or form..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
+            </div>
+            <button class="btn" onclick="searchDrugs()">Search</button>
+            <button class="btn" onclick="clearSearch()">Clear</button>
+            <button class="btn" id="toggleDrugsBtn" onclick="toggleDrugList()">Show All Drugs</button>
+            <button class="btn" id="newReceiveBtn" onclick="toggleNewReceive()">➕ New Receive</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="orders-main" style="display:flex;gap:20px;">
+
+        <!-- LEFT PANEL - 2/3 (hidden by default) -->
+        <div class="left-panel" style="flex:2;min-width:0;display:none;" id="drugListPanel">
+            <div class="section-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                    <h2>Drug List</h2>
+                    <div>
+                        <span id="drugCount" class="text-muted"></span>
+                        <button id="closeDrugListBtn" onclick="closeDrugList()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Drug List">✕</button>
+                    </div>
+                </div>
+                <div id="drugListContainer">
+                    <p class="text-muted">No drugs found.</p>
+                </div>
+                <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
+                    <span id="pageInfo" class="text-muted"></span>
+                    <button class="btn btn-small" onclick="nextPage()">Next ▶</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL - 1/3 (hidden by default) -->
+        <div class="right-panel" style="flex:1;min-width:0;display:none;" id="receivePanel">
+            <div class="section-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                    <h2>New Receive</h2>
+                    <div>
+                        <span id="receiveIdDisplay" class="text-muted" style="font-size:13px;"></span>
+                        <button onclick="toggleNewReceive()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Receive Panel">✕</button>
+                    </div>
+                </div>
+                <div id="receiveListContainer" style="margin-top:10px;">
+                    <p class="text-muted">No items added yet. Search and add drugs.</p>
+                </div>
+                <div style="margin-top:15px;border-top:1px solid #eee;padding-top:12px;">
+                    <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Receive Notes</label>
+                    <textarea id="receiveNotes" placeholder="Add notes for this receive (e.g., supplier, invoice, batch)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;"></textarea>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                    <button class="btn" onclick="submitReceive()" style="background:#38a169;color:white;border:none;">📥 Receive Stock</button>
+                    <button class="btn" onclick="clearReceive()" style="color:#c00;">🗑️ Cancel Receive</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER PLACEHOLDER -->
+    <div id="footer"></div>
+
+    <script>
+        // ============================================================
+        // LOAD HEADER AND FOOTER, THEN INITIALIZE
+        // ============================================================
+
+        var headerLoaded = false;
+        var footerLoaded = false;
+
+        function checkReady() {
+            if (headerLoaded && footerLoaded) {
+                var script = document.createElement('script');
+                script.src = 'script.js';
+                script.onload = function() {
+                    if (typeof initPage === 'function') {
+                        initPage();
+                    }
+                };
+                document.body.appendChild(script);
+            }
+        }
+
+        fetch('header.html')
+            .then(function(response) { return response.text(); })
+            .then(function(html) {
+                document.getElementById('header').innerHTML = html;
+                headerLoaded = true;
+                checkReady();
+            })
+            .catch(function(error) {
+                console.error('Error loading header:', error);
+                headerLoaded = true;
+                checkReady();
+            });
+
+        fetch('footer.html')
+            .then(function(response) { return response.text(); })
+            .then(function(html) {
+                document.getElementById('footer').innerHTML = html;
+                footerLoaded = true;
+                checkReady();
+            })
+            .catch(function(error) {
+                console.error('Error loading footer:', error);
+                footerLoaded = true;
+                checkReady();
+            });
+
+        // ============================================================
+        // RECEIVE.HTML SPECIFIC
+        // ============================================================
+
+        var allDrugs = [];
+        var filteredDrugs = [];
+        var currentPage = 1;
+        var pageSize = 10;
+        var receiveItems = [];
+        var currentUser = {};
+        var isDrugListVisible = false;
+        var isReceiveOpen = false;
+        var currentReceiveId = '';
+
+        // ============================================================
+        // GENERATE RECEIVE ID
+        // ============================================================
+
+        function generateReceiveId() {
+            var timestamp = Date.now().toString(36).toUpperCase();
+            var random = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return 'RCV-' + timestamp + '-' + random;
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+
+        function initPage() {
+            if (!checkAuth()) return;
+
+            currentUser = getCurrentUser();
+            var userDisplay = document.getElementById('userDisplay');
+            if (userDisplay) userDisplay.textContent = 'Welcome, ' + currentUser.fullName;
+
+            var roleDisplay = document.getElementById('roleDisplay');
+            if (roleDisplay) roleDisplay.textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
+
+            if (typeof initNav === 'function') initNav();
+
+            if (!currentUser.isAdmin) {
+                var searchSection = document.querySelector('.section-box:first-of-type');
+                if (searchSection) searchSection.style.display = 'none';
+                var drugListPanel = document.getElementById('drugListPanel');
+                if (drugListPanel) drugListPanel.style.display = 'none';
+                var receivePanel = document.getElementById('receivePanel');
+                if (receivePanel) receivePanel.style.display = 'none';
+                if (typeof showAlert === 'function') showAlert('Admin access required for receiving stock.', 'info');
+                return;
+            }
+
+            loadDrugsSilent();
+
+            // Set up search enter key
+            var drugSearch = document.getElementById('drugSearch');
+            if (drugSearch) {
+                drugSearch.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        searchDrugs();
+                    }
+                });
+            }
+        }
+
+        // ============================================================
+        // TOGGLE NEW RECEIVE
+        // ============================================================
+
+        function toggleNewReceive() {
+            var panel = document.getElementById('receivePanel');
+            var btn = document.getElementById('newReceiveBtn');
+
+            if (isReceiveOpen) {
+                if (receiveItems.length > 0) {
+                    if (!confirm('You have items in this receive. Cancel?')) {
+                        return;
+                    }
+                    receiveItems = [];
+                }
+                if (panel) panel.style.display = 'none';
+                if (btn) btn.textContent = '➕ New Receive';
+                isReceiveOpen = false;
+                var receiveIdDisplay = document.getElementById('receiveIdDisplay');
+                var receiveNotes = document.getElementById('receiveNotes');
+                if (receiveIdDisplay) receiveIdDisplay.textContent = '';
+                if (receiveNotes) receiveNotes.value = '';
+                renderReceiveList();
+            } else {
+                if (panel) panel.style.display = 'block';
+                if (btn) btn.textContent = '✕ Cancel Receive';
+                isReceiveOpen = true;
+                currentReceiveId = generateReceiveId();
+                var receiveIdDisplay = document.getElementById('receiveIdDisplay');
+                var receiveNotes = document.getElementById('receiveNotes');
+                if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
+                if (receiveNotes) receiveNotes.value = '';
+                renderReceiveList();
+            }
+        }
+
+        // ============================================================
+        // SHOW/HIDE DRUG LIST
+        // ============================================================
+
+        function toggleDrugList() {
+            var panel = document.getElementById('drugListPanel');
+            var container = document.getElementById('drugListContainer');
+            var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
+
+            if (isDrugListVisible) {
+                if (panel) panel.style.display = 'none';
+                if (btn) btn.textContent = 'Show All Drugs';
+                if (closeBtn) closeBtn.style.display = 'none';
+                isDrugListVisible = false;
+                var drugSearch = document.getElementById('drugSearch');
+                if (drugSearch) drugSearch.value = '';
+            } else {
+                if (allDrugs.length === 0) {
+                    if (typeof showLoading === 'function') showLoading('Loading drugs...');
+                    loadDrugsSilent().then(function() {
+                        if (typeof hideLoading === 'function') hideLoading();
+                        if (allDrugs.length === 0) {
+                            if (container) container.innerHTML = '<p class="text-muted">No drugs found.</p>';
+                            if (panel) panel.style.display = 'block';
+                            if (btn) btn.textContent = 'Hide Drugs';
+                            if (closeBtn) closeBtn.style.display = 'inline';
+                            isDrugListVisible = true;
+                        } else {
+                            filteredDrugs = allDrugs;
+                            currentPage = 1;
+                            renderDrugList();
+                            if (panel) panel.style.display = 'block';
+                            if (btn) btn.textContent = 'Hide Drugs';
+                            if (closeBtn) closeBtn.style.display = 'inline';
+                            isDrugListVisible = true;
+                        }
+                    });
+                    return;
+                }
+
+                filteredDrugs = allDrugs;
+                currentPage = 1;
+                renderDrugList();
+                if (panel) panel.style.display = 'block';
+                if (btn) btn.textContent = 'Hide Drugs';
+                if (closeBtn) closeBtn.style.display = 'inline';
+                isDrugListVisible = true;
+            }
+        }
+
+        // ============================================================
+        // CLOSE DRUG LIST
+        // ============================================================
+
+        function closeDrugList() {
+            var panel = document.getElementById('drugListPanel');
+            var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
+
+            if (panel) panel.style.display = 'none';
+            if (btn) btn.textContent = 'Show All Drugs';
+            if (closeBtn) closeBtn.style.display = 'none';
+            isDrugListVisible = false;
+            var drugSearch = document.getElementById('drugSearch');
+            if (drugSearch) drugSearch.value = '';
+        }
+
+        // ============================================================
+        // LOAD DRUGS SILENTLY
+        // ============================================================
+
+        async function loadDrugsSilent() {
+            try {
+                var response = await fetch(API_URL + '?search=');
+                var results = await response.json();
+
+                allDrugs = results.map(function(item) {
+                    return {
+                        name: item[0] || 'Unknown',
+                        form: item[1] || 'Unknown',
+                        balance: parseFloat(item[2]) || 0
+                    };
+                });
+
+                filteredDrugs = allDrugs;
+
+            } catch (error) {
+                console.error('Error loading drugs:', error);
+            }
+        }
+
+        // ============================================================
+        // SEARCH DRUGS
+        // ============================================================
+
+        function searchDrugs() {
+            var query = document.getElementById('drugSearch').value.toLowerCase().trim();
+
+            if (!query) {
+                if (typeof showAlert === 'function') showAlert('Please enter a search term.', 'error');
+                return;
+            }
+
+            var panel = document.getElementById('drugListPanel');
+            var btn = document.getElementById('toggleDrugsBtn');
+            var closeBtn = document.getElementById('closeDrugListBtn');
+
+            if (!isDrugListVisible) {
+                if (allDrugs.length === 0) {
+                    if (typeof showLoading === 'function') showLoading('Loading drugs...');
+                    loadDrugsSilent().then(function() {
+                        if (typeof hideLoading === 'function') hideLoading();
+                        performSearch(query);
+                        if (panel) panel.style.display = 'block';
+                        if (btn) btn.textContent = 'Hide Drugs';
+                        if (closeBtn) closeBtn.style.display = 'inline';
+                        isDrugListVisible = true;
+                    });
+                    return;
+                }
+
+                filteredDrugs = allDrugs;
+                currentPage = 1;
+                if (panel) panel.style.display = 'block';
+                if (btn) btn.textContent = 'Hide Drugs';
+                if (closeBtn) closeBtn.style.display = 'inline';
+                isDrugListVisible = true;
+                performSearch(query);
+            } else {
+                performSearch(query);
+            }
+        }
+
+        function performSearch(query) {
+            if (typeof showLoading === 'function') showLoading('Searching for: ' + query);
+
+            setTimeout(function() {
+                filteredDrugs = allDrugs.filter(function(drug) {
+                    return drug.name.toLowerCase().indexOf(query) !== -1 ||
+                           drug.form.toLowerCase().indexOf(query) !== -1;
+                });
+
+                currentPage = 1;
+                if (typeof hideLoading === 'function') hideLoading();
+
+                var container = document.getElementById('drugListContainer');
+                var count = document.getElementById('drugCount');
+                var pagination = document.getElementById('pagination');
+
+                if (filteredDrugs.length === 0) {
+                    if (container) container.innerHTML = '<p class="text-muted">No drugs found matching "' + query + '".</p>';
+                    if (count) count.textContent = '0 drugs';
+                    if (pagination) pagination.style.display = 'none';
+                } else {
+                    renderDrugList();
+                }
+            }, 300);
+        }
+
+        // ============================================================
+        // CLEAR SEARCH
+        // ============================================================
+
+        function clearSearch() {
+            var drugSearch = document.getElementById('drugSearch');
+            if (drugSearch) drugSearch.value = '';
+
+            if (isDrugListVisible) {
+                renderDrugList();
+            } else {
+                var panel = document.getElementById('drugListPanel');
+                var container = document.getElementById('drugListContainer');
+                var count = document.getElementById('drugCount');
+                var pagination = document.getElementById('pagination');
+
+                if (panel) panel.style.display = 'none';
+                if (container) container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
+                if (count) count.textContent = '';
+                if (pagination) pagination.style.display = 'none';
+            }
+
+            if (drugSearch) drugSearch.focus();
+            if (typeof showAlert === 'function') showAlert('Search cleared.', 'info');
+        }
+
+        // ============================================================
+        // RENDER DRUG LIST
+        // ============================================================
+
+        function renderDrugList() {
+            var container = document.getElementById('drugListContainer');
+            var count = document.getElementById('drugCount');
+            var pagination = document.getElementById('pagination');
+            var pageInfo = document.getElementById('pageInfo');
+
+            if (!filteredDrugs || filteredDrugs.length === 0) {
+                if (container) container.innerHTML = '<p class="text-muted">No drugs found.</p>';
+                if (count) count.textContent = '0 drugs';
+                if (pagination) pagination.style.display = 'none';
+                return;
+            }
+
+            var totalPages = Math.ceil(filteredDrugs.length / pageSize);
+            var start = (currentPage - 1) * pageSize;
+            var end = Math.min(start + pageSize, filteredDrugs.length);
+            var pageDrugs = filteredDrugs.slice(start, end);
+
+            if (count) count.textContent = filteredDrugs.length + ' drugs';
+
+            if (filteredDrugs.length > pageSize) {
+                if (pageInfo) pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
+                if (pagination) pagination.style.display = 'flex';
+            } else {
+                if (pagination) pagination.style.display = 'none';
+            }
+
+            var html = '<table>';
+            html += '<tr><th>Drug Name</th><th>Form</th><th>Balance</th><th>Receive Qty</th><th>Action</th></tr>';
+
+            pageDrugs.forEach(function(drug, index) {
+                var globalIndex = start + index;
+                var inReceive = receiveItems.some(function(item) { return item.name === drug.name; });
+                var safeId = 'rqty-' + globalIndex;
+
+                html += '<tr>';
+                html += '<td><strong>' + drug.name + '</strong></td>';
+                html += '<td>' + drug.form + '</td>';
+                html += '<td>' + drug.balance + '</td>';
+                html += '<td>';
+                html += '<input type="number" id="' + safeId + '" ';
+                html += 'min="1" value="1" style="width:70px;padding:4px 6px;border:1px solid #ccc;text-align:center;">';
+                html += '</td>';
+                html += '<td>';
+                if (inReceive) {
+                    html += '<span style="color:#0a0;">✅ Added</span>';
+                } else {
+                    html += '<button class="btn btn-small" onclick="addToReceive(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ',' + globalIndex + ')">Add</button>';
+                }
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            if (container) container.innerHTML = html;
+        }
+
+        // ============================================================
+        // PAGINATION
+        // ============================================================
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderDrugList();
+            }
+        }
+
+        function nextPage() {
+            var totalPages = Math.ceil(filteredDrugs.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderDrugList();
+            }
+        }
+
+        // ============================================================
+        // ADD TO RECEIVE
+        // ============================================================
+
+        function addToReceive(drugName, maxStock, index) {
+            var qtyInput = document.getElementById('rqty-' + index);
+            if (!qtyInput) {
+                if (typeof showAlert === 'function') showAlert('Error: Could not find quantity input.', 'error');
+                return;
+            }
+
+            var qty = parseInt(qtyInput.value) || 1;
+
+            if (qty < 1) {
+                if (typeof showAlert === 'function') showAlert('Quantity must be at least 1.', 'error');
+                return;
+            }
+
+            if (receiveItems.some(function(item) { return item.name === drugName; })) {
+                if (typeof showAlert === 'function') showAlert(drugName + ' is already in this receive.', 'warning');
+                return;
+            }
+
+            if (!isReceiveOpen) {
+                var panel = document.getElementById('receivePanel');
+                var btn = document.getElementById('newReceiveBtn');
+
+                if (panel) panel.style.display = 'block';
+                if (btn) btn.textContent = '✕ Cancel Receive';
+                isReceiveOpen = true;
+                currentReceiveId = generateReceiveId();
+                var receiveIdDisplay = document.getElementById('receiveIdDisplay');
+                var receiveNotes = document.getElementById('receiveNotes');
+                if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
+                if (receiveNotes) receiveNotes.value = '';
+            }
+
+            receiveItems.push({
+                name: drugName,
+                quantity: qty
+            });
+
+            renderReceiveList();
+            renderDrugList();
+            if (typeof showAlert === 'function') showAlert('Added ' + drugName + ' to receive.', 'success');
+        }
+
+        // ============================================================
+        // RENDER RECEIVE LIST
+        // ============================================================
+
+        function renderReceiveList() {
+            var container = document.getElementById('receiveListContainer');
+
+            if (!container) return;
+
+            if (receiveItems.length === 0) {
+                container.innerHTML = '<p class="text-muted">No items added yet. Search and add drugs.</p>';
+                return;
+            }
+
+            var html = '<table style="width:100%;">';
+            html += '<tr><th>Drug</th><th>Qty</th><th>Action</th></tr>';
+
+            receiveItems.forEach(function(item, index) {
+                html += '<tr>';
+                html += '<td><strong>' + item.name + '</strong></td>';
+                html += '<td>';
+                html += '<input type="number" id="receive-qty-' + index + '" value="' + item.quantity + '" ';
+                html += 'min="1" style="width:55px;padding:4px 6px;border:1px solid #ccc;text-align:center;" ';
+                html += 'onchange="updateReceiveQty(' + index + ', this.value)">';
+                html += '</td>';
+                html += '<td><button class="btn btn-small" onclick="removeFromReceive(' + index + ')" style="color:#c00;">✕</button></td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // UPDATE RECEIVE QUANTITY
+        // ============================================================
+
+        function updateReceiveQty(index, newValue) {
+            var qty = parseInt(newValue) || 1;
+
+            if (qty < 1) {
+                if (typeof showAlert === 'function') showAlert('Quantity must be at least 1.', 'error');
+                qty = 1;
+            }
+
+            receiveItems[index].quantity = qty;
+            renderReceiveList();
+        }
+
+        // ============================================================
+        // REMOVE FROM RECEIVE
+        // ============================================================
+
+        function removeFromReceive(index) {
+            var removed = receiveItems[index].name;
+            receiveItems.splice(index, 1);
+            renderReceiveList();
+            if (isDrugListVisible) renderDrugList();
+            if (typeof showAlert === 'function') showAlert('Removed ' + removed + ' from receive.', 'info');
+        }
+
+        // ============================================================
+        // CLEAR RECEIVE
+        // ============================================================
+
+        function clearReceive() {
+            if (receiveItems.length === 0) {
+                if (typeof showAlert === 'function') showAlert('Receive is already empty.', 'info');
+                return;
+            }
+
+            if (!confirm('Clear all items from this receive?')) return;
+
+            receiveItems = [];
+            var receiveNotes = document.getElementById('receiveNotes');
+            if (receiveNotes) receiveNotes.value = '';
+            renderReceiveList();
+            if (isDrugListVisible) renderDrugList();
+            if (typeof showAlert === 'function') showAlert('Receive cleared.', 'info');
+        }
+
+        // ============================================================
+        // SUBMIT RECEIVE
+        // ============================================================
+
+        function submitReceive() {
+            if (receiveItems.length === 0) {
+                if (typeof showAlert === 'function') showAlert('Please add at least one item to receive.', 'warning');
+                return;
+            }
+
+            if (!confirm('Submit this receive? This will add stock to inventory.')) return;
+
+            if (typeof showLoading === 'function') showLoading('Submitting receive...');
+
+            var notes = document.getElementById('receiveNotes') ? document.getElementById('receiveNotes').value.trim() : '';
+
+            var receiveData = {
+                action: 'receive',
+                admin: currentUser.username,
+                items: receiveItems.map(function(item) {
+                    return {
+                        drug: item.name,
+                        quantity: item.quantity
+                    };
+                }),
+                receiveId: currentReceiveId,
+                notes: notes,
+                timestamp: new Date().toISOString()
+            };
+
+            var url = API_URL +
+                '?action=submitreceive' +
+                '&admin=' + encodeURIComponent(receiveData.admin) +
+                '&receiveId=' + encodeURIComponent(receiveData.receiveId) +
+                '&items=' + encodeURIComponent(JSON.stringify(receiveData.items)) +
+                '&notes=' + encodeURIComponent(receiveData.notes) +
+                '&timestamp=' + encodeURIComponent(receiveData.timestamp);
+
+            fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
+                if (typeof hideLoading === 'function') hideLoading();
+                if (result.success) {
+                    if (typeof showAlert === 'function') showAlert('Receive completed successfully! Stock added.', 'success');
+                    receiveItems = [];
+                    var receiveNotes = document.getElementById('receiveNotes');
+                    if (receiveNotes) receiveNotes.value = '';
+                    renderReceiveList();
+                    if (isDrugListVisible) renderDrugList();
+
+                    currentReceiveId = generateReceiveId();
+                    var receiveIdDisplay = document.getElementById('receiveIdDisplay');
+                    if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
+                } else {
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error submitting receive.', 'error');
+                }
+            })
+            .catch(function(error) {
+                if (typeof hideLoading === 'function') hideLoading();
+                console.error('Error:', error);
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
+            });
+        }
+    </script>
+
+</body>
+</html>
