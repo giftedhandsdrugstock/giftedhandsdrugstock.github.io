@@ -388,4 +388,249 @@
                 var safeId = 'qty-' + globalIndex;
 
                 html += '<tr>';
-                html += '<td><strong>' + drug.name + '</strong
+                html += '<td><strong>' + drug.name + '</strong></td>';
+                html += '<td>' + drug.form + '</td>';
+                html += '<td>' + drug.balance + '</td>';
+                html += '<td>';
+                html += '<input type="number" id="' + safeId + '" ';
+                html += 'min="1" max="' + drug.balance + '" value="1" style="width:70px;padding:4px 6px;border:1px solid #ccc;text-align:center;">';
+                html += '</td>';
+                html += '<td>';
+                if (drug.balance === 0) {
+                    html += '<span class="text-muted">Out of Stock</span>';
+                } else if (inOrder) {
+                    html += '<span style="color:#0a0;">✅ Added</span>';
+                } else {
+                    html += '<button class="btn btn-small" onclick="addToOrder(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ',' + globalIndex + ')">Add</button>';
+                }
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // PAGINATION
+        // ============================================================
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderDrugList();
+            }
+        }
+
+        function nextPage() {
+            var totalPages = Math.ceil(filteredDrugs.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderDrugList();
+            }
+        }
+
+        // ============================================================
+        // ADD TO ORDER
+        // ============================================================
+
+        function addToOrder(drugName, maxStock, index) {
+            var qtyInput = document.getElementById('qty-' + index);
+            if (!qtyInput) {
+                showAlert('Error: Could not find quantity input.', 'error');
+                return;
+            }
+
+            var qty = parseInt(qtyInput.value) || 1;
+
+            if (qty < 1) {
+                showAlert('Quantity must be at least 1.', 'error');
+                return;
+            }
+
+            if (qty > maxStock) {
+                showAlert('Quantity exceeds available stock (' + maxStock + ').', 'error');
+                return;
+            }
+
+            if (orderItems.some(function(item) { return item.name === drugName; })) {
+                showAlert(drugName + ' is already in your order.', 'warning');
+                return;
+            }
+
+            if (!isNewOrderOpen) {
+                var panel = document.getElementById('orderPanel');
+                var btn = document.getElementById('newOrderBtn');
+
+                panel.style.display = 'block';
+                btn.textContent = '✕ Cancel Order';
+                isNewOrderOpen = true;
+                currentOrderId = generateOrderId();
+                document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
+                document.getElementById('orderNotes').value = '';
+            }
+
+            orderItems.push({
+                name: drugName,
+                quantity: qty,
+                maxStock: maxStock
+            });
+
+            renderOrderList();
+            renderDrugList();
+            showAlert('Added ' + drugName + ' to your order.', 'success');
+        }
+
+        // ============================================================
+        // RENDER ORDER LIST
+        // ============================================================
+
+        function renderOrderList() {
+            var container = document.getElementById('orderListContainer');
+
+            if (orderItems.length === 0) {
+                container.innerHTML = '<p class="text-muted">No items added yet. Search and add drugs.</p>';
+                return;
+            }
+
+            var html = '<table style="width:100%;">';
+            html += '<tr><th>Drug</th><th>Qty</th><th>Action</th></tr>';
+
+            orderItems.forEach(function(item, index) {
+                html += '<tr>';
+                html += '<td><strong>' + item.name + '</strong></td>';
+                html += '<td>';
+                html += '<input type="number" id="order-qty-' + index + '" value="' + item.quantity + '" ';
+                html += 'min="1" max="' + item.maxStock + '" style="width:55px;padding:4px 6px;border:1px solid #ccc;text-align:center;" ';
+                html += 'onchange="updateOrderQty(' + index + ', this.value)">';
+                html += '</td>';
+                html += '<td><button class="btn btn-small" onclick="removeFromOrder(' + index + ')" style="color:#c00;">✕</button></td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // UPDATE ORDER QUANTITY
+        // ============================================================
+
+        function updateOrderQty(index, newValue) {
+            var qty = parseInt(newValue) || 1;
+
+            if (qty < 1) {
+                showAlert('Quantity must be at least 1.', 'error');
+                qty = 1;
+            }
+
+            var maxStock = orderItems[index].maxStock;
+            if (qty > maxStock) {
+                showAlert('Quantity exceeds available stock (' + maxStock + ').', 'warning');
+                qty = maxStock;
+            }
+
+            orderItems[index].quantity = qty;
+            renderOrderList();
+        }
+
+        // ============================================================
+        // REMOVE FROM ORDER
+        // ============================================================
+
+        function removeFromOrder(index) {
+            var removed = orderItems[index].name;
+            orderItems.splice(index, 1);
+            renderOrderList();
+            if (isDrugListVisible) renderDrugList();
+            showAlert('Removed ' + removed + ' from your order.', 'info');
+        }
+
+        // ============================================================
+        // CLEAR ORDER
+        // ============================================================
+
+        function clearOrder() {
+            if (orderItems.length === 0) {
+                showAlert('Your order is already empty.', 'info');
+                return;
+            }
+
+            if (!confirm('Clear all items from your order?')) return;
+
+            orderItems = [];
+            document.getElementById('orderNotes').value = '';
+            renderOrderList();
+            if (isDrugListVisible) renderDrugList();
+            showAlert('Order cleared.', 'info');
+        }
+
+        // ============================================================
+        // SUBMIT ORDER
+        // ============================================================
+
+        function submitOrder() {
+            if (orderItems.length === 0) {
+                showAlert('Please add at least one item to your order.', 'warning');
+                return;
+            }
+
+            if (!confirm('Submit this order?')) return;
+
+            showLoading('Submitting order...');
+
+            var notes = document.getElementById('orderNotes').value.trim();
+
+            var orderData = {
+                action: 'submitorder',
+                user: currentUser.username,
+                userId: currentUser.userId,
+                department: currentUser.department,
+                orderId: currentOrderId,
+                items: orderItems.map(function(item) {
+                    return {
+                        drug: item.name,
+                        quantity: item.quantity
+                    };
+                }),
+                notes: notes,
+                timestamp: new Date().toISOString()
+            };
+
+            var url = API_URL +
+                '?action=submitorder' +
+                '&user=' + encodeURIComponent(orderData.user) +
+                '&userId=' + encodeURIComponent(orderData.userId) +
+                '&department=' + encodeURIComponent(orderData.department) +
+                '&orderId=' + encodeURIComponent(orderData.orderId) +
+                '&items=' + encodeURIComponent(JSON.stringify(orderData.items)) +
+                '&notes=' + encodeURIComponent(orderData.notes) +
+                '&timestamp=' + encodeURIComponent(orderData.timestamp);
+
+            fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
+                hideLoading();
+                if (result.success) {
+                    showAlert('Order submitted successfully! Order ID: ' + currentOrderId, 'success');
+                    orderItems = [];
+                    document.getElementById('orderNotes').value = '';
+                    renderOrderList();
+                    if (isDrugListVisible) renderDrugList();
+
+                    currentOrderId = generateOrderId();
+                    document.getElementById('orderIdDisplay').textContent = 'Order: ' + currentOrderId;
+                } else {
+                    showAlert(result.message || 'Error submitting order.', 'error');
+                }
+            })
+            .catch(function(error) {
+                hideLoading();
+                console.error('Error:', error);
+                showAlert('Error connecting to server.', 'error');
+            });
+        }
+    </script>
+
+</body>
+</html>
