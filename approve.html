@@ -519,20 +519,23 @@
                 var isOverStock = (item.quantity > available && available !== 'N/A');
                 var warningColor = isOverStock ? '#c00' : '#555';
         
-                var rowStyle = isDeleted ? 'opacity:0.4;background:#f5f5f5;' : '';
+                // Subtle grey when deleted - still readable
+                var rowStyle = isDeleted ? 'opacity:0.6;background:#f5f5f5;' : '';
+                var textStyle = isDeleted ? 'color:#888;' : '';
         
+                // Restore button is ALWAYS visible and clickable
                 var actionButton = isDeleted ?
-                    `<button onclick="restoreItem('${order.orderId}', ${index})" style="background:none;border:none;color:#38a169;cursor:pointer;padding:2px 8px;font-size:14px;" title="Restore item">↩️ Restore</button>` :
+                    `<button onclick="restoreItem('${order.orderId}', ${index})" style="background:none;border:1px solid #38a169;color:#38a169;cursor:pointer;padding:2px 10px;border-radius:4px;font-size:12px;">↩️ Restore</button>` :
                     `<button onclick="deleteItem('${order.orderId}', ${index})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:16px;padding:0 5px;" title="Remove item">✕</button>`;
         
                 html += `
                     <div id="${itemId}" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;${rowStyle}">
-                        <span style="flex:1;font-weight:500;${isDeleted ? 'color:#999;' : ''}">${item.drug}</span>
-                        <span style="font-size:13px;color:${warningColor};">
+                        <span style="flex:1;font-weight:500;${textStyle}">${item.drug}</span>
+                        <span style="font-size:13px;color:${warningColor};${textStyle}">
                             Available: ${available}
                             ${isOverStock ? '⚠️ Insufficient' : '✅ OK'}
                         </span>
-                        <input type="number" id="qty-${order.orderId}-${index}" value="${item.quantity}" min="1" max="${available !== 'N/A' ? available : 999}" style="width:60px;padding:4px 6px;border:1px solid #ccc;text-align:center;${isDeleted ? 'opacity:0.5;' : ''}" ${isDeleted ? 'disabled' : ''}>
+                        <input type="number" id="qty-${order.orderId}-${index}" value="${item.quantity}" min="1" max="${available !== 'N/A' ? available : 999}" style="width:60px;padding:4px 6px;border:1px solid #ccc;text-align:center;${isDeleted ? 'opacity:0.6;' : ''}" ${isDeleted ? 'disabled' : ''}>
                         ${actionButton}
                     </div>
                 `;
@@ -541,7 +544,6 @@
             html += '</div>';
             container.innerHTML = html;
         }
-
         // ============================================================
         // FORMAT NOTES
         // ============================================================
