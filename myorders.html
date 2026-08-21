@@ -387,21 +387,112 @@
             var statusColor = getStatusColor(order.status);
         
             // ============================================================
+            // PARSE NOTES - Check if notes exist
+            // ============================================================
+            var hasNotes = order.notes && order.notes.trim() !== '';
+            var notesDisplay = '';
+        
+            if (hasNotes) {
+                var formattedNotes = formatNotesDialogue(order.notes);
+                notesDisplay = `
+                    <div style="margin-top:10px;">
+                        <button class="btn" onclick="showNotesPopup('${order.orderId}')" style="background:#805ad5;color:white;border:none;padding:6px 16px;font-size:13px;">📝 Read Notes</button>
+                    </div>
+                    <div id="notesPopup-${order.orderId}" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+                        <div style="background:#fff;padding:25px;border-radius:8px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                                <h3 style="font-weight:normal;">📝 Notes Dialogue</h3>
+                                <button onclick="closeNotesPopup('${order.orderId}')" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button>
+                            </div>
+                            <div style="font-family:monospace;font-size:14px;line-height:1.8;background:#f7fafc;padding:15px;border-radius:4px;border-left:3px solid #805ad5;">
+                                ${formattedNotes}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                notesDisplay = '<div style="margin-top:10px;font-size:13px;color:#888;">No notes</div>';
+            }
+        
+            // ============================================================
             // PARSE APPROVED BY FROM NOTES
             // ============================================================
         
             var approvedBy = 'Pending';
-            var notesDisplay = order.notes || '';
         
             if (order.notes) {
-                // Look for [Approved By: xxx] pattern
                 var match = order.notes.match(/\[Approved By: ([^\]]+)\]/);
                 if (match) {
                     approvedBy = match[1];
                 }
-                // Clean up notes for display (remove the Approved By tag)
-                notesDisplay = order.notes.replace(/\[Approved By: [^\]]+\]/, '').trim();
-                if (notesDisplay === '') notesDisplay = 'No notes';
+            }
+
+            // ============================================================
+            // FORMAT NOTES AS DIALOGUE
+            // ============================================================
+            
+            function formatNotesDialogue(notes) {
+                if (!notes) return 'No notes';
+            
+                var lines = notes.split('\n');
+                var formatted = '';
+            
+                lines.forEach(function(line) {
+                    line = line.trim();
+                    if (!line) return;
+            
+                    // Check for [User: xxx] pattern
+                    var userMatch = line.match(/\[User: ([^\]]+)\]\s*(.*)/);
+                    if (userMatch) {
+                        formatted += '<div style="margin-bottom:6px;"><span style="color:#2b6cb0;font-weight:bold;">👤 ' + userMatch[1] + ':</span> <span style="color:#333;">' + userMatch[2] + '</span></div>';
+                        return;
+                    }
+            
+                    // Check for [Admin: xxx] pattern
+                    var adminMatch = line.match(/\[Admin: ([^\]]+)\]\s*(.*)/);
+                    if (adminMatch) {
+                        formatted += '<div style="margin-bottom:6px;padding-left:10px;border-left:2px solid #805ad5;"><span style="color:#805ad5;font-weight:bold;">🔹 Admin ' + adminMatch[1] + ':</span> <span style="color:#333;">' + adminMatch[2] + '</span></div>';
+                        return;
+                    }
+            
+                    // Check for [Approved By: xxx] pattern - skip it
+                    if (line.match(/\[Approved By: [^\]]+\]/)) {
+                        return;
+                    }
+            
+                    // Regular line
+                    formatted += '<div style="margin-bottom:6px;color:#555;">' + line + '</div>';
+                });
+            
+                if (!formatted) {
+                    formatted = '<div style="color:#555;">' + notes.replace(/\n/g, '<br>') + '</div>';
+                }
+            
+                return formatted;
+            }
+            
+            
+            // ============================================================
+            // SHOW NOTES POPUP
+            // ============================================================
+            
+            function showNotesPopup(orderId) {
+                var popup = document.getElementById('notesPopup-' + orderId);
+                if (popup) {
+                    popup.style.display = 'flex';
+                }
+            }
+            
+            
+            // ============================================================
+            // CLOSE NOTES POPUP
+            // ============================================================
+            
+            function closeNotesPopup(orderId) {
+                var popup = document.getElementById('notesPopup-' + orderId);
+                if (popup) {
+                    popup.style.display = 'none';
+                }
             }
         
             // ============================================================
@@ -436,8 +527,8 @@
                         <div><strong>Department:</strong> ${order.department || 'N/A'}</div>
                         <div><strong>Requested By:</strong> ${order.username || 'Unknown'}</div>
                         <div><strong>Approved By:</strong> ${approvedBy}</div>
-                        ${notesDisplay ? `<div><strong>Notes:</strong> ${notesDisplay}</div>` : ''}
                     </div>
+                    ${notesDisplay}
                 </div>
                 <hr style="border:none;border-top:1px solid #eee;">
                 <div style="margin-top:10px;">
