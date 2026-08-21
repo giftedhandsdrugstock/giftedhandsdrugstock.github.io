@@ -1,7 +1,3 @@
-<!-- ============================================================
-    HEADER.HTML - Shared Header for All Pages
-    ============================================================ -->
-
 <!-- Loading Overlay -->
 <div id="loadingOverlay" class="loading-overlay">
     <div style="display:flex;align-items:center;background:#fff;padding:20px 30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
@@ -19,14 +15,24 @@
             <span id="userDisplay"></span>
             <span id="roleDisplay" class="text-muted"></span>
             <span id="deptDisplay" class="text-muted"></span>
+
+            <!-- Dropdown: Internal Orders -->
+            <div class="dropdown" style="position:relative;display:inline-block;">
+                <button class="dropdown-btn" onclick="toggleDropdown()" style="background:none;border:none;cursor:pointer;font-size:14px;color:#000;text-decoration:underline;">
+                    📋 Internal Orders ▾
+                </button>
+                <div id="ordersDropdown" style="display:none;position:absolute;background:#fff;min-width:160px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border-radius:6px;padding:6px 0;z-index:1000;right:0;top:100%;margin-top:4px;border:1px solid #ddd;">
+                    <a href="orders.html" style="display:block;padding:10px 18px;color:#333;text-decoration:none;font-size:14px;border-bottom:1px solid #f0f0f0;">📝 New Order</a>
+                    <a href="myorders.html" style="display:block;padding:10px 18px;color:#333;text-decoration:none;font-size:14px;border-bottom:1px solid #f0f0f0;">📋 My Orders</a>
+                    <a href="approve.html" id="approveDropdownLink" style="display:none;padding:10px 18px;color:#333;text-decoration:none;font-size:14px;">✅ Approve Orders</a>
+                </div>
+            </div>
+
             <a href="search.html">Search</a>
-            <a href="orders.html">Orders</a>
-            <a href="myorders.html">My Orders</a>
             <a href="receive.html" class="admin-link" style="display:none;">Receive</a>
-            <a href="approve.html" class="admin-link" style="display:none;">Approve</a>
-            <a href="users.html" class="admin-link" style="display:none;">Users</a>
             <a href="profile.html">Profile</a>
             <a href="reset.html" class="admin-link" style="display:none;">Reset</a>
+            <a href="users.html" class="admin-link" style="display:none;">Users</a>
             <button class="btn-logout" onclick="logout()">Logout</button>
         </div>
     </div>
