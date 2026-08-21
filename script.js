@@ -110,9 +110,16 @@ function initNav() {
     var user = getCurrentUser();
     var isAdmin = user && user.isAdmin;
 
+    // Show/hide admin links in the main nav
     document.querySelectorAll('.admin-link').forEach(function(link) {
         link.style.display = isAdmin ? 'inline' : 'none';
     });
+
+    // Show/hide Approve link in the dropdown
+    var approveLink = document.getElementById('approveDropdownLink');
+    if (approveLink) {
+        approveLink.style.display = isAdmin ? 'block' : 'none';
+    }
 }
 
 // ============================================================
@@ -186,3 +193,36 @@ function escapeHtml(text) {
     if (!text) return '';
     return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+// ============================================================
+// DROPDOWN MENU
+// ============================================================
+
+function toggleDropdown() {
+    var dropdown = document.getElementById('ordersDropdown');
+    var arrow = document.querySelector('.dropdown-btn .arrow');
+
+    if (dropdown) {
+        if (dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+            if (arrow) arrow.classList.remove('open');
+        } else {
+            dropdown.style.display = 'block';
+            if (arrow) arrow.classList.add('open');
+        }
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    var dropdown = document.getElementById('ordersDropdown');
+    var btn = document.querySelector('.dropdown-btn');
+
+    if (dropdown && btn) {
+        if (!btn.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.style.display = 'none';
+            var arrow = document.querySelector('.dropdown-btn .arrow');
+            if (arrow) arrow.classList.remove('open');
+        }
+    }
+});
