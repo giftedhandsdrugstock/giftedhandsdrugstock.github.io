@@ -283,3 +283,46 @@ table td {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+/* ============================================================
+   DROPDOWN MENU
+   ============================================================ */
+
+.dropdown-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #000;
+    text-decoration: underline;
+    padding: 4px 8px;
+    font-family: inherit;
+}
+
+.dropdown-btn:hover {
+    color: #2b6cb0;
+}
+
+.dropdown-btn:focus {
+    outline: none;
+}
+
+#ordersDropdown a:hover {
+    background: #f0f0f0;
+}
+
+#ordersDropdown a:last-child {
+    border-bottom: none;
+}
+
+/* Dropdown arrow rotation */
+.dropdown-btn .arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+    font-size: 10px;
+    margin-left: 4px;
+}
+
+.dropdown-btn .arrow.open {
+    transform: rotate(180deg);
+}
+
