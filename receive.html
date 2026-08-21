@@ -235,16 +235,16 @@
 
         function initPage() {
             if (!checkAuth()) return;
-
+        
             currentUser = getCurrentUser();
             var userDisplay = document.getElementById('userDisplay');
             if (userDisplay) userDisplay.textContent = 'Welcome, ' + currentUser.fullName;
-
+        
             var roleDisplay = document.getElementById('roleDisplay');
             if (roleDisplay) roleDisplay.textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
-
+        
             if (typeof initNav === 'function') initNav();
-
+        
             if (!currentUser.isAdmin) {
                 var searchSection = document.querySelector('.section-box:first-of-type');
                 if (searchSection) searchSection.style.display = 'none';
@@ -255,9 +255,18 @@
                 if (typeof showAlert === 'function') showAlert('Admin access required for receiving stock.', 'info');
                 return;
             }
-
-            loadDrugsSilent();
-
+        
+            // ============================================================
+            // FIX: Load drugs and THEN render
+            // ============================================================
+            loadDrugsSilent().then(function() {
+                // Now drugs are loaded, safe to render
+                if (allDrugs.length > 0) {
+                    filteredDrugs = allDrugs;
+                    renderDrugList();
+                }
+            });
+        
             var drugSearch = document.getElementById('drugSearch');
             if (drugSearch) {
                 drugSearch.addEventListener('keydown', function(event) {
@@ -626,7 +635,7 @@
             var container = document.getElementById('drugListContainer');
             var btn = document.getElementById('toggleDrugsBtn');
             var closeBtn = document.getElementById('closeDrugListBtn');
-
+        
             if (isDrugListVisible) {
                 if (panel) panel.style.display = 'none';
                 if (btn) btn.textContent = 'Show All Drugs';
@@ -635,6 +644,9 @@
                 var drugSearch = document.getElementById('drugSearch');
                 if (drugSearch) drugSearch.value = '';
             } else {
+                // ============================================================
+                // FIX: Check if drugs are loaded, if not load them first
+                // ============================================================
                 if (allDrugs.length === 0) {
                     if (typeof showLoading === 'function') showLoading('Loading drugs...');
                     loadDrugsSilent().then(function() {
@@ -657,7 +669,7 @@
                     });
                     return;
                 }
-
+        
                 filteredDrugs = allDrugs;
                 currentPage = 1;
                 renderDrugList();
@@ -667,7 +679,6 @@
                 isDrugListVisible = true;
             }
         }
-
         // ============================================================
         // CLOSE DRUG LIST
         // ============================================================
@@ -690,23 +701,25 @@
         // ============================================================
 
         async function loadDrugsSilent() {
-            try {
-                var response = await fetch(API_URL + '?search=');
-                var results = await response.json();
-
-                allDrugs = results.map(function(item) {
-                    return {
-                        name: item[0] || 'Unknown',
-                        form: item[1] || 'Unknown',
-                        balance: parseFloat(item[2]) || 0
-                    };
-                });
-
-                filteredDrugs = allDrugs;
-
-            } catch (error) {
-                console.error('Error loading drugs:', error);
-            }
+            return new Promise(function(resolve, reject) {
+                fetch(API_URL + '?search=')
+                    .then(function(response) { return response.json(); })
+                    .then(function(results) {
+                        allDrugs = results.map(function(item) {
+                            return {
+                                name: item[0] || 'Unknown',
+                                form: item[1] || 'Unknown',
+                                balance: parseFloat(item[2]) || 0
+                            };
+                        });
+                        filteredDrugs = allDrugs;
+                        resolve(allDrugs);
+                    })
+                    .catch(function(error) {
+                        console.error('Error loading drugs:', error);
+                        reject(error);
+                    });
+            });
         }
 
         // ============================================================
@@ -715,17 +728,20 @@
 
         function searchDrugs() {
             var query = document.getElementById('drugSearch').value.toLowerCase().trim();
-
+        
             if (!query) {
                 if (typeof showAlert === 'function') showAlert('Please enter a search term.', 'error');
                 return;
             }
-
+        
             var panel = document.getElementById('drugListPanel');
             var btn = document.getElementById('toggleDrugsBtn');
             var closeBtn = document.getElementById('closeDrugListBtn');
-
+        
             if (!isDrugListVisible) {
+                // ============================================================
+                // FIX: If drugs aren't loaded, load them first
+                // ============================================================
                 if (allDrugs.length === 0) {
                     if (typeof showLoading === 'function') showLoading('Loading drugs...');
                     loadDrugsSilent().then(function() {
@@ -738,7 +754,7 @@
                     });
                     return;
                 }
-
+        
                 filteredDrugs = allDrugs;
                 currentPage = 1;
                 if (panel) panel.style.display = 'block';
@@ -750,7 +766,6 @@
                 performSearch(query);
             }
         }
-
         function performSearch(query) {
             if (typeof showLoading === 'function') showLoading('Searching for: ' + query);
 
