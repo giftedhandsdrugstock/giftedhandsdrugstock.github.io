@@ -12,39 +12,229 @@
     <div id="header"></div>
 
     <!-- ===== PAGE CONTENT ===== -->
-    <!-- PROFILE INFO -->
-    <div class="section-box">
-        <h2>Profile Information</h2>
-        <form id="profileForm" onsubmit="updateProfile(event)">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>User ID</label>
-                    <input type="text" id="profileUserId" disabled>
+    <div id="profileContainer" style="max-width:1000px;margin:0 auto;">
+
+        <!-- ============================================================
+        PROFILE COVER & AVATAR
+        ============================================================ -->
+        <div style="background:#1a365d;border-radius:12px 12px 0 0;height:150px;position:relative;margin-bottom:60px;">
+            <!-- Cover Image Placeholder -->
+            <div style="background:linear-gradient(135deg,#2b6cb0,#1a365d);width:100%;height:100%;border-radius:12px 12px 0 0;"></div>
+
+            <!-- Avatar -->
+            <div style="position:absolute;bottom:-50px;left:40px;width:100px;height:100px;border-radius:50%;background:#fff;border:4px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:600;color:#1a365d;overflow:hidden;" id="avatarDisplay">
+                ?
+            </div>
+        </div>
+
+        <!-- ============================================================
+        PROFILE INFO
+        ============================================================ -->
+        <div style="padding:0 20px 20px 20px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:15px;">
+                <div>
+                    <h1 id="profileFullName" style="font-size:28px;font-weight:600;color:#1a365d;margin:0;">User Name</h1>
+                    <div style="color:#718096;font-size:14px;margin-top:4px;">
+                        <span id="profileUsername">@username</span>
+                        <span style="margin:0 8px;">·</span>
+                        <span id="profileDepartment">Department</span>
+                    </div>
+                    <div style="margin-top:8px;display:flex;gap:15px;flex-wrap:wrap;">
+                        <span style="font-size:14px;color:#4a5568;">📧 <span id="profileEmail">email@example.com</span></span>
+                        <span style="font-size:14px;color:#4a5568;">🆔 <span id="profileUserId" style="font-family:monospace;font-size:13px;">USR-000</span></span>
+                        <span style="font-size:14px;color:#4a5568;">📅 Joined: <span id="profileCreated">Unknown</span></span>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="profileUsername" disabled>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="showEditModal()" style="background:#2b6cb0;color:white;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;">✏️ Edit Profile</button>
                 </div>
             </div>
-            <div class="form-row">
+
+            <!-- Stats -->
+            <div style="display:flex;gap:30px;margin-top:15px;padding:12px 0;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;">
+                <div><strong id="statOrders">0</strong> <span style="color:#718096;font-size:14px;">Orders</span></div>
+                <div><strong id="statApproved">0</strong> <span style="color:#718096;font-size:14px;">Approved</span></div>
+                <div><strong id="statPending">0</strong> <span style="color:#718096;font-size:14px;">Pending</span></div>
+                <div><strong id="statRejected">0</strong> <span style="color:#718096;font-size:14px;">Rejected</span></div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        PROFILE TABS
+        ============================================================ -->
+        <div style="padding:0 20px;">
+            <div style="display:flex;gap:5px;border-bottom:2px solid #e2e8f0;margin-bottom:20px;flex-wrap:wrap;">
+                <button class="profile-tab active" onclick="switchTab('about')" style="padding:10px 20px;border:none;background:none;cursor:pointer;font-size:15px;font-weight:500;color:#2d3748;border-bottom:3px solid #2b6cb0;margin-bottom:-2px;">About</button>
+                <button class="profile-tab" onclick="switchTab('orders')" style="padding:10px 20px;border:none;background:none;cursor:pointer;font-size:15px;font-weight:500;color:#718096;border-bottom:3px solid transparent;margin-bottom:-2px;">Orders</button>
+                <button class="profile-tab" onclick="switchTab('security')" style="padding:10px 20px;border:none;background:none;cursor:pointer;font-size:15px;font-weight:500;color:#718096;border-bottom:3px solid transparent;margin-bottom:-2px;">Security</button>
+                <button class="profile-tab" onclick="switchTab('settings')" style="padding:10px 20px;border:none;background:none;cursor:pointer;font-size:15px;font-weight:500;color:#718096;border-bottom:3px solid transparent;margin-bottom:-2px;">Settings</button>
+            </div>
+
+            <!-- ============================================================
+            TAB: ABOUT
+            ============================================================ -->
+            <div id="tab-about" class="profile-tab-content">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                    <div style="background:#f7fafc;padding:20px;border-radius:8px;">
+                        <h3 style="font-weight:600;font-size:16px;margin-bottom:10px;color:#1a365d;">📋 Personal Information</h3>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Full Name</span>
+                            <span id="aboutFullName" style="font-weight:500;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Username</span>
+                            <span id="aboutUsername" style="font-weight:500;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Email</span>
+                            <span id="aboutEmail" style="font-weight:500;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Department</span>
+                            <span id="aboutDepartment" style="font-weight:500;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                            <span style="color:#718096;">User ID</span>
+                            <span id="aboutUserId" style="font-weight:500;font-family:monospace;">-</span>
+                        </div>
+                    </div>
+                    <div style="background:#f7fafc;padding:20px;border-radius:8px;">
+                        <h3 style="font-weight:600;font-size:16px;margin-bottom:10px;color:#1a365d;">📊 Account Stats</h3>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Member Since</span>
+                            <span id="aboutCreated" style="font-weight:500;">-</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Total Orders</span>
+                            <span id="aboutTotalOrders" style="font-weight:500;">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Approved</span>
+                            <span id="aboutApproved" style="font-weight:500;color:#38a169;">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Pending</span>
+                            <span id="aboutPending" style="font-weight:500;color:#d69e2e;">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                            <span style="color:#718096;">Rejected</span>
+                            <span id="aboutRejected" style="font-weight:500;color:#e53e3e;">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+            TAB: ORDERS
+            ============================================================ -->
+            <div id="tab-orders" class="profile-tab-content" style="display:none;">
+                <div style="background:#f7fafc;padding:20px;border-radius:8px;">
+                    <h3 style="font-weight:600;font-size:16px;margin-bottom:15px;color:#1a365d;">📋 Recent Orders</h3>
+                    <div id="recentOrdersList">
+                        <p class="text-muted">Loading orders...</p>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <a href="myorders.html" style="color:#2b6cb0;text-decoration:none;font-weight:500;">View All Orders →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+            TAB: SECURITY
+            ============================================================ -->
+            <div id="tab-security" class="profile-tab-content" style="display:none;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                    <div style="background:#f7fafc;padding:20px;border-radius:8px;">
+                        <h3 style="font-weight:600;font-size:16px;margin-bottom:10px;color:#1a365d;">🔑 Change Password</h3>
+                        <form id="passwordForm" onsubmit="changePassword(event)">
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" id="newPassword" placeholder="Min 6 characters" required minlength="6" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm Password</label>
+                                <input type="password" id="confirmNewPassword" placeholder="Confirm password" required style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                            </div>
+                            <button type="submit" class="btn" style="background:#2b6cb0;color:white;border:none;padding:8px 20px;border-radius:4px;cursor:pointer;">Update Password</button>
+                        </form>
+                    </div>
+                    <div style="background:#f7fafc;padding:20px;border-radius:8px;">
+                        <h3 style="font-weight:600;font-size:16px;margin-bottom:10px;color:#1a365d;">🔐 Security Info</h3>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Account Status</span>
+                            <span style="font-weight:500;color:#38a169;">Active ✅</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf2f7;">
+                            <span style="color:#718096;">Last Login</span>
+                            <span id="lastLoginTime" style="font-weight:500;">Today</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                            <span style="color:#718096;">Session Status</span>
+                            <span style="font-weight:500;color:#38a169;">Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+            TAB: SETTINGS
+            ============================================================ -->
+            <div id="tab-settings" class="profile-tab-content" style="display:none;">
+                <div style="background:#f7fafc;padding:20px;border-radius:8px;">
+                    <h3 style="font-weight:600;font-size:16px;margin-bottom:15px;color:#1a365d;">⚙️ Settings (Coming Soon)</h3>
+                    <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #edf2f7;">
+                        <div>
+                            <div style="font-weight:500;">Theme Preference</div>
+                            <div style="font-size:13px;color:#718096;">Light mode only (for now)</div>
+                        </div>
+                        <button style="background:#e2e8f0;border:none;padding:4px 16px;border-radius:4px;cursor:pointer;font-size:13px;">Light</button>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #edf2f7;">
+                        <div>
+                            <div style="font-weight:500;">Email Notifications</div>
+                            <div style="font-size:13px;color:#718096;">Get notified when orders are approved</div>
+                        </div>
+                        <button style="background:#38a169;color:white;border:none;padding:4px 16px;border-radius:4px;cursor:pointer;font-size:13px;">Enabled</button>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:12px 0;">
+                        <div>
+                            <div style="font-weight:500;">Language</div>
+                            <div style="font-size:13px;color:#718096;">Application language</div>
+                        </div>
+                        <button style="background:#e2e8f0;border:none;padding:4px 16px;border-radius:4px;cursor:pointer;font-size:13px;">English</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    EDIT PROFILE MODAL
+    ============================================================ -->
+    <div id="editProfileModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:30px;border-radius:12px;max-width:500px;width:90%;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                <h2 style="font-weight:normal;">✏️ Edit Profile</h2>
+                <button onclick="closeEditModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button>
+            </div>
+            <form id="editProfileForm" onsubmit="updateProfileFromModal(event)">
                 <div class="form-group">
                     <label>First Name</label>
-                    <input type="text" id="profileFirstName" required>
+                    <input type="text" id="editFirstName" required style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
                 </div>
                 <div class="form-group">
                     <label>Last Name</label>
-                    <input type="text" id="profileLastName" required>
+                    <input type="text" id="editLastName" required style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
                 </div>
-            </div>
-            <div class="form-row">
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" id="profileEmail" required>
+                    <input type="email" id="editEmail" required style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
                 </div>
                 <div class="form-group">
                     <label>Department</label>
-                    <input type="text" id="profileDepartment" list="profileDeptList" required>
-                    <datalist id="profileDeptList">
+                    <input type="text" id="editDepartment" list="editDeptList" required style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                    <datalist id="editDeptList">
                         <option value="Pharmacy">
                         <option value="Ward A">
                         <option value="Ward B">
@@ -59,49 +249,11 @@
                         <option value="Other">
                     </datalist>
                 </div>
-            </div>
-            <div class="form-group">
-                <label>Account Created</label>
-                <input type="text" id="profileCreated" disabled>
-            </div>
-            <button type="submit" class="btn">Update Profile</button>
-        </form>
-    </div>
-
-    <!-- CHANGE PASSWORD -->
-    <div class="section-box">
-        <h2>Change Password</h2>
-        <form id="passwordForm" onsubmit="changePassword(event)">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" id="newPassword" placeholder="Min 6 characters" required minlength="6">
+                <div style="display:flex;gap:10px;margin-top:15px;">
+                    <button type="submit" class="btn" style="background:#2b6cb0;color:white;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">💾 Save Changes</button>
+                    <button type="button" class="btn" onclick="closeEditModal()" style="background:#e2e8f0;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label>Confirm New Password</label>
-                    <input type="password" id="confirmNewPassword" placeholder="Confirm password" required>
-                </div>
-            </div>
-            <button type="submit" class="btn">Change Password</button>
-        </form>
-    </div>
-
-    <!-- SESSION INFO -->
-    <div class="section-box">
-        <h2>Session Information</h2>
-        <div style="display:flex;flex-wrap:wrap;gap:20px;">
-            <div>
-                <strong>Logged in as:</strong>
-                <span id="sessionUser"></span>
-            </div>
-            <div>
-                <strong>Department:</strong>
-                <span id="sessionDept"></span>
-            </div>
-            <div>
-                <strong>User ID:</strong>
-                <span id="sessionUserId" style="font-family:monospace;font-size:13px;"></span>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -159,6 +311,8 @@
         // PROFILE.HTML SPECIFIC
         // ============================================================
 
+        var allOrders = [];
+
         function initPage() {
             if (!checkAuth()) return;
 
@@ -171,50 +325,169 @@
 
             if (typeof initNav === 'function') initNav();
 
-            var userId = document.getElementById('profileUserId');
-            var username = document.getElementById('profileUsername');
-            var firstName = document.getElementById('profileFirstName');
-            var lastName = document.getElementById('profileLastName');
-            var email = document.getElementById('profileEmail');
-            var department = document.getElementById('profileDepartment');
-            var created = document.getElementById('profileCreated');
-            var sessionUser = document.getElementById('sessionUser');
-            var sessionDept = document.getElementById('sessionDept');
-            var sessionUserId = document.getElementById('sessionUserId');
+            // Avatar initials
+            var initials = (user.firstName ? user.firstName.charAt(0) : '') + (user.lastName ? user.lastName.charAt(0) : '');
+            var avatar = document.getElementById('avatarDisplay');
+            if (avatar) {
+                avatar.textContent = initials || '?';
+                avatar.style.background = '#e2e8f0';
+            }
 
-            if (userId) userId.value = user.userId || 'N/A';
-            if (username) username.value = user.username;
-            if (firstName) firstName.value = user.firstName;
-            if (lastName) lastName.value = user.lastName;
-            if (email) email.value = user.email;
-            if (department) department.value = user.department;
-            if (created) created.value = user.created || 'Unknown';
+            // Profile info
+            document.getElementById('profileFullName').textContent = user.fullName;
+            document.getElementById('profileUsername').textContent = '@' + user.username;
+            document.getElementById('profileDepartment').textContent = user.department;
+            document.getElementById('profileEmail').textContent = user.email;
+            document.getElementById('profileUserId').textContent = user.userId || 'USR-000';
+            document.getElementById('profileCreated').textContent = user.created ? new Date(user.created).toLocaleDateString() : 'Unknown';
 
-            if (sessionUser) sessionUser.textContent = user.fullName;
-            if (sessionDept) sessionDept.textContent = user.department;
-            if (sessionUserId) sessionUserId.textContent = user.userId || 'N/A';
+            // About tab
+            document.getElementById('aboutFullName').textContent = user.fullName;
+            document.getElementById('aboutUsername').textContent = user.username;
+            document.getElementById('aboutEmail').textContent = user.email;
+            document.getElementById('aboutDepartment').textContent = user.department;
+            document.getElementById('aboutUserId').textContent = user.userId || 'USR-000';
+            document.getElementById('aboutCreated').textContent = user.created ? new Date(user.created).toLocaleDateString() : 'Unknown';
+
+            // Edit modal pre-fill
+            document.getElementById('editFirstName').value = user.firstName;
+            document.getElementById('editLastName').value = user.lastName;
+            document.getElementById('editEmail').value = user.email;
+            document.getElementById('editDepartment').value = user.department;
+
+            // Load orders for stats
+            loadUserOrders();
         }
 
         // ============================================================
-        // UPDATE PROFILE
+        // LOAD USER ORDERS FOR STATS
         // ============================================================
 
-        async function updateProfile(event) {
+        async function loadUserOrders() {
+            var user = getCurrentUser();
+
+            try {
+                var url = API_URL + '?action=getorders&user=' + encodeURIComponent(user.username);
+                var response = await fetch(url);
+                var results = await response.json();
+
+                allOrders = results;
+
+                // Update stats
+                var total = results.length;
+                var approved = results.filter(function(o) { return o.status === 'approved'; }).length;
+                var pending = results.filter(function(o) { return o.status === 'pending'; }).length;
+                var rejected = results.filter(function(o) { return o.status === 'rejected'; }).length;
+
+                document.getElementById('statOrders').textContent = total;
+                document.getElementById('statApproved').textContent = approved;
+                document.getElementById('statPending').textContent = pending;
+                document.getElementById('statRejected').textContent = rejected;
+
+                document.getElementById('aboutTotalOrders').textContent = total;
+                document.getElementById('aboutApproved').textContent = approved;
+                document.getElementById('aboutPending').textContent = pending;
+                document.getElementById('aboutRejected').textContent = rejected;
+
+                // Render recent orders (last 5)
+                renderRecentOrders(results.slice(0, 5));
+
+            } catch (error) {
+                console.error('Error loading orders:', error);
+            }
+        }
+
+        // ============================================================
+        // RENDER RECENT ORDERS
+        // ============================================================
+
+        function renderRecentOrders(orders) {
+            var container = document.getElementById('recentOrdersList');
+
+            if (!container) return;
+
+            if (orders.length === 0) {
+                container.innerHTML = '<p class="text-muted">No orders placed yet.</p>';
+                return;
+            }
+
+            var html = '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
+            html += '<tr style="background:#edf2f7;"><th style="padding:8px;text-align:left;">Order ID</th><th style="padding:8px;text-align:left;">Date</th><th style="padding:8px;text-align:left;">Items</th><th style="padding:8px;text-align:left;">Status</th></tr>';
+
+            orders.forEach(function(order) {
+                var date = order.timestamp ? new Date(order.timestamp).toLocaleDateString() : 'Unknown';
+                var itemCount = order.items ? order.items.length : 0;
+                var statusColor = getStatusColor(order.status);
+
+                html += '<tr>';
+                html += '<td style="padding:8px;border-bottom:1px solid #eee;"><a href="myorders.html" style="color:#2b6cb0;text-decoration:none;">' + order.orderId + '</a></td>';
+                html += '<td style="padding:8px;border-bottom:1px solid #eee;">' + date + '</td>';
+                html += '<td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">' + itemCount + '</td>';
+                html += '<td style="padding:8px;border-bottom:1px solid #eee;color:' + statusColor + ';font-weight:bold;">' + order.status.toUpperCase() + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // TAB SWITCHING
+        // ============================================================
+
+        function switchTab(tabId) {
+            // Update tabs
+            document.querySelectorAll('.profile-tab').forEach(function(tab) {
+                tab.classList.remove('active');
+                tab.style.color = '#718096';
+                tab.style.borderBottom = '3px solid transparent';
+            });
+
+            var activeTab = document.querySelector('.profile-tab[onclick="switchTab(\'' + tabId + '\')"]');
+            if (activeTab) {
+                activeTab.classList.add('active');
+                activeTab.style.color = '#2d3748';
+                activeTab.style.borderBottom = '3px solid #2b6cb0';
+            }
+
+            // Update content
+            document.querySelectorAll('.profile-tab-content').forEach(function(content) {
+                content.style.display = 'none';
+            });
+
+            var target = document.getElementById('tab-' + tabId);
+            if (target) {
+                target.style.display = 'block';
+            }
+        }
+
+        // ============================================================
+        // EDIT PROFILE MODAL
+        // ============================================================
+
+        function showEditModal() {
+            document.getElementById('editProfileModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editProfileModal').style.display = 'none';
+        }
+
+        async function updateProfileFromModal(event) {
             event.preventDefault();
 
-            if (typeof showLoading === 'function') showLoading('Updating profile...');
-
-            var firstName = document.getElementById('profileFirstName').value.trim();
-            var lastName = document.getElementById('profileLastName').value.trim();
-            var email = document.getElementById('profileEmail').value.trim();
-            var department = document.getElementById('profileDepartment').value.trim();
+            var firstName = document.getElementById('editFirstName').value.trim();
+            var lastName = document.getElementById('editLastName').value.trim();
+            var email = document.getElementById('editEmail').value.trim();
+            var department = document.getElementById('editDepartment').value.trim();
             var username = localStorage.getItem('username');
 
             if (!firstName || !lastName || !email || !department) {
-                if (typeof hideLoading === 'function') hideLoading();
                 if (typeof showAlert === 'function') showAlert('All fields are required.', 'error');
                 return;
             }
+
+            if (typeof showLoading === 'function') showLoading('Updating profile...');
 
             try {
                 var url = API_URL +
@@ -239,14 +512,21 @@
 
                     if (typeof showAlert === 'function') showAlert('Profile updated successfully!', 'success');
 
+                    // Update UI
                     var fullName = firstName + ' ' + lastName;
-                    var userDisplay = document.getElementById('userDisplay');
-                    var sessionUser = document.getElementById('sessionUser');
-                    var sessionDept = document.getElementById('sessionDept');
+                    document.getElementById('profileFullName').textContent = fullName;
+                    document.getElementById('profileDepartment').textContent = department;
+                    document.getElementById('profileEmail').textContent = email;
+                    document.getElementById('userDisplay').textContent = 'Welcome, ' + fullName;
 
+                    var userDisplay = document.getElementById('userDisplay');
                     if (userDisplay) userDisplay.textContent = 'Welcome, ' + fullName;
-                    if (sessionUser) sessionUser.textContent = fullName;
-                    if (sessionDept) sessionDept.textContent = department;
+
+                    document.getElementById('aboutFullName').textContent = fullName;
+                    document.getElementById('aboutEmail').textContent = email;
+                    document.getElementById('aboutDepartment').textContent = department;
+
+                    closeEditModal();
 
                 } else {
                     if (typeof showAlert === 'function') showAlert(result.message || 'Error updating profile.', 'error');
@@ -266,22 +546,20 @@
         async function changePassword(event) {
             event.preventDefault();
 
-            if (typeof showLoading === 'function') showLoading('Changing password...');
-
             var newPassword = document.getElementById('newPassword').value;
             var confirmPassword = document.getElementById('confirmNewPassword').value;
 
             if (newPassword !== confirmPassword) {
-                if (typeof hideLoading === 'function') hideLoading();
                 if (typeof showAlert === 'function') showAlert('Passwords do not match.', 'error');
                 return;
             }
 
             if (newPassword.length < 6) {
-                if (typeof hideLoading === 'function') hideLoading();
                 if (typeof showAlert === 'function') showAlert('Password must be at least 6 characters.', 'error');
                 return;
             }
+
+            if (typeof showLoading === 'function') showLoading('Changing password...');
 
             var username = localStorage.getItem('username');
 
@@ -297,8 +575,7 @@
 
                 if (result.success) {
                     if (typeof showAlert === 'function') showAlert('Password changed successfully!', 'success');
-                    var passwordForm = document.getElementById('passwordForm');
-                    if (passwordForm) passwordForm.reset();
+                    document.getElementById('passwordForm').reset();
                 } else {
                     if (typeof showAlert === 'function') showAlert(result.message || 'Error changing password.', 'error');
                 }
@@ -309,6 +586,28 @@
                 if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             }
         }
+
+        // ============================================================
+        // HELPERS
+        // ============================================================
+
+        function getStatusColor(status) {
+            var colors = {
+                'pending': '#d69e2e',
+                'approved': '#38a169',
+                'rejected': '#e53e3e',
+                'completed': '#2b6cb0'
+            };
+            return colors[status] || '#666';
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            var modal = document.getElementById('editProfileModal');
+            if (modal && event.target === modal) {
+                closeEditModal();
+            }
+        });
     </script>
 
 </body>
