@@ -148,7 +148,7 @@
             </div>
 
             <div style="display:flex;gap:10px;margin-top:15px;">
-                <button class="btn" onclick="submitNewDrugs()" style="background:#38a169;color:white;border:none;">💾 Add All Drugs & Receive</button>
+                <button class="btn" onclick="Drugs()" style="background:#38a169;color:white;border:none;">💾 Add All Drugs & Receive</button>
                 <button class="btn" onclick="closeNewDrugModal()" style="color:#c00;">Cancel</button>
             </div>
         </div>
@@ -293,6 +293,11 @@
             if (modal) {
                 modal.style.display = 'none';
             }
+            // Clear the form
+            document.getElementById('newDrugSupplier').value = '';
+            document.getElementById('newDrugInvoice').value = '';
+            document.getElementById('newDrugReceivedBy').value = '';
+            document.getElementById('newDrugNotes').value = '';
         }
 
         function addNewDrugRow() {
@@ -390,34 +395,35 @@
         async function submitNewDrugs() {
             var tbody = document.getElementById('newDrugTableBody');
             var rows = tbody.querySelectorAll('tr');
-
+        
             if (rows.length === 0) {
                 if (typeof showAlert === 'function') showAlert('Please add at least one drug.', 'error');
                 return;
             }
-
+        
             var drugs = [];
             var hasError = false;
-
+            var errorMessages = [];
+        
             rows.forEach(function(row, index) {
                 var name = row.querySelector('#nd-name-' + index) ? row.querySelector('#nd-name-' + index).value.trim() : '';
                 var form = row.querySelector('#nd-form-' + index) ? row.querySelector('#nd-form-' + index).value.trim() : '';
                 var batch = row.querySelector('#nd-batch-' + index) ? row.querySelector('#nd-batch-' + index).value.trim() : '';
                 var expiry = row.querySelector('#nd-expiry-' + index) ? row.querySelector('#nd-expiry-' + index).value : '';
                 var qty = row.querySelector('#nd-qty-' + index) ? parseInt(row.querySelector('#nd-qty-' + index).value) : 0;
-
+        
                 if (!name || !form || !batch || !expiry || !qty) {
-                    if (typeof showAlert === 'function') showAlert('Row ' + (index + 1) + ' has missing fields.', 'error');
+                    errorMessages.push('Row ' + (index + 1) + ' has missing fields.');
                     hasError = true;
                     return;
                 }
-
+        
                 if (qty < 1) {
-                    if (typeof showAlert === 'function') showAlert('Quantity for ' + name + ' must be at least 1.', 'error');
+                    errorMessages.push('Quantity for ' + name + ' must be at least 1.');
                     hasError = true;
                     return;
                 }
-
+        
                 drugs.push({
                     drug: name,
                     form: form,
@@ -426,16 +432,27 @@
                     quantity: qty
                 });
             });
-
-            if (hasError || drugs.length === 0) return;
-
+        
+            if (hasError) {
+                if (typeof showAlert === 'function') showAlert(errorMessages.join(' '), 'error');
+                return;
+            }
+        
+            if (drugs.length === 0) {
+                if (typeof showAlert === 'function') showAlert('No valid drugs to add.', 'error');
+                return;
+            }
+        
+            // ============================================================
+            // SHOW LOADING
+            // ============================================================
+            if (typeof showLoading === 'function') showLoading('Checking and adding new drugs...');
+        
             var supplier = document.getElementById('newDrugSupplier').value.trim();
             var invoice = document.getElementById('newDrugInvoice').value.trim();
             var receivedBy = document.getElementById('newDrugReceivedBy').value.trim() || currentUser.username;
             var notes = document.getElementById('newDrugNotes').value.trim();
-
-            if (typeof showLoading === 'function') showLoading('Adding new drugs...');
-
+        
             var url = API_URL +
                 '?action=addbulkdrugs' +
                 '&admin=' + encodeURIComponent(currentUser.username) +
@@ -444,30 +461,59 @@
                 '&receivedBy=' + encodeURIComponent(receivedBy) +
                 '&notes=' + encodeURIComponent(notes || '') +
                 '&drugs=' + encodeURIComponent(JSON.stringify(drugs));
-
+        
             try {
                 var response = await fetch(url);
                 var result = await response.json();
-
+        
                 if (typeof hideLoading === 'function') hideLoading();
-
+        
                 if (result.success) {
-                    if (typeof showAlert === 'function') showAlert(result.message || 'All drugs added successfully!', 'success');
-                    closeNewDrugModal();
-                    // Reset the new drug modal form
+                    // ============================================================
+                    // SUCCESS - Clear the modal and show success message
+                    // ============================================================
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Drugs added successfully!', 'success');
+        
+                    // Clear modal fields
                     document.getElementById('newDrugSupplier').value = '';
                     document.getElementById('newDrugInvoice').value = '';
                     document.getElementById('newDrugReceivedBy').value = '';
                     document.getElementById('newDrugNotes').value = '';
+        
+                    // Clear table body (keep only one empty row)
+                    var tbody = document.getElementById('newDrugTableBody');
+                    tbody.innerHTML = '';
+                    newDrugRowCount = 0;
+                    addNewDrugRow();
+        
+                    // Close modal after delay
+                    setTimeout(function() {
+                        closeNewDrugModal();
+                    }, 1500);
+        
+                    // Refresh drug list
                     loadDrugsSilent();
                     if (isDrugListVisible) {
                         filteredDrugs = allDrugs;
                         renderDrugList();
                     }
+        
+                    // Refresh the page after 2 seconds
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2500);
+        
                 } else {
+                    // ============================================================
+                    // ERROR - Show the error message
+                    // ============================================================
                     if (typeof showAlert === 'function') showAlert(result.message || 'Error adding drugs.', 'error');
+                    // Log errors if any
+                    if (result.errors && result.errors.length > 0) {
+                        console.log('Errors:', result.errors);
+                    }
                 }
-
+        
             } catch (error) {
                 if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
