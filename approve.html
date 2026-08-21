@@ -311,19 +311,19 @@
 
         function selectOrder(orderId) {
             selectedOrderId = orderId;
-
+        
             var items = document.querySelectorAll('.order-list-item');
             items.forEach(function(item) {
                 item.style.background = '';
                 item.style.borderLeft = '3px solid transparent';
             });
-
+        
             var selectedItem = document.querySelector('.order-list-item[onclick="selectOrder(\'' + orderId + '\')"]');
             if (selectedItem) {
                 selectedItem.style.background = '#e8f0fe';
                 selectedItem.style.borderLeft = '3px solid #2b6cb0';
             }
-
+        
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (order) {
                 renderOrderDetails(order);
