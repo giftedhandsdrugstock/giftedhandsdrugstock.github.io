@@ -463,31 +463,23 @@
         function removeItem(orderId, index) {
             if (!confirm('Remove this item from the order?')) return;
         
-            if (typeof showLoading === 'function') showLoading('Removing item...');
-        
             var url = API_URL +
                 '?action=removeitemfromorder' +
                 '&orderId=' + encodeURIComponent(orderId) +
-                '&itemIndex=' + encodeURIComponent(index) +
-                '&admin=' + encodeURIComponent(localStorage.getItem('username'));
+                '&itemIndex=' + encodeURIComponent(index);
         
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
-                    if (typeof showAlert === 'function') showAlert('Item removed from order.', 'info');
+                    if (typeof showAlert === 'function') showAlert('Item removed.', 'info');
         
-                    // Update the order in pendingOrders
                     var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
                     if (order && order.items) {
                         order.items.splice(index, 1);
-                        // Re-render the order details
                         renderOrderDetails(order);
-                        // Update the list
                         renderOrderList();
                         if (order.items.length === 0) {
-                            // If no items left, close details and remove from pending
                             pendingOrders = pendingOrders.filter(function(o) { return o.orderId !== orderId; });
                             filteredOrders = filteredOrders.filter(function(o) { return o.orderId !== orderId; });
                             closeOrderDetails();
@@ -500,7 +492,6 @@
                 }
             })
             .catch(function(error) {
-                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
                 if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
