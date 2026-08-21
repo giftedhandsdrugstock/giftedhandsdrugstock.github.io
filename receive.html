@@ -148,7 +148,7 @@
             </div>
 
             <div style="display:flex;gap:10px;margin-top:15px;">
-                <button class="btn" onclick="Drugs()" style="background:#38a169;color:white;border:none;">💾 Add All Drugs & Receive</button>
+                <button class="btn" onclick="submitNewDrugs()" style="background:#38a169;color:white;border:none;">💾 Add All Drugs & Receive</button>
                 <button class="btn" onclick="closeNewDrugModal()" style="color:#c00;">Cancel</button>
             </div>
         </div>
@@ -270,21 +270,18 @@
         }
 
         // ============================================================
-        // NEW DRUG MODAL - BULK ENTRY
+        // NEW DRUG MODAL FUNCTIONS
         // ============================================================
 
         function showNewDrugModal() {
             var modal = document.getElementById('newDrugModal');
             if (modal) {
                 modal.style.display = 'flex';
-                // Clear previous rows
                 document.getElementById('newDrugTableBody').innerHTML = '';
                 newDrugRowCount = 0;
-                // Add 3 empty rows by default
                 for (var i = 0; i < 3; i++) {
                     addNewDrugRow();
                 }
-                document.getElementById('newDrugName').focus();
             }
         }
 
@@ -293,7 +290,6 @@
             if (modal) {
                 modal.style.display = 'none';
             }
-            // Clear the form
             document.getElementById('newDrugSupplier').value = '';
             document.getElementById('newDrugInvoice').value = '';
             document.getElementById('newDrugReceivedBy').value = '';
@@ -329,7 +325,6 @@
             tbody.appendChild(row);
             newDrugRowCount++;
 
-            // Focus on the first input of the new row
             setTimeout(function() {
                 var firstInput = row.querySelector('input');
                 if (firstInput) firstInput.focus();
@@ -357,14 +352,12 @@
             }
         }
 
-        // Enter key navigation for new drug rows
         function setupNewDrugEnterNavigation() {
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     var target = e.target;
                     if (target && target.id && target.id.startsWith('nd-')) {
                         e.preventDefault();
-                        // Find all inputs in the current row
                         var row = target.closest('tr');
                         if (row) {
                             var inputs = row.querySelectorAll('input');
@@ -372,9 +365,7 @@
                             if (currentIndex < inputs.length - 1) {
                                 inputs[currentIndex + 1].focus();
                             } else {
-                                // Last input, add a new row
                                 addNewDrugRow();
-                                // Focus on first input of new row
                                 var tbody = document.getElementById('newDrugTableBody');
                                 var newRow = tbody.lastChild;
                                 if (newRow) {
@@ -395,35 +386,35 @@
         async function submitNewDrugs() {
             var tbody = document.getElementById('newDrugTableBody');
             var rows = tbody.querySelectorAll('tr');
-        
+
             if (rows.length === 0) {
                 if (typeof showAlert === 'function') showAlert('Please add at least one drug.', 'error');
                 return;
             }
-        
+
             var drugs = [];
             var hasError = false;
             var errorMessages = [];
-        
+
             rows.forEach(function(row, index) {
                 var name = row.querySelector('#nd-name-' + index) ? row.querySelector('#nd-name-' + index).value.trim() : '';
                 var form = row.querySelector('#nd-form-' + index) ? row.querySelector('#nd-form-' + index).value.trim() : '';
                 var batch = row.querySelector('#nd-batch-' + index) ? row.querySelector('#nd-batch-' + index).value.trim() : '';
                 var expiry = row.querySelector('#nd-expiry-' + index) ? row.querySelector('#nd-expiry-' + index).value : '';
                 var qty = row.querySelector('#nd-qty-' + index) ? parseInt(row.querySelector('#nd-qty-' + index).value) : 0;
-        
+
                 if (!name || !form || !batch || !expiry || !qty) {
                     errorMessages.push('Row ' + (index + 1) + ' has missing fields.');
                     hasError = true;
                     return;
                 }
-        
+
                 if (qty < 1) {
                     errorMessages.push('Quantity for ' + name + ' must be at least 1.');
                     hasError = true;
                     return;
                 }
-        
+
                 drugs.push({
                     drug: name,
                     form: form,
@@ -432,27 +423,24 @@
                     quantity: qty
                 });
             });
-        
+
             if (hasError) {
                 if (typeof showAlert === 'function') showAlert(errorMessages.join(' '), 'error');
                 return;
             }
-        
+
             if (drugs.length === 0) {
                 if (typeof showAlert === 'function') showAlert('No valid drugs to add.', 'error');
                 return;
             }
-        
-            // ============================================================
-            // SHOW LOADING
-            // ============================================================
-            if (typeof showLoading === 'function') showLoading('Checking and adding new drugs...');
-        
+
+            if (typeof showLoading === 'function') showLoading('Adding new drugs to inventory...');
+
             var supplier = document.getElementById('newDrugSupplier').value.trim();
             var invoice = document.getElementById('newDrugInvoice').value.trim();
             var receivedBy = document.getElementById('newDrugReceivedBy').value.trim() || currentUser.username;
             var notes = document.getElementById('newDrugNotes').value.trim();
-        
+
             var url = API_URL +
                 '?action=addbulkdrugs' +
                 '&admin=' + encodeURIComponent(currentUser.username) +
@@ -461,59 +449,47 @@
                 '&receivedBy=' + encodeURIComponent(receivedBy) +
                 '&notes=' + encodeURIComponent(notes || '') +
                 '&drugs=' + encodeURIComponent(JSON.stringify(drugs));
-        
+
             try {
                 var response = await fetch(url);
                 var result = await response.json();
-        
+
                 if (typeof hideLoading === 'function') hideLoading();
-        
+
                 if (result.success) {
-                    // ============================================================
-                    // SUCCESS - Clear the modal and show success message
-                    // ============================================================
-                    if (typeof showAlert === 'function') showAlert(result.message || 'Drugs added successfully!', 'success');
-        
-                    // Clear modal fields
+                    if (typeof showAlert === 'function') showAlert(result.message, 'success');
+
                     document.getElementById('newDrugSupplier').value = '';
                     document.getElementById('newDrugInvoice').value = '';
                     document.getElementById('newDrugReceivedBy').value = '';
                     document.getElementById('newDrugNotes').value = '';
-        
-                    // Clear table body (keep only one empty row)
+
                     var tbody = document.getElementById('newDrugTableBody');
                     tbody.innerHTML = '';
                     newDrugRowCount = 0;
                     addNewDrugRow();
-        
-                    // Close modal after delay
-                    setTimeout(function() {
-                        closeNewDrugModal();
-                    }, 1500);
-        
-                    // Refresh drug list
+
                     loadDrugsSilent();
                     if (isDrugListVisible) {
                         filteredDrugs = allDrugs;
                         renderDrugList();
                     }
-        
-                    // Refresh the page after 2 seconds
+
+                    setTimeout(function() {
+                        closeNewDrugModal();
+                    }, 1500);
+
                     setTimeout(function() {
                         window.location.reload();
                     }, 2500);
-        
+
                 } else {
-                    // ============================================================
-                    // ERROR - Show the error message
-                    // ============================================================
                     if (typeof showAlert === 'function') showAlert(result.message || 'Error adding drugs.', 'error');
-                    // Log errors if any
                     if (result.errors && result.errors.length > 0) {
                         console.log('Errors:', result.errors);
                     }
                 }
-        
+
             } catch (error) {
                 if (typeof hideLoading === 'function') hideLoading();
                 console.error('Error:', error);
@@ -960,15 +936,15 @@
                 if (typeof showAlert === 'function') showAlert('Please add at least one item to receive.', 'warning');
                 return;
             }
-        
+
             if (!confirm('Submit this receive? This will add stock to inventory.')) return;
-        
+
             if (typeof showLoading === 'function') showLoading('Submitting receive...');
-        
+
             var supplier = document.getElementById('receiveSupplier') ? document.getElementById('receiveSupplier').value.trim() : '';
             var invoice = document.getElementById('receiveInvoice') ? document.getElementById('receiveInvoice').value.trim() : '';
             var notes = document.getElementById('receiveNotes') ? document.getElementById('receiveNotes').value.trim() : '';
-        
+
             var receiveData = {
                 action: 'submitreceive',
                 admin: currentUser.username,
@@ -984,7 +960,7 @@
                 notes: notes,
                 timestamp: new Date().toISOString()
             };
-        
+
             var url = API_URL +
                 '?action=submitreceive' +
                 '&admin=' + encodeURIComponent(receiveData.admin) +
@@ -994,15 +970,14 @@
                 '&invoice=' + encodeURIComponent(receiveData.invoice) +
                 '&notes=' + encodeURIComponent(receiveData.notes) +
                 '&timestamp=' + encodeURIComponent(receiveData.timestamp);
-        
+
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
                 if (typeof hideLoading === 'function') hideLoading();
                 if (result.success) {
                     if (typeof showAlert === 'function') showAlert('✅ Receive completed successfully! Stock added. Refreshing...', 'success');
-                    
-                    // Clear the receive items
+
                     receiveItems = [];
                     var receiveNotes = document.getElementById('receiveNotes');
                     if (receiveNotes) receiveNotes.value = '';
@@ -1012,14 +987,11 @@
                     if (receiveInvoice) receiveInvoice.value = '';
                     renderReceiveList();
                     if (isDrugListVisible) renderDrugList();
-        
+
                     currentReceiveId = generateReceiveId();
                     var receiveIdDisplay = document.getElementById('receiveIdDisplay');
                     if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
-        
-                    // ============================================================
-                    // REFRESH THE PAGE AFTER 1.5 SECONDS
-                    // ============================================================
+
                     setTimeout(function() {
                         window.location.reload();
                     }, 1500);
@@ -1033,6 +1005,7 @@
                 if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
         }
+
         // ============================================================
         // INITIALIZE NEW DRUG MODAL ENTER KEY
         // ============================================================
