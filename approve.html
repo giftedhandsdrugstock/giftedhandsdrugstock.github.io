@@ -394,12 +394,33 @@
             // BUILD THE REST OF THE DETAILS
             // ============================================================
         
+            // ============================================================
+            // NOTES SECTION - USER/ADMIN FORMAT
+            // ============================================================
+
             var notesHtml = '';
             if (order.notes) {
+                // Format notes with User/Admin labels
+                var formattedNotes = order.notes;
+                
+                // Replace [User: xxx] with "User: xxx"
+                formattedNotes = formattedNotes.replace(/\[User: ([^\]]+)\]\s*/g, '<strong>User:</strong> $1<br>');
+                
+                // Replace [Admin: xxx] with "Admin: xxx"
+                formattedNotes = formattedNotes.replace(/\[Admin: ([^\]]+)\]\s*/g, '<strong>Admin:</strong> $1<br>');
+                
+                // Replace [Approved By: xxx] with "Approved By: xxx"
+                formattedNotes = formattedNotes.replace(/\[Approved By: ([^\]]+)\]/g, '<strong>Approved By:</strong> $1');
+                
+                // Replace newlines with <br>
+                formattedNotes = formattedNotes.replace(/\n/g, '<br>');
+            
                 notesHtml = `
                     <div style="margin-top:12px;padding:10px;background:#f7fafc;border-radius:4px;border-left:3px solid #2b6cb0;">
-                        <strong>📝 User's Notes:</strong>
-                        <p style="margin:4px 0 0 0;font-size:14px;color:#555;">${order.notes}</p>
+                        <strong>📝 Notes:</strong>
+                        <div style="margin:6px 0 0 0;font-size:14px;color:#555;line-height:1.8;">
+                            ${formattedNotes}
+                        </div>
                     </div>
                 `;
             }
@@ -440,13 +461,49 @@
         }
         
         function removeItem(orderId, index) {
-            var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
-            if (order && order.items && order.items.length > index) {
-                order.items.splice(index, 1);
-                renderOrderDetails(order);
-                renderOrderList();
-                if (typeof showAlert === 'function') showAlert('Item removed from order.', 'info');
-            }
+            if (!confirm('Remove this item from the order?')) return;
+        
+            if (typeof showLoading === 'function') showLoading('Removing item...');
+        
+            var url = API_URL +
+                '?action=removeitemfromorder' +
+                '&orderId=' + encodeURIComponent(orderId) +
+                '&itemIndex=' + encodeURIComponent(index) +
+                '&admin=' + encodeURIComponent(localStorage.getItem('username'));
+        
+            fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(result) {
+                if (typeof hideLoading === 'function') hideLoading();
+                if (result.success) {
+                    if (typeof showAlert === 'function') showAlert('Item removed from order.', 'info');
+        
+                    // Update the order in pendingOrders
+                    var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
+                    if (order && order.items) {
+                        order.items.splice(index, 1);
+                        // Re-render the order details
+                        renderOrderDetails(order);
+                        // Update the list
+                        renderOrderList();
+                        if (order.items.length === 0) {
+                            // If no items left, close details and remove from pending
+                            pendingOrders = pendingOrders.filter(function(o) { return o.orderId !== orderId; });
+                            filteredOrders = filteredOrders.filter(function(o) { return o.orderId !== orderId; });
+                            closeOrderDetails();
+                            renderOrderList();
+                            updateResultCount();
+                        }
+                    }
+                } else {
+                    if (typeof showAlert === 'function') showAlert(result.message || 'Error removing item.', 'error');
+                }
+            })
+            .catch(function(error) {
+                if (typeof hideLoading === 'function') hideLoading();
+                console.error('Error:', error);
+                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
+            });
         }
 
         function approveOrder(orderId) {
