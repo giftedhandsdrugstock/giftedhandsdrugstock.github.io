@@ -380,41 +380,41 @@
         }
 
         // ============================================================
-        // SUBMIT NEW DRUGS (BULK)
+        // SUBMIT NEW DRUGS (BULK) - HTML FILE
         // ============================================================
 
-       async function submitNewDrugs() {
+        async function submitNewDrugs() {
             var tbody = document.getElementById('newDrugTableBody');
             var rows = tbody.querySelectorAll('tr');
-        
+
             if (rows.length === 0) {
                 if (typeof showAlert === 'function') showAlert('Please add at least one drug.', 'error');
                 return;
             }
-        
+
             var drugs = [];
             var hasError = false;
             var errorMessages = [];
-        
+
             rows.forEach(function(row, index) {
                 var name = row.querySelector('#nd-name-' + index) ? row.querySelector('#nd-name-' + index).value.trim() : '';
                 var form = row.querySelector('#nd-form-' + index) ? row.querySelector('#nd-form-' + index).value.trim() : '';
                 var batch = row.querySelector('#nd-batch-' + index) ? row.querySelector('#nd-batch-' + index).value.trim() : '';
                 var expiry = row.querySelector('#nd-expiry-' + index) ? row.querySelector('#nd-expiry-' + index).value : '';
                 var qty = row.querySelector('#nd-qty-' + index) ? parseInt(row.querySelector('#nd-qty-' + index).value) : 0;
-        
+
                 if (!name || !form || !batch || !expiry || !qty) {
                     errorMessages.push('Row ' + (index + 1) + ' has missing fields.');
                     hasError = true;
                     return;
                 }
-        
+
                 if (qty < 1) {
                     errorMessages.push('Quantity for ' + name + ' must be at least 1.');
                     hasError = true;
                     return;
                 }
-        
+
                 drugs.push({
                     drug: name,
                     form: form,
@@ -423,24 +423,24 @@
                     quantity: qty
                 });
             });
-        
+
             if (hasError) {
                 if (typeof showAlert === 'function') showAlert(errorMessages.join(' '), 'error');
                 return;
             }
-        
+
             if (drugs.length === 0) {
                 if (typeof showAlert === 'function') showAlert('No valid drugs to add.', 'error');
                 return;
             }
-        
+
             // ============================================================
             // CONFIRMATION POPUP
             // ============================================================
             if (!confirm('Add ' + drugs.length + ' new drug(s) to inventory?')) {
                 return;
             }
-        
+
             // ============================================================
             // SHOW LOADING OVERLAY
             // ============================================================
@@ -467,12 +467,12 @@
                 </div>
             `;
             document.body.appendChild(loadingOverlay);
-        
+
             var supplier = document.getElementById('newDrugSupplier').value.trim();
             var invoice = document.getElementById('newDrugInvoice').value.trim();
             var receivedBy = document.getElementById('newDrugReceivedBy').value.trim() || currentUser.username;
             var notes = document.getElementById('newDrugNotes').value.trim();
-        
+
             var url = API_URL +
                 '?action=addbulkdrugs' +
                 '&admin=' + encodeURIComponent(currentUser.username) +
@@ -481,17 +481,17 @@
                 '&receivedBy=' + encodeURIComponent(receivedBy) +
                 '&notes=' + encodeURIComponent(notes || '') +
                 '&drugs=' + encodeURIComponent(JSON.stringify(drugs));
-        
+
             try {
                 var response = await fetch(url);
                 var result = await response.json();
-        
+
                 // ============================================================
                 // REMOVE LOADING OVERLAY
                 // ============================================================
                 var overlay = document.getElementById('bulkLoadingOverlay');
                 if (overlay) overlay.remove();
-        
+
                 if (result.success) {
                     // ============================================================
                     // SUCCESS MESSAGE
@@ -499,33 +499,33 @@
                     if (typeof showAlert === 'function') {
                         showAlert('✅ ' + result.message, 'success');
                     }
-        
+
                     // Clear modal fields
                     document.getElementById('newDrugSupplier').value = '';
                     document.getElementById('newDrugInvoice').value = '';
                     document.getElementById('newDrugReceivedBy').value = '';
                     document.getElementById('newDrugNotes').value = '';
-        
+
                     // Clear table (keep one empty row)
                     var tbody = document.getElementById('newDrugTableBody');
                     tbody.innerHTML = '';
                     newDrugRowCount = 0;
                     addNewDrugRow();
-        
+
                     // Refresh drug list
                     loadDrugsSilent();
                     if (isDrugListVisible) {
                         filteredDrugs = allDrugs;
                         renderDrugList();
                     }
-        
+
                     // ============================================================
                     // CLOSE MODAL AFTER 1.5 SECONDS
                     // ============================================================
                     setTimeout(function() {
                         closeNewDrugModal();
                     }, 1500);
-        
+
                     // ============================================================
                     // SHOW REFRESH LOADING AND RELOAD AFTER 2.5 SECONDS
                     // ============================================================
@@ -554,32 +554,33 @@
                         document.body.appendChild(refreshOverlay);
                         window.location.reload();
                     }, 2500);
-        
+
                 } else {
                     // ============================================================
                     // ERROR MESSAGE
                     // ============================================================
                     if (typeof showAlert === 'function') {
-                        showAlert('❌ ' + (result.message || 'Error adding drugs.'), 'error');
+                        showAlert('❌ ' (result.message || 'Error adding drugs.'), 'error');
                     }
                     if (result.errors && result.errors.length > 0) {
                         console.log('Errors:', result.errors);
                     }
                 }
-        
+
             } catch (error) {
                 // ============================================================
                 // ERROR - REMOVE LOADING
                 // ============================================================
                 var overlay = document.getElementById('bulkLoadingOverlay');
                 if (overlay) overlay.remove();
-        
+
                 console.error('Error:', error);
                 if (typeof showAlert === 'function') {
                     showAlert('❌ Error connecting to server. Please try again.', 'error');
                 }
             }
         }
+
         // ============================================================
         // TOGGLE NEW RECEIVE
         // ============================================================
@@ -883,7 +884,7 @@
         }
 
         // ============================================================
-        // ADD TO RECEIVE
+        // ADD TO RECEIVE - HTML FILE
         // ============================================================
 
         function addToReceive(drugName, maxStock, index) {
@@ -1011,7 +1012,7 @@
         }
 
         // ============================================================
-        // SUBMIT RECEIVE
+        // SUBMIT RECEIVE - HTML FILE
         // ============================================================
 
         function submitReceive() {
@@ -1020,9 +1021,33 @@
                 return;
             }
 
-            if (!confirm('Submit this receive? This will add stock to inventory.')) return;
+            if (!confirm('Receive ' + receiveItems.length + ' item(s) into inventory?')) {
+                return;
+            }
 
-            if (typeof showLoading === 'function') showLoading('Submitting receive...');
+            var loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'receiveLoadingOverlay';
+            loadingOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255,255,255,0.9);
+                z-index: 999999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: Arial, sans-serif;
+            `;
+            loadingOverlay.innerHTML = `
+                <div style="text-align:center;background:#fff;padding:30px 40px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+                    <div style="border:4px solid #f3f3f3;border-top:4px solid #38a169;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:0 auto 15px;"></div>
+                    <div style="font-size:18px;color:#333;font-weight:500;">Receiving stock...</div>
+                    <div style="font-size:13px;color:#888;margin-top:5px;">Please wait</div>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
 
             var supplier = document.getElementById('receiveSupplier') ? document.getElementById('receiveSupplier').value.trim() : '';
             var invoice = document.getElementById('receiveInvoice') ? document.getElementById('receiveInvoice').value.trim() : '';
@@ -1057,9 +1082,13 @@
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
-                if (typeof hideLoading === 'function') hideLoading();
+                var overlay = document.getElementById('receiveLoadingOverlay');
+                if (overlay) overlay.remove();
+
                 if (result.success) {
-                    if (typeof showAlert === 'function') showAlert('✅ Receive completed successfully! Stock added. Refreshing...', 'success');
+                    if (typeof showAlert === 'function') {
+                        showAlert('✅ Receive completed successfully! Stock added.', 'success');
+                    }
 
                     receiveItems = [];
                     var receiveNotes = document.getElementById('receiveNotes');
@@ -1076,16 +1105,45 @@
                     if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
 
                     setTimeout(function() {
+                        var refreshOverlay = document.createElement('div');
+                        refreshOverlay.id = 'refreshOverlay';
+                        refreshOverlay.style.cssText = `
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: rgba(255,255,255,0.9);
+                            z-index: 999999;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-family: Arial, sans-serif;
+                        `;
+                        refreshOverlay.innerHTML = `
+                            <div style="text-align:center;background:#fff;padding:30px 40px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+                                <div style="border:4px solid #f3f3f3;border-top:4px solid #2b6cb0;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:0 auto 15px;"></div>
+                                <div style="font-size:18px;color:#333;font-weight:500;">Refreshing page...</div>
+                            </div>
+                        `;
+                        document.body.appendChild(refreshOverlay);
                         window.location.reload();
                     }, 1500);
+
                 } else {
-                    if (typeof showAlert === 'function') showAlert(result.message || 'Error submitting receive.', 'error');
+                    if (typeof showAlert === 'function') {
+                        showAlert('❌ ' + (result.message || 'Error submitting receive.'), 'error');
+                    }
                 }
             })
             .catch(function(error) {
-                if (typeof hideLoading === 'function') hideLoading();
+                var overlay = document.getElementById('receiveLoadingOverlay');
+                if (overlay) overlay.remove();
+
                 console.error('Error:', error);
-                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') {
+                    showAlert('❌ Error connecting to server.', 'error');
+                }
             });
         }
 
