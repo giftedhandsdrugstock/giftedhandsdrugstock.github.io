@@ -349,29 +349,25 @@
         function deleteItem(orderId, index) {
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (!order) return;
-
+        
             if (order._deletedItems.indexOf(index) === -1) {
                 order._deletedItems.push(index);
             }
-
-            renderOrderDetails(order);
+        
+            renderOrderDetailsWithStock(order);
             renderOrderList();
         }
-
-        // ============================================================
-        // RESTORE ITEM (↩️ Restore button)
-        // ============================================================
-
+        
         function restoreItem(orderId, index) {
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (!order) return;
-
+        
             var pos = order._deletedItems.indexOf(index);
             if (pos !== -1) {
                 order._deletedItems.splice(pos, 1);
             }
-
-            renderOrderDetails(order);
+        
+            renderOrderDetailsWithStock(order);
             renderOrderList();
         }
 
@@ -392,87 +388,67 @@
 
         function renderOrderDetails(order) {
             var container = document.getElementById('orderDetailsContainer');
-
+        
             if (!container) return;
-
+        
             var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
-
+        
             if (!order._deletedItems) {
                 order._deletedItems = [];
             }
-
+        
+            // ============================================================
+            // FETCH AVAILABLE STOCK FOR EACH ITEM
+            // ============================================================
             var itemsHtml = '';
             if (order.items && order.items.length > 0) {
                 itemsHtml = '<div style="margin-top:10px;">';
-
-                order.items.forEach(function(item, index) {
-                    var isDeleted = order._deletedItems.indexOf(index) !== -1;
-                    var itemId = 'item-' + order.orderId + '-' + index;
-
-                    var rowStyle = isDeleted ? 
-                        'opacity:0.5;text-decoration:line-through;background:#f5f5f5;' : 
-                        '';
-
-                    var actionButton = isDeleted ?
-                        `<button onclick="restoreItem('${order.orderId}', ${index})" style="background:none;border:1px solid #38a169;color:#38a169;cursor:pointer;padding:2px 10px;border-radius:4px;font-size:12px;">↩️ Restore</button>` :
-                        `<button onclick="deleteItem('${order.orderId}', ${index})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:16px;padding:0 5px;" title="Remove item">✕</button>`;
-
-                    itemsHtml += `
-                        <div id="${itemId}" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;${rowStyle}">
-                            <span style="flex:1;font-weight:500;${isDeleted ? 'text-decoration:line-through;' : ''}">${item.drug}</span>
-                            <span style="font-size:13px;color:#888;">Available: ${item.available || 'N/A'}</span>
-                            <input type="number" id="qty-${order.orderId}-${index}" value="${item.quantity}" min="1" max="${item.available || 999}" style="width:60px;padding:4px 6px;border:1px solid #ccc;text-align:center;${isDeleted ? 'opacity:0.5;' : ''}" ${isDeleted ? 'disabled' : ''}>
-                            ${actionButton}
-                        </div>
-                    `;
+        
+                // Fetch stock for all items
+                var stockPromises = order.items.map(function(item) {
+                    return fetch(API_URL + '?search=' + encodeURIComponent(item.drug))
+                        .then(function(response) { return response.json(); })
+                        .then(function(result) {
+                            var currentStock = 0;
+                            if (result && result.length > 0) {
+                                currentStock = parseFloat(result[0][2]) || 0;
+                            }
+                            return {
+                                drug: item.drug,
+                                quantity: item.quantity,
+                                available: currentStock
+                            };
+                        })
+                        .catch(function() {
+                            return {
+                                drug: item.drug,
+                                quantity: item.quantity,
+                                available: 0
+                            };
+                        });
                 });
-
-                itemsHtml += '</div>';
+        
+                // Wait for all stock data, then render
+                Promise.all(stockPromises).then(function(itemsWithStock) {
+                    // Update the order items with stock data
+                    itemsWithStock.forEach(function(stockItem, index) {
+                        if (order.items[index]) {
+                            order.items[index].available = stockItem.available;
+                        }
+                    });
+        
+                    // Re-render with stock data
+                    renderOrderDetailsWithStock(order);
+                });
+        
+                // Show loading state
+                itemsHtml = '<div class="text-muted" style="padding:10px;">Loading stock information...</div>';
             } else {
                 itemsHtml = '<p class="text-muted">No items in this order.</p>';
             }
-
+        
             // ============================================================
-            // NOTES SECTION
-            // ============================================================
-            var notesHtml = '';
-            if (order.notes) {
-                var formattedNotes = order.notes;
-                formattedNotes = formattedNotes.replace(/\[User: ([^\]]+)\]\s*/g, '<strong>User:</strong> $1<br>');
-                formattedNotes = formattedNotes.replace(/\[Admin: ([^\]]+)\]\s*/g, '<strong>Admin:</strong> $1<br>');
-                formattedNotes = formattedNotes.replace(/\[Approved By: ([^\]]+)\]/g, '<strong>Approved By:</strong> $1');
-                formattedNotes = formattedNotes.replace(/\n/g, '<br>');
-
-                notesHtml = `
-                    <div style="margin-top:12px;padding:10px;background:#f7fafc;border-radius:4px;border-left:3px solid #2b6cb0;">
-                        <strong>📝 Notes:</strong>
-                        <div style="margin:6px 0 0 0;font-size:14px;color:#555;line-height:1.8;">
-                            ${formattedNotes}
-                        </div>
-                    </div>
-                `;
-            }
-
-            // ============================================================
-            // REPLY SECTION
-            // ============================================================
-            var replyHtml = `
-                <div style="margin-top:10px;">
-                    <label style="font-weight:500;font-size:14px;">💬 Reply to User:</label>
-                    <textarea id="replyNote-${order.orderId}" placeholder="Add a reply to the user (optional)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;margin-top:4px;"></textarea>
-                </div>
-            `;
-
-            // ============================================================
-            // DELETED ITEMS COUNT
-            // ============================================================
-            var deletedCount = order._deletedItems.length;
-            var deletedInfo = deletedCount > 0 ? 
-                `<span style="font-size:12px;color:#888;margin-left:10px;">(${deletedCount} item(s) will be removed)</span>` : 
-                '';
-
-            // ============================================================
-            // RENDER FULL DETAILS
+            // RENDER BASIC DETAILS (will be updated when stock loads)
             // ============================================================
             var html = `
                 <div style="margin-bottom:15px;">
@@ -488,20 +464,100 @@
                 </div>
                 <hr style="border:none;border-top:1px solid #eee;">
                 <div style="margin-top:10px;">
-                    <strong>Items:</strong> ${deletedInfo}
-                    ${itemsHtml}
+                    <strong>Items:</strong> 
+                    <span style="font-size:12px;color:#888;margin-left:10px;" id="deletedInfo-${order.orderId}"></span>
+                    <div id="itemsContainer-${order.orderId}">
+                        ${itemsHtml}
+                    </div>
                 </div>
-                ${notesHtml}
-                ${replyHtml}
+                <div style="margin-top:12px;padding:10px;background:#f7fafc;border-radius:4px;border-left:3px solid #2b6cb0;">
+                    <strong>📝 Notes:</strong>
+                    <div style="margin:6px 0 0 0;font-size:14px;color:#555;line-height:1.8;">
+                        ${formatNotes(order.notes)}
+                    </div>
+                </div>
+                <div style="margin-top:10px;">
+                    <label style="font-weight:500;font-size:14px;">💬 Reply to User:</label>
+                    <textarea id="replyNote-${order.orderId}" placeholder="Add a reply to the user (optional)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;margin-top:4px;"></textarea>
+                </div>
                 <div style="display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;">
                     <button class="btn" onclick="approveOrder('${order.orderId}')" style="background:#38a169;color:white;border:none;">✅ Approve</button>
                     <button class="btn" onclick="declineOrder('${order.orderId}')" style="background:#e53e3e;color:white;border:none;">❌ Decline</button>
                 </div>
             `;
-
+        
             container.innerHTML = html;
         }
 
+        // ============================================================
+        // RENDER ORDER DETAILS WITH STOCK DATA
+        // ============================================================
+
+        function renderOrderDetailsWithStock(order) {
+            var container = document.getElementById('itemsContainer-' + order.orderId);
+            var deletedInfo = document.getElementById('deletedInfo-' + order.orderId);
+        
+            if (!container) return;
+        
+            var deletedCount = order._deletedItems ? order._deletedItems.length : 0;
+            if (deletedInfo) {
+                deletedInfo.textContent = deletedCount > 0 ? '(' + deletedCount + ' item(s) will be removed)' : '';
+            }
+        
+            if (!order.items || order.items.length === 0) {
+                container.innerHTML = '<p class="text-muted">No items in this order.</p>';
+                return;
+            }
+        
+            var html = '<div style="margin-top:10px;">';
+        
+            order.items.forEach(function(item, index) {
+                var isDeleted = order._deletedItems && order._deletedItems.indexOf(index) !== -1;
+                var itemId = 'item-' + order.orderId + '-' + index;
+        
+                var available = item.available !== undefined ? item.available : 'N/A';
+                var isOverStock = (item.quantity > available && available !== 'N/A');
+                var warningColor = isOverStock ? '#c00' : '#555';
+        
+                var rowStyle = isDeleted ? 'opacity:0.4;background:#f5f5f5;' : '';
+        
+                var actionButton = isDeleted ?
+                    `<button onclick="restoreItem('${order.orderId}', ${index})" style="background:none;border:none;color:#38a169;cursor:pointer;padding:2px 8px;font-size:14px;" title="Restore item">↩️ Restore</button>` :
+                    `<button onclick="deleteItem('${order.orderId}', ${index})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:16px;padding:0 5px;" title="Remove item">✕</button>`;
+        
+                html += `
+                    <div id="${itemId}" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;${rowStyle}">
+                        <span style="flex:1;font-weight:500;${isDeleted ? 'color:#999;' : ''}">${item.drug}</span>
+                        <span style="font-size:13px;color:${warningColor};">
+                            Available: ${available}
+                            ${isOverStock ? '⚠️ Insufficient' : '✅ OK'}
+                        </span>
+                        <input type="number" id="qty-${order.orderId}-${index}" value="${item.quantity}" min="1" max="${available !== 'N/A' ? available : 999}" style="width:60px;padding:4px 6px;border:1px solid #ccc;text-align:center;${isDeleted ? 'opacity:0.5;' : ''}" ${isDeleted ? 'disabled' : ''}>
+                        ${actionButton}
+                    </div>
+                `;
+            });
+        
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // FORMAT NOTES
+        // ============================================================
+        
+        function formatNotes(notes) {
+            if (!notes) return 'No notes';
+        
+            var formatted = notes;
+            formatted = formatted.replace(/\[User: ([^\]]+)\]\s*/g, '<strong>User:</strong> $1<br>');
+            formatted = formatted.replace(/\[Admin: ([^\]]+)\]\s*/g, '<strong>Admin:</strong> $1<br>');
+            formatted = formatted.replace(/\[Approved By: ([^\]]+)\]/g, '<strong>Approved By:</strong> $1');
+            formatted = formatted.replace(/\n/g, '<br>');
+        
+            return formatted;
+        }
+        
         // ============================================================
         // APPROVE ORDER
         // ============================================================
