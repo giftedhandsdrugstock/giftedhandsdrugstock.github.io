@@ -120,6 +120,10 @@
         var currentPage = 1;
         var pageSize = 10;
 
+        // ============================================================
+        // INIT
+        // ============================================================
+
         function initPage() {
             if (!checkAuth()) return;
 
@@ -142,7 +146,6 @@
 
             loadPendingOrders();
 
-            // Set up search enter key
             var orderSearch = document.getElementById('orderSearch');
             if (orderSearch) {
                 orderSearch.addEventListener('keydown', function(event) {
@@ -154,6 +157,10 @@
             }
         }
 
+        // ============================================================
+        // LOAD PENDING ORDERS
+        // ============================================================
+
         async function loadPendingOrders() {
             var container = document.getElementById('orderListContainer');
             if (container) container.innerHTML = '<p class="text-muted">Loading pending orders...</p>';
@@ -161,6 +168,11 @@
             try {
                 var response = await fetch(API_URL + '?action=getorders&status=pending');
                 var results = await response.json();
+
+                // Initialize _deletedItems for each order
+                results.forEach(function(order) {
+                    order._deletedItems = [];
+                });
 
                 pendingOrders = results;
                 filteredOrders = results;
@@ -175,6 +187,10 @@
                 if (typeof showAlert === 'function') showAlert('Error loading orders.', 'error');
             }
         }
+
+        // ============================================================
+        // SEARCH ORDERS
+        // ============================================================
 
         function searchOrders() {
             var searchTerm = document.getElementById('orderSearch').value.toLowerCase().trim();
@@ -206,10 +222,18 @@
             if (typeof showAlert === 'function') showAlert('Search cleared.', 'info');
         }
 
+        // ============================================================
+        // UPDATE RESULT COUNT
+        // ============================================================
+
         function updateResultCount() {
             var count = document.getElementById('resultCount');
             if (count) count.textContent = filteredOrders.length + ' pending order(s)';
         }
+
+        // ============================================================
+        // RENDER ORDER LIST
+        // ============================================================
 
         function renderOrderList() {
             var container = document.getElementById('orderListContainer');
@@ -262,6 +286,10 @@
             container.innerHTML = html;
         }
 
+        // ============================================================
+        // PAGINATION
+        // ============================================================
+
         function prevPage() {
             if (currentPage > 1) {
                 currentPage--;
@@ -276,6 +304,10 @@
                 renderOrderList();
             }
         }
+
+        // ============================================================
+        // SELECT ORDER
+        // ============================================================
 
         function selectOrder(orderId) {
             selectedOrderId = orderId;
@@ -300,6 +332,10 @@
             }
         }
 
+        // ============================================================
+        // CLOSE ORDER DETAILS
+        // ============================================================
+
         function closeOrderDetails() {
             var panel = document.getElementById('orderDetailsPanel');
             if (panel) panel.style.display = 'none';
@@ -309,45 +345,40 @@
         // ============================================================
         // SOFT DELETE ITEM (X button)
         // ============================================================
-        
+
         function deleteItem(orderId, index) {
-            // Find the order
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (!order) return;
-        
-            // Add to deleted items list if not already there
+
             if (order._deletedItems.indexOf(index) === -1) {
                 order._deletedItems.push(index);
             }
-        
-            // Re-render the details
+
             renderOrderDetails(order);
+            renderOrderList();
         }
-        
-        
+
         // ============================================================
         // RESTORE ITEM (↩️ Restore button)
         // ============================================================
-        
+
         function restoreItem(orderId, index) {
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (!order) return;
-        
-            // Remove from deleted items list
+
             var pos = order._deletedItems.indexOf(index);
             if (pos !== -1) {
                 order._deletedItems.splice(pos, 1);
             }
-        
-            // Re-render the details
+
             renderOrderDetails(order);
+            renderOrderList();
         }
-        
-        
+
         // ============================================================
         // GET ACTIVE ITEMS (excludes deleted ones)
         // ============================================================
-        
+
         function getActiveItems(order) {
             if (!order || !order.items) return [];
             return order.items.filter(function(item, index) {
@@ -355,40 +386,37 @@
             });
         }
 
+        // ============================================================
+        // RENDER ORDER DETAILS
+        // ============================================================
+
         function renderOrderDetails(order) {
             var container = document.getElementById('orderDetailsContainer');
-        
+
             if (!container) return;
-        
+
             var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
-        
-            // ============================================================
-            // TRACK SOFT-DELETED ITEMS
-            // ============================================================
+
             if (!order._deletedItems) {
                 order._deletedItems = [];
             }
-        
-            // ============================================================
-            // BUILD ITEMS WITH SOFT DELETE
-            // ============================================================
+
             var itemsHtml = '';
             if (order.items && order.items.length > 0) {
                 itemsHtml = '<div style="margin-top:10px;">';
-        
+
                 order.items.forEach(function(item, index) {
                     var isDeleted = order._deletedItems.indexOf(index) !== -1;
                     var itemId = 'item-' + order.orderId + '-' + index;
-        
-                    // Style: greyed out with strikethrough if deleted
+
                     var rowStyle = isDeleted ? 
                         'opacity:0.5;text-decoration:line-through;background:#f5f5f5;' : 
                         '';
-        
+
                     var actionButton = isDeleted ?
                         `<button onclick="restoreItem('${order.orderId}', ${index})" style="background:none;border:1px solid #38a169;color:#38a169;cursor:pointer;padding:2px 10px;border-radius:4px;font-size:12px;">↩️ Restore</button>` :
                         `<button onclick="deleteItem('${order.orderId}', ${index})" style="background:none;border:none;color:#c00;cursor:pointer;font-size:16px;padding:0 5px;" title="Remove item">✕</button>`;
-        
+
                     itemsHtml += `
                         <div id="${itemId}" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;${rowStyle}">
                             <span style="flex:1;font-weight:500;${isDeleted ? 'text-decoration:line-through;' : ''}">${item.drug}</span>
@@ -398,12 +426,12 @@
                         </div>
                     `;
                 });
-        
+
                 itemsHtml += '</div>';
             } else {
                 itemsHtml = '<p class="text-muted">No items in this order.</p>';
             }
-        
+
             // ============================================================
             // NOTES SECTION
             // ============================================================
@@ -414,7 +442,7 @@
                 formattedNotes = formattedNotes.replace(/\[Admin: ([^\]]+)\]\s*/g, '<strong>Admin:</strong> $1<br>');
                 formattedNotes = formattedNotes.replace(/\[Approved By: ([^\]]+)\]/g, '<strong>Approved By:</strong> $1');
                 formattedNotes = formattedNotes.replace(/\n/g, '<br>');
-        
+
                 notesHtml = `
                     <div style="margin-top:12px;padding:10px;background:#f7fafc;border-radius:4px;border-left:3px solid #2b6cb0;">
                         <strong>📝 Notes:</strong>
@@ -424,7 +452,7 @@
                     </div>
                 `;
             }
-        
+
             // ============================================================
             // REPLY SECTION
             // ============================================================
@@ -434,7 +462,7 @@
                     <textarea id="replyNote-${order.orderId}" placeholder="Add a reply to the user (optional)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;margin-top:4px;"></textarea>
                 </div>
             `;
-        
+
             // ============================================================
             // DELETED ITEMS COUNT
             // ============================================================
@@ -442,7 +470,7 @@
             var deletedInfo = deletedCount > 0 ? 
                 `<span style="font-size:12px;color:#888;margin-left:10px;">(${deletedCount} item(s) will be removed)</span>` : 
                 '';
-        
+
             // ============================================================
             // RENDER FULL DETAILS
             // ============================================================
@@ -470,178 +498,73 @@
                     <button class="btn" onclick="declineOrder('${order.orderId}')" style="background:#e53e3e;color:white;border:none;">❌ Decline</button>
                 </div>
             `;
-        
+
             container.innerHTML = html;
         }
 
-            // ============================================================
-            // BUILD THE REST OF THE DETAILS
-            // ============================================================
-        
-            // ============================================================
-            // NOTES SECTION - USER/ADMIN FORMAT
-            // ============================================================
-
-            var notesHtml = '';
-            if (order.notes) {
-                // Format notes with User/Admin labels
-                var formattedNotes = order.notes;
-                
-                // Replace [User: xxx] with "User: xxx"
-                formattedNotes = formattedNotes.replace(/\[User: ([^\]]+)\]\s*/g, '<strong>User:</strong> $1<br>');
-                
-                // Replace [Admin: xxx] with "Admin: xxx"
-                formattedNotes = formattedNotes.replace(/\[Admin: ([^\]]+)\]\s*/g, '<strong>Admin:</strong> $1<br>');
-                
-                // Replace [Approved By: xxx] with "Approved By: xxx"
-                formattedNotes = formattedNotes.replace(/\[Approved By: ([^\]]+)\]/g, '<strong>Approved By:</strong> $1');
-                
-                // Replace newlines with <br>
-                formattedNotes = formattedNotes.replace(/\n/g, '<br>');
-            
-                notesHtml = `
-                    <div style="margin-top:12px;padding:10px;background:#f7fafc;border-radius:4px;border-left:3px solid #2b6cb0;">
-                        <strong>📝 Notes:</strong>
-                        <div style="margin:6px 0 0 0;font-size:14px;color:#555;line-height:1.8;">
-                            ${formattedNotes}
-                        </div>
-                    </div>
-                `;
-            }
-        
-            var replyHtml = `
-                <div style="margin-top:10px;">
-                    <label style="font-weight:500;font-size:14px;">💬 Reply to User:</label>
-                    <textarea id="replyNote-${order.orderId}" placeholder="Add a reply to the user (optional)..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;margin-top:4px;"></textarea>
-                </div>
-            `;
-        
-            var html = `
-                <div style="margin-bottom:15px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                        <h3 style="font-weight:normal;font-size:18px;">${order.orderId}</h3>
-                        <span style="color:#d69e2e;font-weight:bold;">PENDING</span>
-                    </div>
-                    <div style="margin-top:10px;font-size:14px;color:#555;">
-                        <div><strong>Date:</strong> ${date}</div>
-                        <div><strong>Department:</strong> ${order.department || 'N/A'}</div>
-                        <div><strong>Requested By:</strong> ${order.username || 'Unknown'}</div>
-                    </div>
-                </div>
-                <hr style="border:none;border-top:1px solid #eee;">
-                <div style="margin-top:10px;">
-                    <strong>Items:</strong>
-                    ${itemsHtml}
-                </div>
-                ${notesHtml}
-                ${replyHtml}
-                <div style="display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;">
-                    <button class="btn" onclick="approveOrder('${order.orderId}')" style="background:#38a169;color:white;border:none;">✅ Approve</button>
-                    <button class="btn" onclick="declineOrder('${order.orderId}')" style="background:#e53e3e;color:white;border:none;">❌ Decline</button>
-                </div>
-            `;
-        
-            container.innerHTML = html;
-        }
-        
-        function removeItem(orderId, index) {
-            if (!confirm('Remove this item from the order?')) return;
-        
-            var url = API_URL +
-                '?action=removeitemfromorder' +
-                '&orderId=' + encodeURIComponent(orderId) +
-                '&itemIndex=' + encodeURIComponent(index);
-        
-            fetch(url)
-            .then(function(response) { return response.json(); })
-            .then(function(result) {
-                if (result.success) {
-                    if (typeof showAlert === 'function') showAlert('Item removed.', 'info');
-        
-                    var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
-                    if (order && order.items) {
-                        order.items.splice(index, 1);
-                        renderOrderDetails(order);
-                        renderOrderList();
-                        if (order.items.length === 0) {
-                            pendingOrders = pendingOrders.filter(function(o) { return o.orderId !== orderId; });
-                            filteredOrders = filteredOrders.filter(function(o) { return o.orderId !== orderId; });
-                            closeOrderDetails();
-                            renderOrderList();
-                            updateResultCount();
-                        }
-                    }
-                } else {
-                    if (typeof showAlert === 'function') showAlert(result.message || 'Error removing item.', 'error');
-                }
-            })
-            .catch(function(error) {
-                console.error('Error:', error);
-                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
-            });
-        }
+        // ============================================================
+        // APPROVE ORDER
+        // ============================================================
 
         function approveOrder(orderId) {
             if (!confirm('Approve this order? This will deduct stock from inventory.')) return;
-        
+
             if (typeof showLoading === 'function') showLoading('Approving order...');
-        
+
             var order = pendingOrders.find(function(o) { return o.orderId === orderId; });
             if (!order) {
                 if (typeof hideLoading === 'function') hideLoading();
                 if (typeof showAlert === 'function') showAlert('Order not found.', 'error');
                 return;
             }
-        
+
             // ============================================================
             // ONLY APPROVE ACTIVE ITEMS (not deleted)
             // ============================================================
             var activeItems = [];
             var hasError = false;
-        
+
             order.items.forEach(function(item, index) {
-                // Skip deleted items
                 if (order._deletedItems && order._deletedItems.indexOf(index) !== -1) {
                     return;
                 }
-        
+
                 var qtyInput = document.getElementById('qty-' + orderId + '-' + index);
                 var qty = qtyInput ? parseInt(qtyInput.value) : item.quantity;
-        
+
                 if (qty < 1) {
                     if (typeof showAlert === 'function') showAlert('Quantity for ' + item.drug + ' must be at least 1.', 'error');
                     hasError = true;
                     return;
                 }
-        
+
                 activeItems.push({
                     drug: item.drug,
                     quantity: qty
                 });
             });
-        
+
             if (hasError) {
                 if (typeof hideLoading === 'function') hideLoading();
                 return;
             }
-        
+
             if (activeItems.length === 0) {
                 if (typeof hideLoading === 'function') hideLoading();
                 if (typeof showAlert === 'function') showAlert('No active items to approve. All items have been removed.', 'warning');
                 return;
             }
-        
-            // Get reply note
+
             var replyNote = document.getElementById('replyNote-' + orderId);
             var note = replyNote ? replyNote.value.trim() : '';
-        
+
             var url = API_URL +
                 '?action=approveorder' +
                 '&orderId=' + encodeURIComponent(orderId) +
                 '&admin=' + encodeURIComponent(localStorage.getItem('username')) +
                 '&items=' + encodeURIComponent(JSON.stringify(activeItems)) +
                 '&note=' + encodeURIComponent(note);
-        
+
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
@@ -663,7 +586,11 @@
                 if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
             });
         }
-        
+
+        // ============================================================
+        // DECLINE ORDER
+        // ============================================================
+
         function declineOrder(orderId) {
             var reason = prompt('Reason for declining (optional):');
             if (reason === null) return;
