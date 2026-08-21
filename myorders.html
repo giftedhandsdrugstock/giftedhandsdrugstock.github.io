@@ -382,37 +382,21 @@
 
         function formatNotesDialogue(notes) {
             if (!notes) return 'No notes';
-
-            var lines = notes.split('\n');
-            var formatted = '';
-
-            lines.forEach(function(line) {
-                line = line.trim();
-                if (!line) return;
-
-                var userMatch = line.match(/\[User: ([^\]]+)\]\s*(.*)/);
-                if (userMatch) {
-                    formatted += '<div style="margin-bottom:6px;"><span style="color:#2b6cb0;font-weight:bold;">👤 ' + userMatch[1] + ':</span> <span style="color:#333;">' + userMatch[2] + '</span></div>';
-                    return;
-                }
-
-                var adminMatch = line.match(/\[Admin: ([^\]]+)\]\s*(.*)/);
-                if (adminMatch) {
-                    formatted += '<div style="margin-bottom:6px;padding-left:10px;border-left:2px solid #805ad5;"><span style="color:#805ad5;font-weight:bold;">🔹 Admin ' + adminMatch[1] + ':</span> <span style="color:#333;">' + adminMatch[2] + '</span></div>';
-                    return;
-                }
-
-                if (line.match(/\[Approved By: [^\]]+\]/)) {
-                    return;
-                }
-
-                formatted += '<div style="margin-bottom:6px;color:#555;">' + line + '</div>';
-            });
-
-            if (!formatted) {
-                formatted = '<div style="color:#555;">' + notes.replace(/\n/g, '<br>') + '</div>';
-            }
-
+        
+            var formatted = notes;
+            
+            // Replace [User: xxx] with "User: xxx"
+            formatted = formatted.replace(/\[User: ([^\]]+)\]\s*/g, '<strong>User:</strong> $1<br>');
+            
+            // Replace [Admin: xxx] with "Admin: xxx"
+            formatted = formatted.replace(/\[Admin: ([^\]]+)\]\s*/g, '<strong>Admin:</strong> $1<br>');
+            
+            // Replace [Approved By: xxx] with "Approved By: xxx"
+            formatted = formatted.replace(/\[Approved By: ([^\]]+)\]/g, '<strong>Approved By:</strong> $1');
+            
+            // Replace newlines with <br>
+            formatted = formatted.replace(/\n/g, '<br>');
+        
             return formatted;
         }
 
