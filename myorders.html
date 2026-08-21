@@ -164,6 +164,7 @@
                 var response = await fetch(url);
                 var results = await response.json();
 
+                console.log('Orders loaded:', results.length);
                 allOrders = results;
                 applyViewFilter();
 
@@ -219,6 +220,7 @@
                 }
             });
 
+            console.log('Filtered orders:', filtered.length);
             filteredOrders = filtered;
             renderOrderList(filteredOrders);
             updateResultCount();
@@ -375,23 +377,85 @@
         }
 
         // ============================================================
+        // FORMAT NOTES AS DIALOGUE
+        // ============================================================
+
+        function formatNotesDialogue(notes) {
+            if (!notes) return 'No notes';
+
+            var lines = notes.split('\n');
+            var formatted = '';
+
+            lines.forEach(function(line) {
+                line = line.trim();
+                if (!line) return;
+
+                var userMatch = line.match(/\[User: ([^\]]+)\]\s*(.*)/);
+                if (userMatch) {
+                    formatted += '<div style="margin-bottom:6px;"><span style="color:#2b6cb0;font-weight:bold;">👤 ' + userMatch[1] + ':</span> <span style="color:#333;">' + userMatch[2] + '</span></div>';
+                    return;
+                }
+
+                var adminMatch = line.match(/\[Admin: ([^\]]+)\]\s*(.*)/);
+                if (adminMatch) {
+                    formatted += '<div style="margin-bottom:6px;padding-left:10px;border-left:2px solid #805ad5;"><span style="color:#805ad5;font-weight:bold;">🔹 Admin ' + adminMatch[1] + ':</span> <span style="color:#333;">' + adminMatch[2] + '</span></div>';
+                    return;
+                }
+
+                if (line.match(/\[Approved By: [^\]]+\]/)) {
+                    return;
+                }
+
+                formatted += '<div style="margin-bottom:6px;color:#555;">' + line + '</div>';
+            });
+
+            if (!formatted) {
+                formatted = '<div style="color:#555;">' + notes.replace(/\n/g, '<br>') + '</div>';
+            }
+
+            return formatted;
+        }
+
+        // ============================================================
+        // SHOW NOTES POPUP
+        // ============================================================
+
+        function showNotesPopup(orderId) {
+            var popup = document.getElementById('notesPopup-' + orderId);
+            if (popup) {
+                popup.style.display = 'flex';
+            }
+        }
+
+        // ============================================================
+        // CLOSE NOTES POPUP
+        // ============================================================
+
+        function closeNotesPopup(orderId) {
+            var popup = document.getElementById('notesPopup-' + orderId);
+            if (popup) {
+                popup.style.display = 'none';
+            }
+        }
+
+        // ============================================================
         // RENDER ORDER DETAILS
         // ============================================================
 
         function renderOrderDetails(order) {
             var container = document.getElementById('orderDetailsContainer');
-        
+
             if (!container) return;
-        
+
             var date = order.timestamp ? new Date(order.timestamp).toLocaleString() : 'Unknown';
             var statusColor = getStatusColor(order.status);
-        
+
             // ============================================================
             // PARSE NOTES
             // ============================================================
             var hasNotes = order.notes && order.notes.trim() !== '';
             var notesDisplay = '';
-        
+
             if (hasNotes) {
                 var formattedNotes = formatNotesDialogue(order.notes);
                 notesDisplay = `
@@ -413,24 +477,24 @@
             } else {
                 notesDisplay = '<div style="margin-top:10px;font-size:13px;color:#888;">No notes</div>';
             }
-        
+
             // ============================================================
-            // PARSE APPROVED BY
+            // PARSE APPROVED BY FROM NOTES
             // ============================================================
-        
+
             var approvedBy = 'Pending';
-        
+
             if (order.notes) {
                 var match = order.notes.match(/\[Approved By: ([^\]]+)\]/);
                 if (match) {
                     approvedBy = match[1];
                 }
             }
-        
+
             // ============================================================
             // RENDER ITEMS
             // ============================================================
-        
+
             var itemsHtml = '';
             if (order.items && order.items.length > 0) {
                 itemsHtml = '<table style="width:100%;margin-top:10px;">';
@@ -445,9 +509,9 @@
             } else {
                 itemsHtml = '<p class="text-muted">No items in this order.</p>';
             }
-        
+
             var statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
-        
+
             var html = `
                 <div style="margin-bottom:15px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
@@ -468,119 +532,7 @@
                     ${itemsHtml}
                 </div>
             `;
-        
-            container.innerHTML = html;
-        }
-            // ============================================================
-            // FORMAT NOTES AS DIALOGUE
-            // ============================================================
-            
-            function formatNotesDialogue(notes) {
-                if (!notes) return 'No notes';
-            
-                var lines = notes.split('\n');
-                var formatted = '';
-            
-                lines.forEach(function(line) {
-                    line = line.trim();
-                    if (!line) return;
-            
-                    // Check for [User: xxx] pattern
-                    var userMatch = line.match(/\[User: ([^\]]+)\]\s*(.*)/);
-                    if (userMatch) {
-                        formatted += '<div style="margin-bottom:6px;"><span style="color:#2b6cb0;font-weight:bold;">👤 ' + userMatch[1] + ':</span> <span style="color:#333;">' + userMatch[2] + '</span></div>';
-                        return;
-                    }
-            
-                    // Check for [Admin: xxx] pattern
-                    var adminMatch = line.match(/\[Admin: ([^\]]+)\]\s*(.*)/);
-                    if (adminMatch) {
-                        formatted += '<div style="margin-bottom:6px;padding-left:10px;border-left:2px solid #805ad5;"><span style="color:#805ad5;font-weight:bold;">🔹 Admin ' + adminMatch[1] + ':</span> <span style="color:#333;">' + adminMatch[2] + '</span></div>';
-                        return;
-                    }
-            
-                    // Check for [Approved By: xxx] pattern - skip it
-                    if (line.match(/\[Approved By: [^\]]+\]/)) {
-                        return;
-                    }
-            
-                    // Regular line
-                    formatted += '<div style="margin-bottom:6px;color:#555;">' + line + '</div>';
-                });
-            
-                if (!formatted) {
-                    formatted = '<div style="color:#555;">' + notes.replace(/\n/g, '<br>') + '</div>';
-                }
-            
-                return formatted;
-            }
-            
-            
-            // ============================================================
-            // SHOW NOTES POPUP
-            // ============================================================
-            
-            function showNotesPopup(orderId) {
-                var popup = document.getElementById('notesPopup-' + orderId);
-                if (popup) {
-                    popup.style.display = 'flex';
-                }
-            }
-            
-            
-            // ============================================================
-            // CLOSE NOTES POPUP
-            // ============================================================
-            
-            function closeNotesPopup(orderId) {
-                var popup = document.getElementById('notesPopup-' + orderId);
-                if (popup) {
-                    popup.style.display = 'none';
-                }
-            }
-        
-            // ============================================================
-            // RENDER ITEMS
-            // ============================================================
-        
-            var itemsHtml = '';
-            if (order.items && order.items.length > 0) {
-                itemsHtml = '<table style="width:100%;margin-top:10px;">';
-                itemsHtml += '<tr><th>Drug</th><th>Quantity</th></tr>';
-                order.items.forEach(function(item) {
-                    itemsHtml += '<tr>';
-                    itemsHtml += '<td>' + item.drug + '</td>';
-                    itemsHtml += '<td style="text-align:center;">' + item.quantity + '</td>';
-                    itemsHtml += '</tr>';
-                });
-                itemsHtml += '</table>';
-            } else {
-                itemsHtml = '<p class="text-muted">No items in this order.</p>';
-            }
-        
-            var statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
-        
-            var html = `
-                <div style="margin-bottom:15px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                        <h3 style="font-weight:normal;font-size:18px;">${order.orderId}</h3>
-                        <span style="color:${statusColor};font-weight:bold;font-size:16px;">${statusLabel}</span>
-                    </div>
-                    <div style="margin-top:10px;font-size:14px;color:#555;">
-                        <div><strong>Date:</strong> ${date}</div>
-                        <div><strong>Department:</strong> ${order.department || 'N/A'}</div>
-                        <div><strong>Requested By:</strong> ${order.username || 'Unknown'}</div>
-                        <div><strong>Approved By:</strong> ${approvedBy}</div>
-                    </div>
-                    ${notesDisplay}
-                </div>
-                <hr style="border:none;border-top:1px solid #eee;">
-                <div style="margin-top:10px;">
-                    <strong>Items:</strong>
-                    ${itemsHtml}
-                </div>
-            `;
-        
+
             container.innerHTML = html;
         }
 
