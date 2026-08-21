@@ -51,7 +51,6 @@
         </div>
 
         <!-- RIGHT PANEL - 1/3 (hidden by default) -->
-        <!-- RIGHT PANEL - 1/3 (hidden by default) -->
         <div class="right-panel" style="flex:1;min-width:0;display:none;" id="receivePanel">
             <div class="section-box">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
@@ -62,33 +61,28 @@
                     </div>
                 </div>
         
-                <!-- Supplier, Invoice, Batch, Expiry -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                    <div>
+                <!-- Supplier & Invoice -->
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:100px;">
                         <label style="font-size:13px;font-weight:500;">Supplier</label>
                         <input type="text" id="receiveSupplier" placeholder="Supplier name" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
                     </div>
-                    <div>
+                    <div style="flex:1;min-width:100px;">
                         <label style="font-size:13px;font-weight:500;">Invoice No</label>
                         <input type="text" id="receiveInvoice" placeholder="Invoice number" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
-                    </div>
-                    <div>
-                        <label style="font-size:13px;font-weight:500;">Batch No</label>
-                        <input type="text" id="receiveBatch" placeholder="Batch number" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
-                    </div>
-                    <div>
-                        <label style="font-size:13px;font-weight:500;">Expiry Date</label>
-                        <input type="date" id="receiveExpiry" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
                     </div>
                 </div>
         
                 <div id="receiveListContainer" style="margin-top:10px;">
                     <p class="text-muted">No items added yet. Search and add drugs.</p>
                 </div>
+        
+                <!-- Global Notes -->
                 <div style="margin-top:15px;border-top:1px solid #eee;padding-top:12px;">
                     <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Additional Notes</label>
                     <textarea id="receiveNotes" placeholder="Add any additional notes..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;"></textarea>
                 </div>
+        
                 <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
                     <button class="btn" onclick="submitReceive()" style="background:#38a169;color:white;border:none;">📥 Receive Stock</button>
                     <button class="btn" onclick="clearReceive()" style="color:#c00;">🗑️ Cancel Receive</button>
@@ -906,23 +900,23 @@
                 if (typeof showAlert === 'function') showAlert('Error: Could not find quantity input.', 'error');
                 return;
             }
-
+        
             var qty = parseInt(qtyInput.value) || 1;
-
+        
             if (qty < 1) {
                 if (typeof showAlert === 'function') showAlert('Quantity must be at least 1.', 'error');
                 return;
             }
-
+        
             if (receiveItems.some(function(item) { return item.name === drugName; })) {
                 if (typeof showAlert === 'function') showAlert(drugName + ' is already in this receive.', 'warning');
                 return;
             }
-
+        
             if (!isReceiveOpen) {
                 var panel = document.getElementById('receivePanel');
                 var btn = document.getElementById('newReceiveBtn');
-
+        
                 if (panel) panel.style.display = 'block';
                 if (btn) btn.textContent = '✕ Cancel Receive';
                 isReceiveOpen = true;
@@ -932,12 +926,15 @@
                 if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
                 if (receiveNotes) receiveNotes.value = '';
             }
-
+        
+            // Add with empty batch and expiry (user can fill them in)
             receiveItems.push({
                 name: drugName,
-                quantity: qty
+                quantity: qty,
+                batch: '',
+                expiry: ''
             });
-
+        
             renderReceiveList();
             renderDrugList();
             if (typeof showAlert === 'function') showAlert('Added ' + drugName + ' to receive.', 'success');
@@ -949,29 +946,49 @@
 
         function renderReceiveList() {
             var container = document.getElementById('receiveListContainer');
-
+        
             if (!container) return;
-
+        
             if (receiveItems.length === 0) {
                 container.innerHTML = '<p class="text-muted">No items added yet. Search and add drugs.</p>';
                 return;
             }
-
-            var html = '<table style="width:100%;">';
-            html += '<tr><th>Drug</th><th>Qty</th><th>Action</th></tr>';
-
+        
+            var html = '<table style="width:100%;border-collapse:collapse;">';
+            html += '<tr style="background:#f0f0f0;">';
+            html += '<th style="padding:8px;text-align:left;border:1px solid #ddd;">Drug</th>';
+            html += '<th style="padding:8px;text-align:center;border:1px solid #ddd;width:60px;">Qty</th>';
+            html += '<th style="padding:8px;text-align:left;border:1px solid #ddd;">Batch</th>';
+            html += '<th style="padding:8px;text-align:left;border:1px solid #ddd;">Expiry</th>';
+            html += '<th style="padding:8px;text-align:center;border:1px solid #ddd;width:50px;">Action</th>';
+            html += '</tr>';
+        
             receiveItems.forEach(function(item, index) {
-                html += '<tr>';
-                html += '<td><strong>' + item.name + '</strong></td>';
-                html += '<td>';
+                // Alternate row colors: grey for odd, white for even
+                var rowColor = (index % 2 === 0) ? '#f7fafc' : '#ffffff';
+                var rowStyle = 'background:' + rowColor + ';';
+        
+                html += '<tr style="' + rowStyle + '">';
+                html += '<td style="padding:8px;border:1px solid #ddd;"><strong>' + item.name + '</strong></td>';
+                html += '<td style="padding:8px;border:1px solid #ddd;text-align:center;">';
                 html += '<input type="number" id="receive-qty-' + index + '" value="' + item.quantity + '" ';
                 html += 'min="1" style="width:55px;padding:4px 6px;border:1px solid #ccc;text-align:center;" ';
                 html += 'onchange="updateReceiveQty(' + index + ', this.value)">';
                 html += '</td>';
-                html += '<td><button class="btn btn-small" onclick="removeFromReceive(' + index + ')" style="color:#c00;">✕</button></td>';
+                html += '<td style="padding:8px;border:1px solid #ddd;">';
+                html += '<input type="text" id="receive-batch-' + index + '" value="' + (item.batch || '') + '" ';
+                html += 'placeholder="Batch" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;">';
+                html += '</td>';
+                html += '<td style="padding:8px;border:1px solid #ddd;">';
+                html += '<input type="date" id="receive-expiry-' + index + '" value="' + (item.expiry || '') + '" ';
+                html += 'style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;">';
+                html += '</td>';
+                html += '<td style="padding:8px;border:1px solid #ddd;text-align:center;">';
+                html += '<button class="btn btn-small" onclick="removeFromReceive(' + index + ')" style="color:#c00;background:none;border:none;cursor:pointer;font-size:16px;">✕</button>';
+                html += '</td>';
                 html += '</tr>';
             });
-
+        
             html += '</table>';
             container.innerHTML = html;
         }
@@ -1021,12 +1038,8 @@
             if (receiveNotes) receiveNotes.value = '';
             var receiveSupplier = document.getElementById('receiveSupplier');
             var receiveInvoice = document.getElementById('receiveInvoice');
-            var receiveBatch = document.getElementById('receiveBatch');
-            var receiveExpiry = document.getElementById('receiveExpiry');
             if (receiveSupplier) receiveSupplier.value = '';
             if (receiveInvoice) receiveInvoice.value = '';
-            if (receiveBatch) receiveBatch.value = '';
-            if (receiveExpiry) receiveExpiry.value = '';
             renderReceiveList();
             if (isDrugListVisible) renderDrugList();
             if (typeof showAlert === 'function') showAlert('Receive cleared.', 'info');
@@ -1070,29 +1083,31 @@
             `;
             document.body.appendChild(loadingOverlay);
         
-            // ============================================================
-            // COLLECT ALL FIELD VALUES
-            // ============================================================
+            // Collect all field values
             var supplier = document.getElementById('receiveSupplier') ? document.getElementById('receiveSupplier').value.trim() : '';
             var invoice = document.getElementById('receiveInvoice') ? document.getElementById('receiveInvoice').value.trim() : '';
-            var batch = document.getElementById('receiveBatch') ? document.getElementById('receiveBatch').value.trim() : '';
-            var expiry = document.getElementById('receiveExpiry') ? document.getElementById('receiveExpiry').value : '';
             var notes = document.getElementById('receiveNotes') ? document.getElementById('receiveNotes').value.trim() : '';
+        
+            // Build items with batch and expiry from the form
+            var itemsWithDetails = receiveItems.map(function(item, index) {
+                var batchInput = document.getElementById('receive-batch-' + index);
+                var expiryInput = document.getElementById('receive-expiry-' + index);
+        
+                return {
+                    drug: item.name,
+                    quantity: item.quantity,
+                    batch: batchInput ? batchInput.value.trim() : '',
+                    expiry: expiryInput ? expiryInput.value : ''
+                };
+            });
         
             var receiveData = {
                 action: 'submitreceive',
                 admin: currentUser.username,
-                items: receiveItems.map(function(item) {
-                    return {
-                        drug: item.name,
-                        quantity: item.quantity
-                    };
-                }),
+                items: itemsWithDetails,
                 receiveId: currentReceiveId,
                 supplier: supplier,
                 invoice: invoice,
-                batch: batch,
-                expiry: expiry,
                 notes: notes,
                 timestamp: new Date().toISOString()
             };
@@ -1104,8 +1119,6 @@
                 '&items=' + encodeURIComponent(JSON.stringify(receiveData.items)) +
                 '&supplier=' + encodeURIComponent(receiveData.supplier) +
                 '&invoice=' + encodeURIComponent(receiveData.invoice) +
-                '&batch=' + encodeURIComponent(receiveData.batch) +
-                '&expiry=' + encodeURIComponent(receiveData.expiry) +
                 '&notes=' + encodeURIComponent(receiveData.notes) +
                 '&timestamp=' + encodeURIComponent(receiveData.timestamp);
         
@@ -1125,12 +1138,8 @@
                     if (receiveNotes) receiveNotes.value = '';
                     var receiveSupplier = document.getElementById('receiveSupplier');
                     var receiveInvoice = document.getElementById('receiveInvoice');
-                    var receiveBatch = document.getElementById('receiveBatch');
-                    var receiveExpiry = document.getElementById('receiveExpiry');
                     if (receiveSupplier) receiveSupplier.value = '';
                     if (receiveInvoice) receiveInvoice.value = '';
-                    if (receiveBatch) receiveBatch.value = '';
-                    if (receiveExpiry) receiveExpiry.value = '';
                     renderReceiveList();
                     if (isDrugListVisible) renderDrugList();
         
