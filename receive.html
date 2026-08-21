@@ -51,6 +51,7 @@
         </div>
 
         <!-- RIGHT PANEL - 1/3 (hidden by default) -->
+        <!-- RIGHT PANEL - 1/3 (hidden by default) -->
         <div class="right-panel" style="flex:1;min-width:0;display:none;" id="receivePanel">
             <div class="section-box">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
@@ -60,19 +61,27 @@
                         <button onclick="toggleNewReceive()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Receive Panel">✕</button>
                     </div>
                 </div>
-
-                <!-- Supplier & Invoice -->
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <div style="flex:1;min-width:100px;">
+        
+                <!-- Supplier, Invoice, Batch, Expiry -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div>
                         <label style="font-size:13px;font-weight:500;">Supplier</label>
                         <input type="text" id="receiveSupplier" placeholder="Supplier name" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
                     </div>
-                    <div style="flex:1;min-width:100px;">
+                    <div>
                         <label style="font-size:13px;font-weight:500;">Invoice No</label>
                         <input type="text" id="receiveInvoice" placeholder="Invoice number" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
                     </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:500;">Batch No</label>
+                        <input type="text" id="receiveBatch" placeholder="Batch number" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:500;">Expiry Date</label>
+                        <input type="date" id="receiveExpiry" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
+                    </div>
                 </div>
-
+        
                 <div id="receiveListContainer" style="margin-top:10px;">
                     <p class="text-muted">No items added yet. Search and add drugs.</p>
                 </div>
@@ -86,9 +95,6 @@
                 </div>
             </div>
         </div>
-
-    </div>
-
     <!-- ============================================================
     NEW DRUG MODAL - BULK ENTRY
     ============================================================ -->
@@ -997,12 +1003,20 @@
                 if (typeof showAlert === 'function') showAlert('Receive is already empty.', 'info');
                 return;
             }
-
+        
             if (!confirm('Clear all items from this receive?')) return;
-
+        
             receiveItems = [];
             var receiveNotes = document.getElementById('receiveNotes');
             if (receiveNotes) receiveNotes.value = '';
+            var receiveSupplier = document.getElementById('receiveSupplier');
+            var receiveInvoice = document.getElementById('receiveInvoice');
+            var receiveBatch = document.getElementById('receiveBatch');
+            var receiveExpiry = document.getElementById('receiveExpiry');
+            if (receiveSupplier) receiveSupplier.value = '';
+            if (receiveInvoice) receiveInvoice.value = '';
+            if (receiveBatch) receiveBatch.value = '';
+            if (receiveExpiry) receiveExpiry.value = '';
             renderReceiveList();
             if (isDrugListVisible) renderDrugList();
             if (typeof showAlert === 'function') showAlert('Receive cleared.', 'info');
@@ -1017,11 +1031,11 @@
                 if (typeof showAlert === 'function') showAlert('Please add at least one item to receive.', 'warning');
                 return;
             }
-
+        
             if (!confirm('Receive ' + receiveItems.length + ' item(s) into inventory?')) {
                 return;
             }
-
+        
             var loadingOverlay = document.createElement('div');
             loadingOverlay.id = 'receiveLoadingOverlay';
             loadingOverlay.style.cssText = `
@@ -1045,11 +1059,16 @@
                 </div>
             `;
             document.body.appendChild(loadingOverlay);
-
+        
+            // ============================================================
+            // COLLECT ALL FIELD VALUES
+            // ============================================================
             var supplier = document.getElementById('receiveSupplier') ? document.getElementById('receiveSupplier').value.trim() : '';
             var invoice = document.getElementById('receiveInvoice') ? document.getElementById('receiveInvoice').value.trim() : '';
+            var batch = document.getElementById('receiveBatch') ? document.getElementById('receiveBatch').value.trim() : '';
+            var expiry = document.getElementById('receiveExpiry') ? document.getElementById('receiveExpiry').value : '';
             var notes = document.getElementById('receiveNotes') ? document.getElementById('receiveNotes').value.trim() : '';
-
+        
             var receiveData = {
                 action: 'submitreceive',
                 admin: currentUser.username,
@@ -1062,10 +1081,12 @@
                 receiveId: currentReceiveId,
                 supplier: supplier,
                 invoice: invoice,
+                batch: batch,
+                expiry: expiry,
                 notes: notes,
                 timestamp: new Date().toISOString()
             };
-
+        
             var url = API_URL +
                 '?action=submitreceive' +
                 '&admin=' + encodeURIComponent(receiveData.admin) +
@@ -1073,34 +1094,40 @@
                 '&items=' + encodeURIComponent(JSON.stringify(receiveData.items)) +
                 '&supplier=' + encodeURIComponent(receiveData.supplier) +
                 '&invoice=' + encodeURIComponent(receiveData.invoice) +
+                '&batch=' + encodeURIComponent(receiveData.batch) +
+                '&expiry=' + encodeURIComponent(receiveData.expiry) +
                 '&notes=' + encodeURIComponent(receiveData.notes) +
                 '&timestamp=' + encodeURIComponent(receiveData.timestamp);
-
+        
             fetch(url)
             .then(function(response) { return response.json(); })
             .then(function(result) {
                 var overlay = document.getElementById('receiveLoadingOverlay');
                 if (overlay) overlay.remove();
-
+        
                 if (result.success) {
                     if (typeof showAlert === 'function') {
                         showAlert('✅ Receive completed successfully! Stock added.', 'success');
                     }
-
+        
                     receiveItems = [];
                     var receiveNotes = document.getElementById('receiveNotes');
                     if (receiveNotes) receiveNotes.value = '';
                     var receiveSupplier = document.getElementById('receiveSupplier');
                     var receiveInvoice = document.getElementById('receiveInvoice');
+                    var receiveBatch = document.getElementById('receiveBatch');
+                    var receiveExpiry = document.getElementById('receiveExpiry');
                     if (receiveSupplier) receiveSupplier.value = '';
                     if (receiveInvoice) receiveInvoice.value = '';
+                    if (receiveBatch) receiveBatch.value = '';
+                    if (receiveExpiry) receiveExpiry.value = '';
                     renderReceiveList();
                     if (isDrugListVisible) renderDrugList();
-
+        
                     currentReceiveId = generateReceiveId();
                     var receiveIdDisplay = document.getElementById('receiveIdDisplay');
                     if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
-
+        
                     setTimeout(function() {
                         var refreshOverlay = document.createElement('div');
                         refreshOverlay.id = 'refreshOverlay';
@@ -1126,7 +1153,7 @@
                         document.body.appendChild(refreshOverlay);
                         window.location.reload();
                     }, 1500);
-
+        
                 } else {
                     if (typeof showAlert === 'function') {
                         showAlert('❌ ' + (result.message || 'Error submitting receive.'), 'error');
@@ -1136,7 +1163,7 @@
             .catch(function(error) {
                 var overlay = document.getElementById('receiveLoadingOverlay');
                 if (overlay) overlay.remove();
-
+        
                 console.error('Error:', error);
                 if (typeof showAlert === 'function') {
                     showAlert('❌ Error connecting to server.', 'error');
