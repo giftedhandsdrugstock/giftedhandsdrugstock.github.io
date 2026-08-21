@@ -98,22 +98,25 @@
     <!-- ============================================================
     NEW DRUG MODAL - BULK ENTRY
     ============================================================ -->
+    <!-- ============================================================
+    NEW DRUG MODAL - BULK ENTRY (FIXED)
+    ============================================================ -->
     <div id="newDrugModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
         <div style="background:#fff;padding:30px;border-radius:8px;max-width:800px;width:95%;max-height:90vh;overflow-y:auto;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
                 <h2 style="font-weight:normal;">Add New Drugs (Bulk)</h2>
                 <button onclick="closeNewDrugModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button>
             </div>
-            <p class="text-muted" style="margin-bottom:15px;">Add multiple new drugs at once. All fields are required for each drug.</p>
-
+            <p class="text-muted" style="margin-bottom:15px;">Add multiple new drugs at once. Each drug has its own Batch and Expiry.</p>
+    
             <!-- Supplier & Invoice for New Drugs -->
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;padding:10px;background:#f7fafc;border-radius:4px;">
                 <div style="flex:1;min-width:150px;">
-                    <label style="font-size:13px;font-weight:500;">Supplier</label>
+                    <label style="font-size:13px;font-weight:500;">Supplier <span style="color:#c00;">*</span></label>
                     <input type="text" id="newDrugSupplier" placeholder="Supplier name" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
                 </div>
                 <div style="flex:1;min-width:150px;">
-                    <label style="font-size:13px;font-weight:500;">Invoice No</label>
+                    <label style="font-size:13px;font-weight:500;">Invoice No <span style="color:#c00;">*</span></label>
                     <input type="text" id="newDrugInvoice" placeholder="Invoice number" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
                 </div>
                 <div style="flex:1;min-width:150px;">
@@ -121,17 +124,17 @@
                     <input type="text" id="newDrugReceivedBy" placeholder="Received by" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
                 </div>
             </div>
-
+    
             <!-- Drug Entry Table -->
             <div style="overflow-x:auto;">
                 <table id="newDrugTable" style="width:100%;border-collapse:collapse;font-size:14px;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Drug Name <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Form <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Batch No <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:left;border:1px solid #ddd;">Expiry <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:center;border:1px solid #ddd;width:80px;">Qty <span style="color:#c00;">*</span></th>
+                            <th style="padding:8px;text-align:left;border:1px solid #ddd;min-width:120px;">Drug Name <span style="color:#c00;">*</span></th>
+                            <th style="padding:8px;text-align:left;border:1px solid #ddd;min-width:80px;">Form <span style="color:#c00;">*</span></th>
+                            <th style="padding:8px;text-align:left;border:1px solid #ddd;min-width:100px;">Batch No <span style="color:#c00;">*</span></th>
+                            <th style="padding:8px;text-align:left;border:1px solid #ddd;min-width:100px;">Expiry <span style="color:#c00;">*</span></th>
+                            <th style="padding:8px;text-align:center;border:1px solid #ddd;width:70px;">Qty <span style="color:#c00;">*</span></th>
                             <th style="padding:8px;text-align:center;border:1px solid #ddd;width:50px;">Action</th>
                         </tr>
                     </thead>
@@ -140,26 +143,25 @@
                     </tbody>
                 </table>
             </div>
-
+    
             <!-- Add Row Button -->
             <div style="margin-top:10px;">
                 <button class="btn" onclick="addNewDrugRow()" style="background:#2b6cb0;color:white;border:none;">➕ Add Row</button>
                 <button class="btn" onclick="removeLastDrugRow()" style="color:#c00;">✕ Remove Last</button>
             </div>
-
+    
             <!-- Notes -->
             <div style="margin-top:15px;">
                 <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Notes (for all drugs)</label>
                 <textarea id="newDrugNotes" placeholder="Additional notes..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;"></textarea>
             </div>
-
+    
             <div style="display:flex;gap:10px;margin-top:15px;">
                 <button class="btn" onclick="submitNewDrugs()" style="background:#38a169;color:white;border:none;">💾 Add All Drugs & Receive</button>
                 <button class="btn" onclick="closeNewDrugModal()" style="color:#c00;">Cancel</button>
             </div>
         </div>
     </div>
-
     <!-- FOOTER PLACEHOLDER -->
     <div id="footer"></div>
 
@@ -424,35 +426,46 @@
         async function submitNewDrugs() {
             var tbody = document.getElementById('newDrugTableBody');
             var rows = tbody.querySelectorAll('tr');
-
+        
             if (rows.length === 0) {
                 if (typeof showAlert === 'function') showAlert('Please add at least one drug.', 'error');
                 return;
             }
-
+        
+            // ============================================================
+            // VALIDATE SUPPLIER AND INVOICE FIRST
+            // ============================================================
+            var supplier = document.getElementById('newDrugSupplier').value.trim();
+            var invoice = document.getElementById('newDrugInvoice').value.trim();
+        
+            if (!supplier || !invoice) {
+                if (typeof showAlert === 'function') showAlert('Supplier and Invoice No are required.', 'error');
+                return;
+            }
+        
             var drugs = [];
             var hasError = false;
             var errorMessages = [];
-
+        
             rows.forEach(function(row, index) {
                 var name = row.querySelector('#nd-name-' + index) ? row.querySelector('#nd-name-' + index).value.trim() : '';
                 var form = row.querySelector('#nd-form-' + index) ? row.querySelector('#nd-form-' + index).value.trim() : '';
                 var batch = row.querySelector('#nd-batch-' + index) ? row.querySelector('#nd-batch-' + index).value.trim() : '';
                 var expiry = row.querySelector('#nd-expiry-' + index) ? row.querySelector('#nd-expiry-' + index).value : '';
                 var qty = row.querySelector('#nd-qty-' + index) ? parseInt(row.querySelector('#nd-qty-' + index).value) : 0;
-
+        
                 if (!name || !form || !batch || !expiry || !qty) {
                     errorMessages.push('Row ' + (index + 1) + ' has missing fields.');
                     hasError = true;
                     return;
                 }
-
+        
                 if (qty < 1) {
                     errorMessages.push('Quantity for ' + name + ' must be at least 1.');
                     hasError = true;
                     return;
                 }
-
+        
                 drugs.push({
                     drug: name,
                     form: form,
@@ -461,29 +474,29 @@
                     quantity: qty
                 });
             });
-
+        
             if (hasError) {
                 if (typeof showAlert === 'function') showAlert(errorMessages.join(' '), 'error');
                 return;
             }
-
+        
             if (drugs.length === 0) {
                 if (typeof showAlert === 'function') showAlert('No valid drugs to add.', 'error');
                 return;
             }
-
+        
             // ============================================================
             // CONFIRMATION POPUP
             // ============================================================
             if (!confirm('Add ' + drugs.length + ' new drug(s) to inventory?')) {
                 return;
             }
-
+        
             // ============================================================
             // CLOSE MODAL IMMEDIATELY
             // ============================================================
             closeNewDrugModal();
-
+        
             // ============================================================
             // SHOW LOADING OVERLAY
             // ============================================================
@@ -510,55 +523,53 @@
                 </div>
             `;
             document.body.appendChild(loadingOverlay);
-
-            var supplier = document.getElementById('newDrugSupplier').value.trim();
-            var invoice = document.getElementById('newDrugInvoice').value.trim();
+        
             var receivedBy = document.getElementById('newDrugReceivedBy').value.trim() || currentUser.username;
             var notes = document.getElementById('newDrugNotes').value.trim();
-
+        
             var url = API_URL +
                 '?action=addbulkdrugs' +
                 '&admin=' + encodeURIComponent(currentUser.username) +
-                '&supplier=' + encodeURIComponent(supplier || '') +
-                '&invoice=' + encodeURIComponent(invoice || '') +
+                '&supplier=' + encodeURIComponent(supplier) +
+                '&invoice=' + encodeURIComponent(invoice) +
                 '&receivedBy=' + encodeURIComponent(receivedBy) +
                 '&notes=' + encodeURIComponent(notes || '') +
                 '&drugs=' + encodeURIComponent(JSON.stringify(drugs));
-
+        
             try {
                 var response = await fetch(url);
                 var result = await response.json();
-
+        
                 // ============================================================
                 // REMOVE LOADING OVERLAY
                 // ============================================================
                 var overlay = document.getElementById('bulkLoadingOverlay');
                 if (overlay) overlay.remove();
-
+        
                 if (result.success) {
                     if (typeof showAlert === 'function') {
                         showAlert('✅ ' + result.message, 'success');
                     }
-
+        
                     // Clear modal fields
                     document.getElementById('newDrugSupplier').value = '';
                     document.getElementById('newDrugInvoice').value = '';
                     document.getElementById('newDrugReceivedBy').value = '';
                     document.getElementById('newDrugNotes').value = '';
-
+        
                     // Clear table (keep one empty row)
                     var tbody = document.getElementById('newDrugTableBody');
                     tbody.innerHTML = '';
                     newDrugRowCount = 0;
                     addNewDrugRow();
-
+        
                     // Refresh drug list
                     loadDrugsSilent();
                     if (isDrugListVisible) {
                         filteredDrugs = allDrugs;
                         renderDrugList();
                     }
-
+        
                     // ============================================================
                     // SHOW REFRESH LOADING AND RELOAD AFTER 2.5 SECONDS
                     // ============================================================
@@ -587,7 +598,7 @@
                         document.body.appendChild(refreshOverlay);
                         window.location.reload();
                     }, 2500);
-
+        
                 } else {
                     if (typeof showAlert === 'function') {
                         showAlert('❌ ' + (result.message || 'Error adding drugs.'), 'error');
@@ -596,18 +607,17 @@
                         console.log('Errors:', result.errors);
                     }
                 }
-
+        
             } catch (error) {
                 var overlay = document.getElementById('bulkLoadingOverlay');
                 if (overlay) overlay.remove();
-
+        
                 console.error('Error:', error);
                 if (typeof showAlert === 'function') {
                     showAlert('❌ Error connecting to server. Please try again.', 'error');
                 }
             }
         }
-
         // ============================================================
         // TOGGLE NEW RECEIVE
         // ============================================================
