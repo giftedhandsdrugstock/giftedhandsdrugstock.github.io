@@ -383,38 +383,38 @@
         // SUBMIT NEW DRUGS (BULK)
         // ============================================================
 
-        async function submitNewDrugs() {
+       async function submitNewDrugs() {
             var tbody = document.getElementById('newDrugTableBody');
             var rows = tbody.querySelectorAll('tr');
-
+        
             if (rows.length === 0) {
                 if (typeof showAlert === 'function') showAlert('Please add at least one drug.', 'error');
                 return;
             }
-
+        
             var drugs = [];
             var hasError = false;
             var errorMessages = [];
-
+        
             rows.forEach(function(row, index) {
                 var name = row.querySelector('#nd-name-' + index) ? row.querySelector('#nd-name-' + index).value.trim() : '';
                 var form = row.querySelector('#nd-form-' + index) ? row.querySelector('#nd-form-' + index).value.trim() : '';
                 var batch = row.querySelector('#nd-batch-' + index) ? row.querySelector('#nd-batch-' + index).value.trim() : '';
                 var expiry = row.querySelector('#nd-expiry-' + index) ? row.querySelector('#nd-expiry-' + index).value : '';
                 var qty = row.querySelector('#nd-qty-' + index) ? parseInt(row.querySelector('#nd-qty-' + index).value) : 0;
-
+        
                 if (!name || !form || !batch || !expiry || !qty) {
                     errorMessages.push('Row ' + (index + 1) + ' has missing fields.');
                     hasError = true;
                     return;
                 }
-
+        
                 if (qty < 1) {
                     errorMessages.push('Quantity for ' + name + ' must be at least 1.');
                     hasError = true;
                     return;
                 }
-
+        
                 drugs.push({
                     drug: name,
                     form: form,
@@ -423,24 +423,36 @@
                     quantity: qty
                 });
             });
-
+        
             if (hasError) {
                 if (typeof showAlert === 'function') showAlert(errorMessages.join(' '), 'error');
                 return;
             }
-
+        
             if (drugs.length === 0) {
                 if (typeof showAlert === 'function') showAlert('No valid drugs to add.', 'error');
                 return;
             }
-
-            if (typeof showLoading === 'function') showLoading('Adding new drugs to inventory...');
-
+        
+            // ============================================================
+            // SHOW LOADING OVERLAY
+            // ============================================================
+            if (typeof showLoading === 'function') {
+                showLoading('Adding new drugs to inventory...');
+            } else {
+                // Fallback loading indicator
+                var loadingDiv = document.createElement('div');
+                loadingDiv.id = 'tempLoading';
+                loadingDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;font-size:18px;color:#333;';
+                loadingDiv.innerHTML = '<div style="text-align:center;"><div style="border:4px solid #f3f3f3;border-top:4px solid #333;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 15px;"></div>Adding new drugs to inventory...</div>';
+                document.body.appendChild(loadingDiv);
+            }
+        
             var supplier = document.getElementById('newDrugSupplier').value.trim();
             var invoice = document.getElementById('newDrugInvoice').value.trim();
             var receivedBy = document.getElementById('newDrugReceivedBy').value.trim() || currentUser.username;
             var notes = document.getElementById('newDrugNotes').value.trim();
-
+        
             var url = API_URL +
                 '?action=addbulkdrugs' +
                 '&admin=' + encodeURIComponent(currentUser.username) +
@@ -449,54 +461,91 @@
                 '&receivedBy=' + encodeURIComponent(receivedBy) +
                 '&notes=' + encodeURIComponent(notes || '') +
                 '&drugs=' + encodeURIComponent(JSON.stringify(drugs));
-
+        
             try {
                 var response = await fetch(url);
                 var result = await response.json();
-
-                if (typeof hideLoading === 'function') hideLoading();
-
+        
+                // Hide loading overlay
+                if (typeof hideLoading === 'function') {
+                    hideLoading();
+                } else {
+                    var tempLoading = document.getElementById('tempLoading');
+                    if (tempLoading) tempLoading.remove();
+                }
+        
                 if (result.success) {
-                    if (typeof showAlert === 'function') showAlert(result.message, 'success');
-
+                    // Show success alert
+                    if (typeof showAlert === 'function') {
+                        showAlert('✅ ' + result.message, 'success');
+                    } else {
+                        alert('✅ ' + result.message);
+                    }
+        
+                    // Clear modal fields
                     document.getElementById('newDrugSupplier').value = '';
                     document.getElementById('newDrugInvoice').value = '';
                     document.getElementById('newDrugReceivedBy').value = '';
                     document.getElementById('newDrugNotes').value = '';
-
+        
+                    // Clear table (keep one empty row)
                     var tbody = document.getElementById('newDrugTableBody');
                     tbody.innerHTML = '';
                     newDrugRowCount = 0;
                     addNewDrugRow();
-
+        
+                    // Refresh drug list
                     loadDrugsSilent();
                     if (isDrugListVisible) {
                         filteredDrugs = allDrugs;
                         renderDrugList();
                     }
-
+        
+                    // Close modal after 1.5 seconds
                     setTimeout(function() {
                         closeNewDrugModal();
                     }, 1500);
-
+        
+                    // Refresh page after 2.5 seconds with loading message
                     setTimeout(function() {
+                        // Show refresh loading message
+                        var refreshDiv = document.createElement('div');
+                        refreshDiv.id = 'refreshLoading';
+                        refreshDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;font-size:18px;color:#333;';
+                        refreshDiv.innerHTML = '<div style="text-align:center;"><div style="border:4px solid #f3f3f3;border-top:4px solid #38a169;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 15px;"></div>Refreshing page...</div>';
+                        document.body.appendChild(refreshDiv);
                         window.location.reload();
                     }, 2500);
-
+        
                 } else {
-                    if (typeof showAlert === 'function') showAlert(result.message || 'Error adding drugs.', 'error');
+                    // Show error alert
+                    if (typeof showAlert === 'function') {
+                        showAlert('❌ ' + (result.message || 'Error adding drugs.'), 'error');
+                    } else {
+                        alert('❌ ' + (result.message || 'Error adding drugs.'));
+                    }
                     if (result.errors && result.errors.length > 0) {
                         console.log('Errors:', result.errors);
                     }
                 }
-
+        
             } catch (error) {
-                if (typeof hideLoading === 'function') hideLoading();
+                // Hide loading overlay
+                if (typeof hideLoading === 'function') {
+                    hideLoading();
+                } else {
+                    var tempLoading = document.getElementById('tempLoading');
+                    if (tempLoading) tempLoading.remove();
+                }
+        
                 console.error('Error:', error);
-                if (typeof showAlert === 'function') showAlert('Error connecting to server.', 'error');
+                if (typeof showAlert === 'function') {
+                    showAlert('❌ Error connecting to server. Please try again.', 'error');
+                } else {
+                    alert('❌ Error connecting to server. Please try again.');
+                }
             }
         }
-
         // ============================================================
         // TOGGLE NEW RECEIVE
         // ============================================================
