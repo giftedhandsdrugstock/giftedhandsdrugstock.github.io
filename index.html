@@ -23,7 +23,9 @@
 
         <div id="alert" class="alert"></div>
 
-        <!-- LOGIN -->
+        <!-- ============================================================
+        LOGIN FORM
+        ============================================================ -->
         <div id="loginForm">
             <h2>Login</h2>
             <form id="loginFormElement" onsubmit="handleLogin(event)">
@@ -38,12 +40,14 @@
                 <button type="submit" class="btn">Login</button>
             </form>
             <p style="margin-top:15px;">
-                <a href="#" onclick="showForgotPassword()" style="color:#2b6cb0;text-decoration:none;font-size:14px;">Forgot Password?</a>
+                <a href="reset-password.html" onclick="showForgotPassword()" style="color:#2b6cb0;text-decoration:none;font-size:14px;">Forgot Password?</a>
             </p>
             <p style="margin-top:5px;">Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
         </div>
 
-        <!-- REGISTER -->
+        <!-- ============================================================
+        REGISTER FORM
+        ============================================================ -->
         <div id="registerForm" style="display:none;">
             <h2>Register</h2>
             <form id="registerFormElement" onsubmit="handleRegister(event)">
@@ -138,6 +142,7 @@
         // ============================================================
 
         var API_URL = "https://script.google.com/macros/s/AKfycbyybdqQbHlOLLp6mUHq36_Bq4sXRjEpO7NgxvSHU9nPew7CD51YMaO8BUmHpJywF7lG/exec";
+
         // ============================================================
         // LOADING INDICATOR
         // ============================================================
@@ -357,25 +362,24 @@
 
         async function handleForgotPassword(event) {
             event.preventDefault();
-        
+
             var username = document.getElementById('forgotUsername').value.trim();
-        
+
             if (!username) {
                 showAlert('Please enter your username or email.', 'error');
                 return;
             }
-        
+
             showLoading('Sending reset link...');
-        
+
             try {
-                // Uses the globally declared API_URL
                 var response = await fetch(API_URL +
                     '?action=forgotpassword' +
                     '&username=' + encodeURIComponent(username));
-        
+
                 var result = await response.json();
                 hideLoading();
-        
+
                 if (result.success) {
                     showAlert('✅ ' + result.message, 'success');
                     showLogin();
@@ -383,7 +387,7 @@
                 } else {
                     showAlert(result.message || 'Error sending reset link.', 'error');
                 }
-        
+
             } catch (error) {
                 hideLoading();
                 console.error('Forgot password error:', error);
