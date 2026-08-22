@@ -7,19 +7,36 @@
     <link rel="stylesheet" href="style.css">
     <style>
         /* ============================================================
-           MOBILE-FIRST RESPONSIVE STYLES
+           BASE STYLES
            ============================================================ */
         
-        /* Base mobile styles */
-        .mobile-header {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 10px;
-            padding: 10px 0;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
-        .mobile-header-top {
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f7fafc;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        
+        .app-header {
+            background: #1a365d;
+            color: #fff;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .app-header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -27,250 +44,33 @@
             gap: 8px;
         }
         
-        .mobile-header-top h1 {
-            font-size: 18px;
-            margin: 0;
+        .app-header-top h1 {
+            font-size: 20px;
+            font-weight: 600;
         }
         
-        .mobile-user-info {
+        .app-header-top h1 span {
+            font-size: 24px;
+        }
+        
+        .user-badge {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
-            flex-wrap: wrap;
-        }
-        
-        .mobile-user-info .text-muted {
-            font-size: 12px;
-        }
-        
-        .mobile-nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            padding-top: 8px;
-            border-top: 1px solid #eee;
-        }
-        
-        .mobile-nav a,
-        .mobile-nav button {
-            font-size: 13px;
+            background: rgba(255,255,255,0.15);
             padding: 6px 12px;
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #333;
-            cursor: pointer;
+            border-radius: 20px;
         }
         
-        .mobile-nav a:hover,
-        .mobile-nav button:hover {
-            background: #e8e8e8;
+        .user-badge .role {
+            font-size: 11px;
+            opacity: 0.7;
         }
         
-        .mobile-nav .admin-link {
-            display: none;
-        }
-        
-        .mobile-nav .admin-link.show {
-            display: inline-block;
-        }
-        
-        .mobile-nav .btn-logout {
-            background: #fee;
-            border-color: #fcc;
-            color: #c00;
-        }
-        
-        /* Search box - mobile friendly */
-        .search-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .search-container .search-input-wrapper {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .search-container input {
-            flex: 1;
-            padding: 10px 12px;
-            font-size: 16px; /* Prevents iOS zoom */
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            min-height: 44px; /* Touch-friendly */
-        }
-        
-        .search-container input:focus {
-            border-color: #2b6cb0;
-            outline: none;
-        }
-        
-        .search-container .search-actions {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        
-        .search-container .search-actions button {
-            flex: 1;
-            min-width: 60px;
-            padding: 10px 12px;
-            font-size: 14px;
-            border: none;
-            border-radius: 6px;
-            background: #2b6cb0;
-            color: #fff;
-            cursor: pointer;
-            min-height: 44px;
-        }
-        
-        .search-container .search-actions button:hover {
-            background: #1a4a7a;
-        }
-        
-        .search-container .search-actions button.btn-secondary {
-            background: #e2e8f0;
-            color: #333;
-        }
-        
-        .search-container .search-actions button.btn-secondary:hover {
-            background: #cbd5e0;
-        }
-        
-        /* Results - mobile friendly */
-        .results-container {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .results-container table {
-            width: 100%;
-            min-width: 300px;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        
-        .results-container table th,
-        .results-container table td {
-            padding: 10px 8px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .results-container table th {
-            background: #f7fafc;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        
-        /* Status indicators */
-        .stock-status {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .stock-status.in-stock {
-            background: #c6f6d5;
-            color: #276749;
-        }
-        
-        .stock-status.low-stock {
-            background: #fefcbf;
-            color: #975a16;
-        }
-        
-        .stock-status.out-of-stock {
-            background: #fed7d7;
-            color: #9b2c2c;
-        }
-        
-        /* Loading state */
-        .loading-indicator {
-            text-align: center;
-            padding: 30px 0;
-            color: #888;
-        }
-        
-        .loading-indicator .spinner {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #2b6cb0;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* ============================================================
-           TABLET AND DESKTOP IMPROVEMENTS
-           ============================================================ */
-        
-        @media (min-width: 600px) {
-            .mobile-header {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-            }
-            
-            .mobile-header-top {
-                flex: 1;
-            }
-            
-            .mobile-nav {
-                border-top: none;
-                padding-top: 0;
-            }
-            
-            .search-container {
-                flex-direction: row;
-                align-items: center;
-            }
-            
-            .search-container .search-input-wrapper {
-                flex: 1;
-            }
-            
-            .search-container .search-actions {
-                flex: 0 0 auto;
-            }
-        }
-        
-        @media (min-width: 768px) {
-            .mobile-header-top h1 {
-                font-size: 24px;
-            }
-            
-            .results-container table {
-                font-size: 15px;
-            }
-            
-            .results-container table th,
-            .results-container table td {
-                padding: 12px 16px;
-            }
-        }
-        
-        /* ============================================================
-           HAMBURGER MENU (mobile)
-           ============================================================ */
-        
+        /* Hamburger */
         .hamburger {
-            display: none;
+            display: flex;
             flex-direction: column;
             gap: 4px;
             background: none;
@@ -281,9 +81,9 @@
         
         .hamburger span {
             display: block;
-            width: 25px;
-            height: 3px;
-            background: #333;
+            width: 22px;
+            height: 2.5px;
+            background: #fff;
             border-radius: 2px;
             transition: all 0.3s;
         }
@@ -300,26 +100,415 @@
             transform: rotate(-45deg) translate(5px, -5px);
         }
         
-        @media (max-width: 599px) {
-            .hamburger {
-                display: flex;
+        /* Navigation */
+        .mobile-nav {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .mobile-nav.open {
+            display: flex;
+        }
+        
+        .mobile-nav a,
+        .mobile-nav button {
+            padding: 10px 14px;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .mobile-nav a:hover,
+        .mobile-nav button:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .mobile-nav .admin-link {
+            display: none;
+        }
+        
+        .mobile-nav .admin-link.show {
+            display: block;
+        }
+        
+        .mobile-nav .btn-logout {
+            color: #feb2b2;
+            margin-top: 4px;
+        }
+        
+        .mobile-nav .btn-logout:hover {
+            background: rgba(254, 178, 178, 0.15);
+        }
+        
+        /* ============================================================
+           SEARCH BAR
+           ============================================================ */
+        
+        .search-section {
+            margin-bottom: 16px;
+        }
+        
+        .search-wrapper {
+            display: flex;
+            gap: 8px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .search-wrapper input {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: transparent;
+            min-height: 48px;
+        }
+        
+        .search-wrapper input:focus {
+            outline: none;
+        }
+        
+        .search-wrapper input::placeholder {
+            color: #a0aec0;
+        }
+        
+        .search-wrapper button {
+            padding: 10px 18px;
+            background: #2b6cb0;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 48px;
+            min-width: 60px;
+            transition: background 0.2s;
+        }
+        
+        .search-wrapper button:hover {
+            background: #1a4a7a;
+        }
+        
+        .search-wrapper button.btn-clear {
+            background: #e2e8f0;
+            color: #4a5568;
+            min-width: 50px;
+        }
+        
+        .search-wrapper button.btn-clear:hover {
+            background: #cbd5e0;
+        }
+        
+        /* ============================================================
+           RESULTS - CARD LAYOUT
+           ============================================================ */
+        
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .result-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid #2b6cb0;
+            transition: transform 0.15s, box-shadow 0.15s;
+            animation: fadeInUp 0.3s ease;
+        }
+        
+        .result-card:active {
+            transform: scale(0.98);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-card .drug-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 2px;
+        }
+        
+        .result-card .drug-form {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+        
+        .result-card .drug-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #edf2f7;
+        }
+        
+        .result-card .drug-quantity {
+            font-size: 15px;
+            color: #2d3748;
+        }
+        
+        .result-card .drug-quantity strong {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        .result-card .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .result-card .status-badge.in-stock {
+            background: #c6f6d5;
+            color: #276749;
+        }
+        
+        .result-card .status-badge.low-stock {
+            background: #fefcbf;
+            color: #975a16;
+        }
+        
+        .result-card .status-badge.out-of-stock {
+            background: #fed7d7;
+            color: #9b2c2c;
+        }
+        
+        /* Status by border color */
+        .result-card.border-in-stock {
+            border-left-color: #38a169;
+        }
+        
+        .result-card.border-low-stock {
+            border-left-color: #d69e2e;
+        }
+        
+        .result-card.border-out-of-stock {
+            border-left-color: #e53e3e;
+        }
+        
+        /* Empty / loading states */
+        .empty-state,
+        .loading-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #a0aec0;
+        }
+        
+        .empty-state .icon,
+        .loading-state .icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        
+        .loading-state .spinner {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #2b6cb0;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ============================================================
+           ALERT
+           ============================================================ */
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: none;
+            font-size: 14px;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            color: #276749;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .alert-error {
+            background: #fed7d7;
+            color: #9b2c2c;
+            border: 1px solid #feb2b2;
+        }
+        
+        .alert-info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+        
+        .alert-warning {
+            background: #fefcbf;
+            color: #975a16;
+            border: 1px solid #f6e05e;
+        }
+        
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        
+        .app-footer {
+            text-align: center;
+            padding: 20px 0 8px;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+        
+        /* ============================================================
+           RESPONSIVE - TABLET AND DESKTOP
+           ============================================================ */
+        
+        @media (min-width: 600px) {
+            body {
+                padding: 24px 32px;
+                max-width: 800px;
+                margin: 0 auto;
             }
             
-            .mobile-nav {
-                display: none;
-                flex-direction: column;
-                width: 100%;
+            .app-header {
+                padding: 20px 24px;
             }
             
-            .mobile-nav.open {
-                display: flex;
+            .app-header-top h1 {
+                font-size: 24px;
             }
             
-            .mobile-nav a,
-            .mobile-nav button {
-                width: 100%;
-                text-align: center;
-                padding: 10px;
+            .results-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            
+            .result-card {
+                padding: 18px 20px;
+            }
+        }
+        
+        @media (min-width: 900px) {
+            body {
+                padding: 32px 40px;
+                max-width: 1000px;
+            }
+            
+            .results-container {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 14px;
+            }
+        }
+        
+        /* ============================================================
+           DARK MODE SUPPORT (optional)
+           ============================================================ */
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1a202c;
+            }
+            
+            .app-header {
+                background: #2d3748;
+            }
+            
+            .search-wrapper {
+                background: #2d3748;
+            }
+            
+            .search-wrapper input {
+                color: #e2e8f0;
+            }
+            
+            .search-wrapper input::placeholder {
+                color: #718096;
+            }
+            
+            .result-card {
+                background: #2d3748;
+                border-left-color: #4a5568;
+            }
+            
+            .result-card .drug-name {
+                color: #f7fafc;
+            }
+            
+            .result-card .drug-form {
+                color: #a0aec0;
+            }
+            
+            .result-card .drug-details {
+                border-top-color: #4a5568;
+            }
+            
+            .result-card .drug-quantity {
+                color: #e2e8f0;
+            }
+            
+            .result-card .drug-quantity strong {
+                color: #f7fafc;
+            }
+            
+            .empty-state,
+            .loading-state {
+                color: #718096;
+            }
+            
+            .app-footer {
+                color: #4a5568;
+            }
+            
+            .search-wrapper button.btn-clear {
+                background: #4a5568;
+                color: #e2e8f0;
+            }
+            
+            .search-wrapper button.btn-clear:hover {
+                background: #5a6578;
             }
         }
     </style>
@@ -327,14 +516,16 @@
 <body>
 
     <!-- ============================================================
-    MOBILE HEADER (replaces header.html)
+    HEADER
     ============================================================ -->
-    <header class="mobile-header">
-        <div class="mobile-header-top">
-            <h1>💊 Drug Stock</h1>
-            <div class="mobile-user-info">
-                <span id="userDisplay">Welcome, User</span>
-                <span class="text-muted" id="roleDisplay"></span>
+    <header class="app-header">
+        <div class="app-header-top">
+            <h1><span>💊</span> Drug Stock</h1>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div class="user-badge">
+                    <span id="userDisplay">User</span>
+                    <span class="role" id="roleDisplay"></span>
+                </div>
                 <button class="hamburger" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Toggle menu">
                     <span></span>
                     <span></span>
@@ -361,28 +552,32 @@
     <div id="alert" class="alert"></div>
 
     <!-- ============================================================
-    PAGE CONTENT
+    SEARCH
     ============================================================ -->
-    <div class="section-box">
-        <div class="search-container">
-            <div class="search-input-wrapper">
-                <input type="text" id="searchBox" placeholder="Search for a drug..." autofocus>
-            </div>
-            <div class="search-actions">
-                <button onclick="searchDrugs()">🔍 Search</button>
-                <button class="btn-secondary" onclick="clearSearch()">✕ Clear</button>
-            </div>
+    <section class="search-section">
+        <div class="search-wrapper">
+            <input type="text" id="searchBox" placeholder="Search for a drug..." autofocus>
+            <button onclick="searchDrugs()">Search</button>
+            <button class="btn-clear" onclick="clearSearch()">✕</button>
         </div>
+    </section>
 
-        <div class="results-container" id="results">
-            <p class="text-muted">Type a drug name and press Enter or tap Search.</p>
+    <!-- ============================================================
+    RESULTS
+    ============================================================ -->
+    <div class="results-container" id="results">
+        <div class="empty-state">
+            <span class="icon">🔍</span>
+            <p>Type a drug name and tap Search</p>
         </div>
     </div>
 
     <!-- ============================================================
     FOOTER
     ============================================================ -->
-    <div id="footer"></div>
+    <div class="app-footer">
+        <p>Drug Stock Management System &bull; v2.0</p>
+    </div>
 
     <!-- ============================================================
     SCRIPTS
@@ -446,41 +641,16 @@
         }
 
         // ============================================================
-        // LOADING INDICATOR
-        // ============================================================
-
-        function showLoading(message) {
-            var results = document.getElementById('results');
-            if (results) {
-                results.innerHTML = `
-                    <div class="loading-indicator">
-                        <div class="spinner"></div>
-                        <p>${message || 'Searching...'}</p>
-                    </div>
-                `;
-            }
-        }
-
-        function hideLoading() {
-            // Will be replaced by search results
-        }
-
-        // ============================================================
         // MOBILE MENU
         // ============================================================
 
         function toggleMenu() {
             var nav = document.getElementById('mobileNav');
             var btn = document.getElementById('hamburgerBtn');
-            if (nav) {
-                nav.classList.toggle('open');
-            }
-            if (btn) {
-                btn.classList.toggle('active');
-            }
+            if (nav) nav.classList.toggle('open');
+            if (btn) btn.classList.toggle('active');
         }
 
-        // Close menu on link click (mobile)
         document.addEventListener('click', function(e) {
             var nav = document.getElementById('mobileNav');
             var btn = document.getElementById('hamburgerBtn');
@@ -504,12 +674,12 @@
             var user = getCurrentUser();
             var userDisplay = document.getElementById('userDisplay');
             if (userDisplay) {
-                userDisplay.textContent = '👋 ' + user.fullName;
+                userDisplay.textContent = user.fullName;
             }
 
             var roleDisplay = document.getElementById('roleDisplay');
             if (roleDisplay) {
-                roleDisplay.textContent = user.isAdmin ? '🔑 Admin' : '👤 User';
+                roleDisplay.textContent = user.isAdmin ? 'Admin' : 'User';
             }
 
             // Show/hide admin links
@@ -522,7 +692,6 @@
                 }
             });
 
-            // Focus search
             var searchBox = document.getElementById('searchBox');
             if (searchBox) {
                 searchBox.focus();
@@ -536,59 +705,104 @@
         }
 
         // ============================================================
-        // SEARCH DRUGS
+        // GET STATUS EMOJI AND CLASS
+        // ============================================================
+
+        function getStatusInfo(balance) {
+            if (balance === 0) {
+                return {
+                    emoji: '🚫',
+                    text: 'Out of Stock',
+                    class: 'out-of-stock',
+                    borderClass: 'border-out-of-stock'
+                };
+            } else if (balance < 10) {
+                return {
+                    emoji: '⚠️',
+                    text: 'Low Stock',
+                    class: 'low-stock',
+                    borderClass: 'border-low-stock'
+                };
+            } else {
+                return {
+                    emoji: '✅',
+                    text: 'In Stock',
+                    class: 'in-stock',
+                    borderClass: 'border-in-stock'
+                };
+            }
+        }
+
+        // ============================================================
+        // SEARCH DRUGS - CARD RESULTS
         // ============================================================
 
         async function searchDrugs() {
             var query = document.getElementById('searchBox').value.trim();
 
             if (!query) {
-                document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter or tap Search.</p>';
+                document.getElementById('results').innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">🔍</span>
+                        <p>Type a drug name and tap Search</p>
+                    </div>
+                `;
                 return;
             }
 
-            showLoading('Searching for: ' + query);
+            // Show loading
+            document.getElementById('results').innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Searching for "${query}"...</p>
+                </div>
+            `;
 
             try {
                 var response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
                 var results = await response.json();
 
                 if (!results || results.length === 0) {
-                    document.getElementById('results').innerHTML = '<p>❌ No matching drugs found for "<strong>' + query + '</strong>".</p>';
+                    document.getElementById('results').innerHTML = `
+                        <div class="empty-state">
+                            <span class="icon">🔍</span>
+                            <p>No matching drugs found for <strong>"${query}"</strong></p>
+                            <p style="font-size:13px;color:#a0aec0;margin-top:4px;">Try a different search term</p>
+                        </div>
+                    `;
                     return;
                 }
 
-                var html = '<table>';
-                html += '<thead><tr><th>Drug Name</th><th>Form</th><th>Balance</th><th>Status</th></tr></thead>';
-                html += '<tbody>';
-
+                var html = '';
                 results.forEach(function(record) {
+                    var name = record[0] || 'Unknown';
+                    var form = record[1] || 'N/A';
                     var balance = parseFloat(record[2]) || 0;
-                    var statusClass = 'in-stock';
-                    var statusText = '✅ In Stock';
-                    
-                    if (balance === 0) {
-                        statusClass = 'out-of-stock';
-                        statusText = '❌ Out of Stock';
-                    } else if (balance < 10) {
-                        statusClass = 'low-stock';
-                        statusText = '⚠️ Low Stock';
-                    }
+                    var status = getStatusInfo(balance);
 
-                    html += '<tr>';
-                    html += '<td><strong>' + record[0] + '</strong></td>';
-                    html += '<td>' + record[1] + '</td>';
-                    html += '<td>' + balance + '</td>';
-                    html += '<td><span class="stock-status ' + statusClass + '">' + statusText + '</span></td>';
-                    html += '</tr>';
+                    html += `
+                        <div class="result-card ${status.borderClass}">
+                            <div class="drug-name">${name}</div>
+                            <div class="drug-form">${form}</div>
+                            <div class="drug-details">
+                                <span class="drug-quantity">📦 <strong>${balance}</strong></span>
+                                <span class="status-badge ${status.class}">${status.emoji} ${status.text}</span>
+                            </div>
+                        </div>
+                    `;
                 });
 
-                html += '</tbody></table>';
                 document.getElementById('results').innerHTML = html;
 
             } catch (error) {
                 console.error('Search error:', error);
-                document.getElementById('results').innerHTML = '<p>❌ Unable to retrieve stock information. Please try again.</p>';
+                document.getElementById('results').innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">❌</span>
+                        <p>Unable to retrieve stock information</p>
+                        <p style="font-size:13px;color:#a0aec0;margin-top:4px;">Please check your connection and try again</p>
+                    </div>
+                `;
             }
         }
 
@@ -602,22 +816,12 @@
                 searchBox.value = '';
                 searchBox.focus();
             }
-            document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter or tap Search.</p>';
-        }
-
-        // ============================================================
-        // LOAD HEADER AND FOOTER (for backward compatibility)
-        // ============================================================
-
-        function loadFooter() {
-            fetch('footer.html')
-                .then(function(response) { return response.text(); })
-                .then(function(html) {
-                    document.getElementById('footer').innerHTML = html;
-                })
-                .catch(function(error) {
-                    console.error('Error loading footer:', error);
-                });
+            document.getElementById('results').innerHTML = `
+                <div class="empty-state">
+                    <span class="icon">🔍</span>
+                    <p>Type a drug name and tap Search</p>
+                </div>
+            `;
         }
 
         // ============================================================
@@ -625,7 +829,6 @@
         // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
-            loadFooter();
             initPage();
         });
     </script>
