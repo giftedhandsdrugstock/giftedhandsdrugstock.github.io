@@ -4,222 +4,936 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receive Stock</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ============================================================
+           RESET & BASE (same as orders.html)
+           ============================================================ */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #ffffff;
+            padding: 20px;
+        }
+        
+        .app-wrapper {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        /* Header (same as orders.html) */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .user-info .role {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .nav a,
+        .nav button {
+            padding: 6px 14px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #111827;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .nav a:hover,
+        .nav button:hover {
+            background: #e5e7eb;
+        }
+        
+        .nav .admin-link {
+            display: none;
+        }
+        
+        .nav .admin-link.show {
+            display: inline-block;
+        }
+        
+        .nav .btn-logout {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        
+        .nav .btn-logout:hover {
+            background: #fecaca;
+        }
+        
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 3px;
+            background: #111827;
+            border-radius: 2px;
+        }
+        
+        /* ============================================================
+           RECEIVE LAYOUT
+           ============================================================ */
+        
+        .receive-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+        
+        /* ============================================================
+           DRUG LIST (same as orders.html)
+           ============================================================ */
+        
+        .drug-list-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .drug-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f3f4f6;
+            border-bottom: 2px solid #d1d5db;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .drug-list-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .drug-list-header .drug-count {
+            font-size: 13px;
+            color: #6b7280;
+        }
+        
+        .order-search-row {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .order-search-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            min-height: 40px;
+        }
+        
+        .order-search-row input:focus {
+            border-color: #6b7280;
+            outline: none;
+        }
+        
+        .order-search-row button {
+            padding: 8px 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            background: #f3f4f6;
+            font-size: 13px;
+            cursor: pointer;
+            min-height: 40px;
+        }
+        
+        .order-search-row button:hover {
+            background: #e5e7eb;
+        }
+        
+        .drug-list-scroll {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .list-header {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr 1fr 1fr 1fr;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #f9fafb;
+            font-weight: 600;
+            font-size: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .list-item {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr 1fr 1fr 1fr;
+            gap: 6px;
+            padding: 8px 14px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+            align-items: center;
+        }
+        
+        .list-item:hover {
+            background: #f9fafb;
+        }
+        
+        .list-item .drug-name {
+            font-weight: 500;
+        }
+        
+        .list-item .drug-form {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .list-item .drug-qty {
+            font-weight: 500;
+        }
+        
+        .list-item .qty-input {
+            width: 55px;
+            padding: 4px 6px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 13px;
+        }
+        
+        .list-item .qty-input:focus {
+            border-color: #6b7280;
+            outline: none;
+        }
+        
+        .list-item .add-btn {
+            padding: 4px 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            background: #f3f4f6;
+            font-size: 12px;
+            cursor: pointer;
+            min-height: 32px;
+        }
+        
+        .list-item .add-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .list-item .add-btn.added {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            color: #065f46;
+        }
+        
+        /* Status badge */
+        .status-badge-small {
+            padding: 2px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            display: inline-block;
+            justify-self: start;
+        }
+        
+        .status-plenty-small {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            color: #065f46;
+        }
+        
+        .status-okay-small {
+            background: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e3a5f;
+        }
+        
+        .status-low-small {
+            background: #fef3c7;
+            border-color: #fcd34d;
+            color: #92400e;
+        }
+        
+        .status-out-small {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        
+        /* ============================================================
+           RECEIVE CART (right panel)
+           ============================================================ */
+        
+        .receive-cart {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .receive-cart-header {
+            padding: 12px 16px;
+            background: #f3f4f6;
+            border-bottom: 2px solid #d1d5db;
+        }
+        
+        .receive-cart-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .receive-cart-header .receive-id {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: normal;
+        }
+        
+        .receive-cart-body {
+            flex: 1;
+            padding: 12px 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .cart-empty {
+            text-align: center;
+            padding: 30px 10px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+        }
+        
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        
+        .cart-item .item-name {
+            font-weight: 500;
+            flex: 1;
+        }
+        
+        .cart-item .item-qty {
+            margin: 0 10px;
+            color: #6b7280;
+        }
+        
+        .cart-item .remove-btn {
+            background: none;
+            border: none;
+            color: #991b1b;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+        }
+        
+        .cart-item .remove-btn:hover {
+            color: #7f1d1d;
+        }
+        
+        .receive-cart-footer {
+            padding: 12px 16px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .receive-cart-footer .receive-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .receive-cart-footer .receive-details input {
+            padding: 8px 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .receive-cart-footer .receive-details input:focus {
+            border-color: #6b7280;
+            outline: none;
+        }
+        
+        .receive-cart-footer textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 40px;
+        }
+        
+        .receive-cart-footer textarea:focus {
+            border-color: #6b7280;
+            outline: none;
+        }
+        
+        .receive-cart-footer .cart-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .receive-cart-footer .cart-actions button {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            background: #f3f4f6;
+            font-size: 14px;
+            cursor: pointer;
+            min-height: 44px;
+        }
+        
+        .receive-cart-footer .cart-actions button:hover {
+            background: #e5e7eb;
+        }
+        
+        .receive-cart-footer .cart-actions .btn-receive {
+            background: #1a365d;
+            border-color: #1a365d;
+            color: #fff;
+        }
+        
+        .receive-cart-footer .cart-actions .btn-receive:hover {
+            background: #2a4a7a;
+        }
+        
+        .receive-cart-footer .cart-actions .btn-cancel {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        
+        .receive-cart-footer .cart-actions .btn-cancel:hover {
+            background: #fecaca;
+        }
+        
+        /* ============================================================
+           EMPTY / LOADING STATES
+           ============================================================ */
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+        
+        .empty-state .icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .loading-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+        
+        .loading-state .spinner {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #6b7280;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ============================================================
+           ALERT
+           ============================================================ */
+        
+        .alert {
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            color: #065f46;
+        }
+        
+        .alert-info {
+            background: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e3a5f;
+        }
+        
+        .alert-warning {
+            background: #fef3c7;
+            border-color: #fcd34d;
+            color: #92400e;
+        }
+        
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        
+        .footer {
+            text-align: center;
+            padding: 20px 0 8px;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 24px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        
+        @media (max-width: 900px) {
+            .receive-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .drug-list-scroll {
+                max-height: 400px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .list-header {
+                grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 0.8fr;
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            
+            .list-item {
+                grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 0.8fr;
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+            
+            .list-item .qty-input {
+                width: 45px;
+                font-size: 12px;
+            }
+            
+            .receive-cart-footer .receive-details {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            
+            .header-left {
+                justify-content: space-between;
+            }
+            
+            .header-left h1 {
+                font-size: 20px;
+            }
+            
+            .hamburger {
+                display: flex;
+            }
+            
+            .header-right {
+                display: none;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                width: 100%;
+            }
+            
+            .header-right.open {
+                display: flex;
+            }
+            
+            .user-info {
+                justify-content: center;
+                padding: 8px 0;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .nav {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .nav a,
+            .nav button {
+                text-align: center;
+                padding: 10px;
+                width: 100%;
+            }
+            
+            .order-search-row {
+                flex-direction: column;
+            }
+            
+            .list-header {
+                display: none;
+            }
+            
+            .list-item {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                padding: 10px 14px;
+            }
+            
+            .list-item .drug-name {
+                font-size: 15px;
+                font-weight: 600;
+            }
+            
+            .list-item .drug-form {
+                font-size: 13px;
+            }
+            
+            .list-item .drug-row-details {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            
+            .list-item .drug-qty {
+                font-size: 13px;
+            }
+            
+            .list-item .qty-input {
+                width: 50px;
+            }
+            
+            .list-item .add-btn {
+                padding: 4px 16px;
+            }
+            
+            .receive-cart-body {
+                max-height: 250px;
+            }
+            
+            .receive-cart-footer .cart-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- HEADER PLACEHOLDER -->
-    <div id="header"></div>
+    <div class="app-wrapper">
 
-    <!-- ===== PAGE CONTENT ===== -->
-    <!-- SEARCH SECTION -->
-    <div class="section-box">
-        <div class="flex flex-wrap gap-10" style="align-items:center;">
-            <div style="flex:1;min-width:200px;">
-                <input type="text" id="drugSearch" placeholder="Search by drug name or form..." style="width:100%;padding:6px 8px;border:1px solid #ccc;">
+        <!-- ============================================================
+        HEADER
+        ============================================================ -->
+        <header class="header">
+            <div class="header-left">
+                <h1>📥 Receive Stock</h1>
+                <button class="hamburger" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
             </div>
-            <button class="btn" onclick="searchDrugs()">Search</button>
-            <button class="btn" onclick="clearSearch()">Clear</button>
-            <button class="btn" id="toggleDrugsBtn" onclick="toggleDrugList()">Show All Drugs</button>
-            <button class="btn" id="newReceiveBtn" onclick="toggleNewReceive()">➕ New Receive</button>
-            <button class="btn" onclick="showNewDrugModal()" style="background:#805ad5;color:white;border:none;">➕ New Drug (Bulk)</button>
+            <div class="header-right" id="headerRight">
+                <div class="user-info">
+                    <span id="userDisplay">User</span>
+                    <span class="role" id="roleDisplay"></span>
+                </div>
+                <nav class="nav" id="nav">
+                    <a href="search.html">Search</a>
+                    <a href="orders.html">New Order</a>
+                    <a href="myorders.html">My Orders</a>
+                    <a href="approve.html" class="admin-link" id="approveLink">Approve</a>
+                    <a href="receive.html" class="admin-link" id="receiveLink">Receive</a>
+                    <a href="profile.html">Profile</a>
+                    <a href="users.html" class="admin-link" id="usersLink">Users</a>
+                    <a href="reset.html" class="admin-link" id="resetLink">Reset</a>
+                    <button class="btn-logout" onclick="logout()">Logout</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- ============================================================
+        ALERT
+        ============================================================ -->
+        <div id="alert" class="alert"></div>
+
+        <!-- ============================================================
+        RECEIVE LAYOUT
+        ============================================================ -->
+        <div class="receive-layout">
+
+            <!-- LEFT: DRUG LIST -->
+            <div class="drug-list-section">
+                <div class="drug-list-header">
+                    <h2>💊 Drug List</h2>
+                    <span class="drug-count" id="drugCount">0 drugs</span>
+                </div>
+
+                <div class="order-search-row">
+                    <input type="text" id="drugSearch" placeholder="Search for a drug..." autofocus>
+                    <button onclick="searchDrugs()">Search</button>
+                    <button onclick="showAllDrugs()">Show All</button>
+                </div>
+
+                <div class="drug-list-scroll" id="drugListContainer">
+                    <div class="empty-state">
+                        <span class="icon">🔍</span>
+                        <p>Search for a drug or click Show All</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: RECEIVE CART -->
+            <div class="receive-cart">
+                <div class="receive-cart-header">
+                    <h2>📦 Receive <span class="receive-id" id="receiveIdDisplay"></span></h2>
+                </div>
+                <div class="receive-cart-body" id="cartContainer">
+                    <div class="cart-empty">
+                        <p>No items added yet</p>
+                        <p style="font-size:12px;color:#9ca3af;">Search and add drugs from the list</p>
+                    </div>
+                </div>
+                <div class="receive-cart-footer">
+                    <div class="receive-details">
+                        <input type="text" id="receiveSupplier" placeholder="Supplier">
+                        <input type="text" id="receiveInvoice" placeholder="Invoice No">
+                    </div>
+                    <textarea id="receiveNotes" placeholder="Additional notes (optional)..."></textarea>
+                    <div class="cart-actions">
+                        <button class="btn-receive" onclick="submitReceive()">📥 Receive Stock</button>
+                        <button class="btn-cancel" onclick="clearReceive()">🗑️ Clear</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
+
+        <!-- ============================================================
+        FOOTER
+        ============================================================ -->
+        <div class="footer">
+            <p>Drug Stock Management System</p>
+        </div>
+
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="orders-main" style="display:flex;gap:20px;">
-
-        <!-- LEFT PANEL - 2/3 (hidden by default) -->
-        <div class="left-panel" style="flex:2;min-width:0;display:none;" id="drugListPanel">
-            <div class="section-box">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                    <h2>Drug List</h2>
-                    <div>
-                        <span id="drugCount" class="text-muted"></span>
-                        <button id="closeDrugListBtn" onclick="closeDrugList()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Drug List">✕</button>
-                    </div>
-                </div>
-                <div id="drugListContainer">
-                    <p class="text-muted">No drugs found.</p>
-                </div>
-                <div id="pagination" style="display:none;margin-top:15px;gap:10px;align-items:center;flex-wrap:wrap;">
-                    <button class="btn btn-small" onclick="prevPage()">◀ Previous</button>
-                    <span id="pageInfo" class="text-muted"></span>
-                    <button class="btn btn-small" onclick="nextPage()">Next ▶</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- RIGHT PANEL - 1/3 (hidden by default) -->
-        <div class="right-panel" style="flex:1;min-width:0;display:none;" id="receivePanel">
-            <div class="section-box">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                    <h2>New Receive</h2>
-                    <div>
-                        <span id="receiveIdDisplay" class="text-muted" style="font-size:13px;"></span>
-                        <button onclick="toggleNewReceive()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;margin-left:10px;" title="Close Receive Panel">✕</button>
-                    </div>
-                </div>
-        
-                <!-- Supplier & Invoice -->
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <div style="flex:1;min-width:100px;">
-                        <label style="font-size:13px;font-weight:500;">Supplier</label>
-                        <input type="text" id="receiveSupplier" placeholder="Supplier name" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
-                    </div>
-                    <div style="flex:1;min-width:100px;">
-                        <label style="font-size:13px;font-weight:500;">Invoice No</label>
-                        <input type="text" id="receiveInvoice" placeholder="Invoice number" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
-                    </div>
-                </div>
-        
-                <div id="receiveListContainer" style="margin-top:10px;">
-                    <p class="text-muted">No items added yet. Search and add drugs.</p>
-                </div>
-        
-                <!-- Global Notes -->
-                <div style="margin-top:15px;border-top:1px solid #eee;padding-top:12px;">
-                    <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Additional Notes</label>
-                    <textarea id="receiveNotes" placeholder="Add any additional notes..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;"></textarea>
-                </div>
-        
-                <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-                    <button class="btn" onclick="submitReceive()" style="background:#38a169;color:white;border:none;">📥 Receive Stock</button>
-                    <button class="btn" onclick="clearReceive()" style="color:#c00;">🗑️ Cancel Receive</button>
-                </div>
-            </div>
-        </div>
     <!-- ============================================================
-    NEW DRUG MODAL - BULK ENTRY
+    SCRIPTS
     ============================================================ -->
-    <!-- ============================================================
-    NEW DRUG MODAL - BULK ENTRY (FIXED)
-    ============================================================ -->
-    <div id="newDrugModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
-        <div style="background:#fff;padding:30px;border-radius:8px;max-width:800px;width:95%;max-height:90vh;overflow-y:auto;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-                <h2 style="font-weight:normal;">Add New Drugs (Bulk)</h2>
-                <button onclick="closeNewDrugModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button>
-            </div>
-            <p class="text-muted" style="margin-bottom:15px;">Add multiple new drugs at once. Each drug has its own Batch and Expiry.</p>
-    
-            <!-- Supplier & Invoice for New Drugs -->
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;padding:10px;background:#f7fafc;border-radius:4px;">
-                <div style="flex:1;min-width:150px;">
-                    <label style="font-size:13px;font-weight:500;">Supplier <span style="color:#c00;">*</span></label>
-                    <input type="text" id="newDrugSupplier" placeholder="Supplier name" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
-                </div>
-                <div style="flex:1;min-width:150px;">
-                    <label style="font-size:13px;font-weight:500;">Invoice No <span style="color:#c00;">*</span></label>
-                    <input type="text" id="newDrugInvoice" placeholder="Invoice number" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
-                </div>
-                <div style="flex:1;min-width:150px;">
-                    <label style="font-size:13px;font-weight:500;">Received By</label>
-                    <input type="text" id="newDrugReceivedBy" placeholder="Received by" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;">
-                </div>
-            </div>
-    
-            <!-- Drug Entry Table -->
-            <div style="overflow-x:auto;">
-                <table id="newDrugTable" style="width:100%;border-collapse:collapse;font-size:14px;">
-                    <thead>
-                        <tr style="background:#f0f0f0;">
-                            <th style="padding:8px;text-align:left;border:1px solid #ddd;min-width:120px;">Drug Name <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:left;border:1px solid #ddd;min-width:80px;">Form <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:left;border:1px solid #ddd;min-width:100px;">Batch No <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:left;border:1px solid #ddd;min-width:100px;">Expiry <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:center;border:1px solid #ddd;width:70px;">Qty <span style="color:#c00;">*</span></th>
-                            <th style="padding:8px;text-align:center;border:1px solid #ddd;width:50px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="newDrugTableBody">
-                        <!-- Rows added dynamically -->
-                    </tbody>
-                </table>
-            </div>
-    
-            <!-- Add Row Button -->
-            <div style="margin-top:10px;">
-                <button class="btn" onclick="addNewDrugRow()" style="background:#2b6cb0;color:white;border:none;">➕ Add Row</button>
-                <button class="btn" onclick="removeLastDrugRow()" style="color:#c00;">✕ Remove Last</button>
-            </div>
-    
-            <!-- Notes -->
-            <div style="margin-top:15px;">
-                <label style="font-weight:500;font-size:14px;display:block;margin-bottom:4px;">📝 Notes (for all drugs)</label>
-                <textarea id="newDrugNotes" placeholder="Additional notes..." style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;min-height:50px;"></textarea>
-            </div>
-    
-            <div style="display:flex;gap:10px;margin-top:15px;">
-                <button class="btn" onclick="submitNewDrugs()" style="background:#38a169;color:white;border:none;">💾 Add All Drugs & Receive</button>
-                <button class="btn" onclick="closeNewDrugModal()" style="color:#c00;">Cancel</button>
-            </div>
-        </div>
-    </div>
-    <!-- FOOTER PLACEHOLDER -->
-    <div id="footer"></div>
-
     <script>
         // ============================================================
-        // LOAD HEADER AND FOOTER, THEN INITIALIZE
+        // CONFIGURATION
         // ============================================================
-
-        var headerLoaded = false;
-        var footerLoaded = false;
-
-        function checkReady() {
-            if (headerLoaded && footerLoaded) {
-                var script = document.createElement('script');
-                script.src = 'script.js';
-                script.onload = function() {
-                    if (typeof initPage === 'function') {
-                        initPage();
-                    }
-                };
-                document.body.appendChild(script);
-            }
-        }
-
-        fetch('header.html')
-            .then(function(response) { return response.text(); })
-            .then(function(html) {
-                document.getElementById('header').innerHTML = html;
-                headerLoaded = true;
-                checkReady();
-            })
-            .catch(function(error) {
-                console.error('Error loading header:', error);
-                headerLoaded = true;
-                checkReady();
-            });
-
-        fetch('footer.html')
-            .then(function(response) { return response.text(); })
-            .then(function(html) {
-                document.getElementById('footer').innerHTML = html;
-                footerLoaded = true;
-                checkReady();
-            })
-            .catch(function(error) {
-                console.error('Error loading footer:', error);
-                footerLoaded = true;
-                checkReady();
-            });
+        
+        var API_URL = "https://script.google.com/macros/s/AKfycbzHfORUmsdHLH1qVys1kDiYOHDe6hpAHsYMcR4X2nOf-wVA8UhRcVE9ihycw9YDM2vU/exec";
 
         // ============================================================
-        // RECEIVE.HTML SPECIFIC
+        // STATE
         // ============================================================
-
+        
         var allDrugs = [];
         var filteredDrugs = [];
-        var currentPage = 1;
-        var pageSize = 10;
         var receiveItems = [];
         var currentUser = {};
-        var isDrugListVisible = false;
-        var isReceiveOpen = false;
         var currentReceiveId = '';
-        var newDrugRowCount = 0;
+
+        // ============================================================
+        // AUTHENTICATION
+        // ============================================================
+
+        function checkAuth() {
+            if (localStorage.getItem('loggedIn') !== 'true') {
+                window.location.href = 'index.html';
+                return false;
+            }
+            return true;
+        }
+
+        function getCurrentUser() {
+            return {
+                userId: localStorage.getItem('userId') || '',
+                username: localStorage.getItem('username'),
+                fullName: localStorage.getItem('fullName') || localStorage.getItem('username') || 'User',
+                firstName: localStorage.getItem('firstName') || '',
+                lastName: localStorage.getItem('lastName') || '',
+                email: localStorage.getItem('email') || '',
+                department: localStorage.getItem('department') || '',
+                created: localStorage.getItem('created') || '',
+                isAdmin: localStorage.getItem('username') === 'admin'
+            };
+        }
+
+        function logout() {
+            var userId = localStorage.getItem('userId');
+            if (userId) {
+                fetch(API_URL + '?action=logout&userId=' + encodeURIComponent(userId))
+                    .catch(function(error) { console.error('Logout error:', error); });
+            }
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        // ============================================================
+        // ALERT
+        // ============================================================
+
+        function showAlert(message, type) {
+            var alert = document.getElementById('alert');
+            if (!alert) return;
+            alert.textContent = message;
+            alert.className = 'alert alert-' + type + ' show';
+            clearTimeout(alert._timeout);
+            alert._timeout = setTimeout(function() {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // ============================================================
+        // MOBILE MENU
+        // ============================================================
+
+        function toggleMenu() {
+            var headerRight = document.getElementById('headerRight');
+            var btn = document.getElementById('hamburgerBtn');
+            if (headerRight) headerRight.classList.toggle('open');
+            if (btn) btn.classList.toggle('active');
+        }
+
+        document.addEventListener('click', function(e) {
+            var headerRight = document.getElementById('headerRight');
+            var btn = document.getElementById('hamburgerBtn');
+            if (headerRight && headerRight.classList.contains('open')) {
+                var isInside = headerRight.contains(e.target) || (btn && btn.contains(e.target));
+                if (!isInside) {
+                    headerRight.classList.remove('open');
+                    if (btn) btn.classList.remove('active');
+                }
+            }
+        });
+
+        // ============================================================
+        // STOCK LEVEL RULES
+        // ============================================================
+
+        function getStockStatus(form, quantity) {
+            var formLower = form.toLowerCase().trim();
+            
+            if (formLower === 'tablet') {
+                if (quantity < 50) return { text: 'Low', class: 'status-low-small' };
+                else if (quantity >= 50 && quantity <= 200) return { text: 'Okay', class: 'status-okay-small' };
+                else return { text: 'Plenty', class: 'status-plenty-small' };
+            }
+            
+            if (formLower === 'bottle' || formLower === 'cream') {
+                if (quantity < 3) return { text: 'Low', class: 'status-low-small' };
+                else if (quantity >= 3 && quantity <= 5) return { text: 'Okay', class: 'status-okay-small' };
+                else return { text: 'Plenty', class: 'status-plenty-small' };
+            }
+            
+            if (quantity < 5) return { text: 'Low', class: 'status-low-small' };
+            else if (quantity >= 5 && quantity <= 10) return { text: 'Okay', class: 'status-okay-small' };
+            else return { text: 'Plenty', class: 'status-plenty-small' };
+        }
 
         // ============================================================
         // GENERATE RECEIVE ID
@@ -232,7 +946,7 @@
         }
 
         // ============================================================
-        // INIT
+        // INITIALIZE PAGE
         // ============================================================
 
         function initPage() {
@@ -240,35 +954,32 @@
 
             currentUser = getCurrentUser();
             var userDisplay = document.getElementById('userDisplay');
-            if (userDisplay) userDisplay.textContent = 'Welcome, ' + currentUser.fullName;
+            if (userDisplay) userDisplay.textContent = currentUser.fullName;
 
             var roleDisplay = document.getElementById('roleDisplay');
-            if (roleDisplay) roleDisplay.textContent = currentUser.isAdmin ? '(Admin)' : '(User)';
+            if (roleDisplay) roleDisplay.textContent = currentUser.isAdmin ? 'Admin' : 'User';
 
-            if (typeof initNav === 'function') initNav();
+            var adminLinks = document.querySelectorAll('.admin-link');
+            adminLinks.forEach(function(link) {
+                if (currentUser.isAdmin) link.classList.add('show');
+                else link.classList.remove('show');
+            });
 
+            // Only admin can receive
             if (!currentUser.isAdmin) {
-                var searchSection = document.querySelector('.section-box:first-of-type');
-                if (searchSection) searchSection.style.display = 'none';
-                var drugListPanel = document.getElementById('drugListPanel');
-                if (drugListPanel) drugListPanel.style.display = 'none';
-                var receivePanel = document.getElementById('receivePanel');
-                if (receivePanel) receivePanel.style.display = 'none';
-                if (typeof showAlert === 'function') showAlert('Admin access required for receiving stock.', 'info');
+                document.querySelector('.receive-layout').innerHTML = 
+                    '<div class="empty-state" style="padding:60px 20px;"><span class="icon">🔑</span><p>Admin access required for receiving stock.</p></div>';
                 return;
             }
 
-            // Load drugs silently and then render
-            loadDrugsSilent().then(function() {
-                if (allDrugs.length > 0) {
-                    filteredDrugs = allDrugs;
-                    renderDrugList();
-                }
-            });
+            currentReceiveId = generateReceiveId();
+            document.getElementById('receiveIdDisplay').textContent = currentReceiveId;
 
-            var drugSearch = document.getElementById('drugSearch');
-            if (drugSearch) {
-                drugSearch.addEventListener('keydown', function(event) {
+            loadAllDrugs();
+
+            var searchBox = document.getElementById('drugSearch');
+            if (searchBox) {
+                searchBox.addEventListener('keydown', function(event) {
                     if (event.key === 'Enter') {
                         event.preventDefault();
                         searchDrugs();
@@ -278,442 +989,44 @@
         }
 
         // ============================================================
-        // LOAD DRUGS SILENTLY - Returns a Promise
+        // LOAD ALL DRUGS
         // ============================================================
 
-        function loadDrugsSilent() {
-            return new Promise(function(resolve, reject) {
-                fetch(API_URL + '?search=')
-                    .then(function(response) { return response.json(); })
-                    .then(function(results) {
-                        allDrugs = results.map(function(item) {
-                            return {
-                                name: item[0] || 'Unknown',
-                                form: item[1] || 'Unknown',
-                                balance: parseFloat(item[2]) || 0
-                            };
-                        });
-                        filteredDrugs = allDrugs;
-                        resolve(allDrugs);
-                    })
-                    .catch(function(error) {
-                        console.error('Error loading drugs:', error);
-                        reject(error);
-                    });
-            });
-        }
-
-        // ============================================================
-        // NEW DRUG MODAL FUNCTIONS
-        // ============================================================
-
-        function showNewDrugModal() {
-            var modal = document.getElementById('newDrugModal');
-            if (modal) {
-                modal.style.display = 'flex';
-                document.getElementById('newDrugTableBody').innerHTML = '';
-                newDrugRowCount = 0;
-                for (var i = 0; i < 3; i++) {
-                    addNewDrugRow();
-                }
-            }
-        }
-
-        function closeNewDrugModal() {
-            var modal = document.getElementById('newDrugModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            document.getElementById('newDrugSupplier').value = '';
-            document.getElementById('newDrugInvoice').value = '';
-            document.getElementById('newDrugReceivedBy').value = '';
-            document.getElementById('newDrugNotes').value = '';
-        }
-
-        function addNewDrugRow() {
-            var tbody = document.getElementById('newDrugTableBody');
-            var row = document.createElement('tr');
-            var index = newDrugRowCount;
-
-            row.innerHTML = `
-                <td style="padding:6px;border:1px solid #ddd;">
-                    <input type="text" id="nd-name-${index}" placeholder="Drug name" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;">
-                </td>
-                <td style="padding:6px;border:1px solid #ddd;">
-                    <input type="text" id="nd-form-${index}" placeholder="Form" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;">
-                </td>
-                <td style="padding:6px;border:1px solid #ddd;">
-                    <input type="text" id="nd-batch-${index}" placeholder="Batch" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;">
-                </td>
-                <td style="padding:6px;border:1px solid #ddd;">
-                    <input type="date" id="nd-expiry-${index}" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;">
-                </td>
-                <td style="padding:6px;border:1px solid #ddd;text-align:center;">
-                    <input type="number" id="nd-qty-${index}" placeholder="Qty" min="1" value="1" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;text-align:center;">
-                </td>
-                <td style="padding:6px;border:1px solid #ddd;text-align:center;">
-                    <button onclick="removeDrugRow(this)" style="background:none;border:none;color:#c00;cursor:pointer;font-size:16px;">✕</button>
-                </td>
-            `;
-
-            tbody.appendChild(row);
-            newDrugRowCount++;
-
-            setTimeout(function() {
-                var firstInput = row.querySelector('input');
-                if (firstInput) firstInput.focus();
-            }, 100);
-        }
-
-        function removeDrugRow(button) {
-            var row = button.closest('tr');
-            if (row) {
-                var tbody = document.getElementById('newDrugTableBody');
-                if (tbody.children.length > 1) {
-                    row.remove();
-                } else {
-                    if (typeof showAlert === 'function') showAlert('At least one row is required.', 'warning');
-                }
-            }
-        }
-
-        function removeLastDrugRow() {
-            var tbody = document.getElementById('newDrugTableBody');
-            if (tbody.children.length > 1) {
-                tbody.removeChild(tbody.lastChild);
-            } else {
-                if (typeof showAlert === 'function') showAlert('At least one row is required.', 'warning');
-            }
-        }
-
-        function setupNewDrugEnterNavigation() {
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    var target = e.target;
-                    if (target && target.id && target.id.startsWith('nd-')) {
-                        e.preventDefault();
-                        var row = target.closest('tr');
-                        if (row) {
-                            var inputs = row.querySelectorAll('input');
-                            var currentIndex = Array.from(inputs).indexOf(target);
-                            if (currentIndex < inputs.length - 1) {
-                                inputs[currentIndex + 1].focus();
-                            } else {
-                                addNewDrugRow();
-                                var tbody = document.getElementById('newDrugTableBody');
-                                var newRow = tbody.lastChild;
-                                if (newRow) {
-                                    var firstInput = newRow.querySelector('input');
-                                    if (firstInput) firstInput.focus();
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ============================================================
-        // SUBMIT NEW DRUGS (BULK) - HTML FILE
-        // ============================================================
-
-        async function submitNewDrugs() {
-            var tbody = document.getElementById('newDrugTableBody');
-            var rows = tbody.querySelectorAll('tr');
-        
-            if (rows.length === 0) {
-                if (typeof showAlert === 'function') showAlert('Please add at least one drug.', 'error');
-                return;
-            }
-        
-            // ============================================================
-            // VALIDATE SUPPLIER AND INVOICE FIRST
-            // ============================================================
-            var supplier = document.getElementById('newDrugSupplier').value.trim();
-            var invoice = document.getElementById('newDrugInvoice').value.trim();
-        
-            if (!supplier || !invoice) {
-                if (typeof showAlert === 'function') showAlert('Supplier and Invoice No are required.', 'error');
-                return;
-            }
-        
-            var drugs = [];
-            var hasError = false;
-            var errorMessages = [];
-        
-            rows.forEach(function(row, index) {
-                var name = row.querySelector('#nd-name-' + index) ? row.querySelector('#nd-name-' + index).value.trim() : '';
-                var form = row.querySelector('#nd-form-' + index) ? row.querySelector('#nd-form-' + index).value.trim() : '';
-                var batch = row.querySelector('#nd-batch-' + index) ? row.querySelector('#nd-batch-' + index).value.trim() : '';
-                var expiry = row.querySelector('#nd-expiry-' + index) ? row.querySelector('#nd-expiry-' + index).value : '';
-                var qty = row.querySelector('#nd-qty-' + index) ? parseInt(row.querySelector('#nd-qty-' + index).value) : 0;
-        
-                if (!name || !form || !batch || !expiry || !qty) {
-                    errorMessages.push('Row ' + (index + 1) + ' has missing fields.');
-                    hasError = true;
-                    return;
-                }
-        
-                if (qty < 1) {
-                    errorMessages.push('Quantity for ' + name + ' must be at least 1.');
-                    hasError = true;
-                    return;
-                }
-        
-                drugs.push({
-                    drug: name,
-                    form: form,
-                    batch: batch,
-                    expiry: expiry,
-                    quantity: qty
-                });
-            });
-        
-            if (hasError) {
-                if (typeof showAlert === 'function') showAlert(errorMessages.join(' '), 'error');
-                return;
-            }
-        
-            if (drugs.length === 0) {
-                if (typeof showAlert === 'function') showAlert('No valid drugs to add.', 'error');
-                return;
-            }
-        
-            // ============================================================
-            // CONFIRMATION POPUP
-            // ============================================================
-            if (!confirm('Add ' + drugs.length + ' new drug(s) to inventory?')) {
-                return;
-            }
-        
-            // ============================================================
-            // CLOSE MODAL IMMEDIATELY
-            // ============================================================
-            closeNewDrugModal();
-        
-            // ============================================================
-            // SHOW LOADING OVERLAY
-            // ============================================================
-            var loadingOverlay = document.createElement('div');
-            loadingOverlay.id = 'bulkLoadingOverlay';
-            loadingOverlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(255,255,255,0.9);
-                z-index: 999999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: Arial, sans-serif;
-            `;
-            loadingOverlay.innerHTML = `
-                <div style="text-align:center;background:#fff;padding:30px 40px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
-                    <div style="border:4px solid #f3f3f3;border-top:4px solid #38a169;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:0 auto 15px;"></div>
-                    <div style="font-size:18px;color:#333;font-weight:500;">Adding ${drugs.length} new drug(s)...</div>
-                    <div style="font-size:13px;color:#888;margin-top:5px;">Please wait</div>
+        async function loadAllDrugs() {
+            var container = document.getElementById('drugListContainer');
+            container.innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading drugs...</p>
                 </div>
             `;
-            document.body.appendChild(loadingOverlay);
-        
-            var receivedBy = document.getElementById('newDrugReceivedBy').value.trim() || currentUser.username;
-            var notes = document.getElementById('newDrugNotes').value.trim();
-        
-            var url = API_URL +
-                '?action=addbulkdrugs' +
-                '&admin=' + encodeURIComponent(currentUser.username) +
-                '&supplier=' + encodeURIComponent(supplier) +
-                '&invoice=' + encodeURIComponent(invoice) +
-                '&receivedBy=' + encodeURIComponent(receivedBy) +
-                '&notes=' + encodeURIComponent(notes || '') +
-                '&drugs=' + encodeURIComponent(JSON.stringify(drugs));
-        
+
             try {
-                var response = await fetch(url);
-                var result = await response.json();
-        
-                // ============================================================
-                // REMOVE LOADING OVERLAY
-                // ============================================================
-                var overlay = document.getElementById('bulkLoadingOverlay');
-                if (overlay) overlay.remove();
-        
-                if (result.success) {
-                    if (typeof showAlert === 'function') {
-                        showAlert('✅ ' + result.message, 'success');
-                    }
-        
-                    // Clear modal fields
-                    document.getElementById('newDrugSupplier').value = '';
-                    document.getElementById('newDrugInvoice').value = '';
-                    document.getElementById('newDrugReceivedBy').value = '';
-                    document.getElementById('newDrugNotes').value = '';
-        
-                    // Clear table (keep one empty row)
-                    var tbody = document.getElementById('newDrugTableBody');
-                    tbody.innerHTML = '';
-                    newDrugRowCount = 0;
-                    addNewDrugRow();
-        
-                    // Refresh drug list
-                    loadDrugsSilent();
-                    if (isDrugListVisible) {
-                        filteredDrugs = allDrugs;
-                        renderDrugList();
-                    }
-        
-                    // ============================================================
-                    // SHOW REFRESH LOADING AND RELOAD AFTER 2.5 SECONDS
-                    // ============================================================
-                    setTimeout(function() {
-                        var refreshOverlay = document.createElement('div');
-                        refreshOverlay.id = 'refreshOverlay';
-                        refreshOverlay.style.cssText = `
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            width: 100%;
-                            height: 100%;
-                            background: rgba(255,255,255,0.9);
-                            z-index: 999999;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-family: Arial, sans-serif;
-                        `;
-                        refreshOverlay.innerHTML = `
-                            <div style="text-align:center;background:#fff;padding:30px 40px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
-                                <div style="border:4px solid #f3f3f3;border-top:4px solid #2b6cb0;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:0 auto 15px;"></div>
-                                <div style="font-size:18px;color:#333;font-weight:500;">Refreshing page...</div>
-                            </div>
-                        `;
-                        document.body.appendChild(refreshOverlay);
-                        window.location.reload();
-                    }, 2500);
-        
-                } else {
-                    if (typeof showAlert === 'function') {
-                        showAlert('❌ ' + (result.message || 'Error adding drugs.'), 'error');
-                    }
-                    if (result.errors && result.errors.length > 0) {
-                        console.log('Errors:', result.errors);
-                    }
-                }
-        
-            } catch (error) {
-                var overlay = document.getElementById('bulkLoadingOverlay');
-                if (overlay) overlay.remove();
-        
-                console.error('Error:', error);
-                if (typeof showAlert === 'function') {
-                    showAlert('❌ Error connecting to server. Please try again.', 'error');
-                }
-            }
-        }
-        // ============================================================
-        // TOGGLE NEW RECEIVE
-        // ============================================================
+                var response = await fetch(API_URL + '?search=');
+                var results = await response.json();
 
-        function toggleNewReceive() {
-            var panel = document.getElementById('receivePanel');
-            var btn = document.getElementById('newReceiveBtn');
-
-            if (isReceiveOpen) {
-                if (receiveItems.length > 0) {
-                    if (!confirm('You have items in this receive. Cancel?')) {
-                        return;
-                    }
-                    receiveItems = [];
-                }
-                if (panel) panel.style.display = 'none';
-                if (btn) btn.textContent = '➕ New Receive';
-                isReceiveOpen = false;
-                var receiveIdDisplay = document.getElementById('receiveIdDisplay');
-                var receiveNotes = document.getElementById('receiveNotes');
-                if (receiveIdDisplay) receiveIdDisplay.textContent = '';
-                if (receiveNotes) receiveNotes.value = '';
-                renderReceiveList();
-            } else {
-                if (panel) panel.style.display = 'block';
-                if (btn) btn.textContent = '✕ Cancel Receive';
-                isReceiveOpen = true;
-                currentReceiveId = generateReceiveId();
-                var receiveIdDisplay = document.getElementById('receiveIdDisplay');
-                var receiveNotes = document.getElementById('receiveNotes');
-                if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
-                if (receiveNotes) receiveNotes.value = '';
-                renderReceiveList();
-            }
-        }
-
-        // ============================================================
-        // SHOW/HIDE DRUG LIST
-        // ============================================================
-
-        function toggleDrugList() {
-            var panel = document.getElementById('drugListPanel');
-            var container = document.getElementById('drugListContainer');
-            var btn = document.getElementById('toggleDrugsBtn');
-            var closeBtn = document.getElementById('closeDrugListBtn');
-
-            if (isDrugListVisible) {
-                if (panel) panel.style.display = 'none';
-                if (btn) btn.textContent = 'Show All Drugs';
-                if (closeBtn) closeBtn.style.display = 'none';
-                isDrugListVisible = false;
-                var drugSearch = document.getElementById('drugSearch');
-                if (drugSearch) drugSearch.value = '';
-            } else {
-                if (allDrugs.length === 0) {
-                    if (typeof showLoading === 'function') showLoading('Loading drugs...');
-                    loadDrugsSilent().then(function() {
-                        if (typeof hideLoading === 'function') hideLoading();
-                        if (allDrugs.length === 0) {
-                            if (container) container.innerHTML = '<p class="text-muted">No drugs found.</p>';
-                            if (panel) panel.style.display = 'block';
-                            if (btn) btn.textContent = 'Hide Drugs';
-                            if (closeBtn) closeBtn.style.display = 'inline';
-                            isDrugListVisible = true;
-                        } else {
-                            filteredDrugs = allDrugs;
-                            currentPage = 1;
-                            renderDrugList();
-                            if (panel) panel.style.display = 'block';
-                            if (btn) btn.textContent = 'Hide Drugs';
-                            if (closeBtn) closeBtn.style.display = 'inline';
-                            isDrugListVisible = true;
-                        }
-                    });
-                    return;
-                }
+                allDrugs = results.map(function(item) {
+                    return {
+                        name: item[0] || 'Unknown',
+                        form: item[1] || 'N/A',
+                        balance: parseFloat(item[2]) || 0,
+                        batch: item[3] || '',
+                        expiry: item[4] || ''
+                    };
+                });
 
                 filteredDrugs = allDrugs;
-                currentPage = 1;
                 renderDrugList();
-                if (panel) panel.style.display = 'block';
-                if (btn) btn.textContent = 'Hide Drugs';
-                if (closeBtn) closeBtn.style.display = 'inline';
-                isDrugListVisible = true;
+
+            } catch (error) {
+                console.error('Error loading drugs:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">❌</span>
+                        <p>Error loading drugs. Please refresh.</p>
+                    </div>
+                `;
             }
-        }
-
-        // ============================================================
-        // CLOSE DRUG LIST
-        // ============================================================
-
-        function closeDrugList() {
-            var panel = document.getElementById('drugListPanel');
-            var btn = document.getElementById('toggleDrugsBtn');
-            var closeBtn = document.getElementById('closeDrugListBtn');
-
-            if (panel) panel.style.display = 'none';
-            if (btn) btn.textContent = 'Show All Drugs';
-            if (closeBtn) closeBtn.style.display = 'none';
-            isDrugListVisible = false;
-            var drugSearch = document.getElementById('drugSearch');
-            if (drugSearch) drugSearch.value = '';
         }
 
         // ============================================================
@@ -724,90 +1037,23 @@
             var query = document.getElementById('drugSearch').value.toLowerCase().trim();
 
             if (!query) {
-                if (typeof showAlert === 'function') showAlert('Please enter a search term.', 'error');
+                showAlert('Please enter a search term.', 'warning');
                 return;
             }
 
-            var panel = document.getElementById('drugListPanel');
-            var btn = document.getElementById('toggleDrugsBtn');
-            var closeBtn = document.getElementById('closeDrugListBtn');
+            filteredDrugs = allDrugs.filter(function(drug) {
+                return drug.name.toLowerCase().indexOf(query) !== -1 ||
+                       drug.form.toLowerCase().indexOf(query) !== -1;
+            });
 
-            if (!isDrugListVisible) {
-                if (allDrugs.length === 0) {
-                    if (typeof showLoading === 'function') showLoading('Loading drugs...');
-                    loadDrugsSilent().then(function() {
-                        if (typeof hideLoading === 'function') hideLoading();
-                        performSearch(query);
-                        if (panel) panel.style.display = 'block';
-                        if (btn) btn.textContent = 'Hide Drugs';
-                        if (closeBtn) closeBtn.style.display = 'inline';
-                        isDrugListVisible = true;
-                    });
-                    return;
-                }
-
-                filteredDrugs = allDrugs;
-                currentPage = 1;
-                if (panel) panel.style.display = 'block';
-                if (btn) btn.textContent = 'Hide Drugs';
-                if (closeBtn) closeBtn.style.display = 'inline';
-                isDrugListVisible = true;
-                performSearch(query);
-            } else {
-                performSearch(query);
-            }
+            renderDrugList();
         }
 
-        function performSearch(query) {
-            if (typeof showLoading === 'function') showLoading('Searching for: ' + query);
-
-            setTimeout(function() {
-                filteredDrugs = allDrugs.filter(function(drug) {
-                    return drug.name.toLowerCase().indexOf(query) !== -1 ||
-                           drug.form.toLowerCase().indexOf(query) !== -1;
-                });
-
-                currentPage = 1;
-                if (typeof hideLoading === 'function') hideLoading();
-
-                var container = document.getElementById('drugListContainer');
-                var count = document.getElementById('drugCount');
-                var pagination = document.getElementById('pagination');
-
-                if (filteredDrugs.length === 0) {
-                    if (container) container.innerHTML = '<p class="text-muted">No drugs found matching "' + query + '".</p>';
-                    if (count) count.textContent = '0 drugs';
-                    if (pagination) pagination.style.display = 'none';
-                } else {
-                    renderDrugList();
-                }
-            }, 300);
-        }
-
-        // ============================================================
-        // CLEAR SEARCH
-        // ============================================================
-
-        function clearSearch() {
-            var drugSearch = document.getElementById('drugSearch');
-            if (drugSearch) drugSearch.value = '';
-
-            if (isDrugListVisible) {
-                renderDrugList();
-            } else {
-                var panel = document.getElementById('drugListPanel');
-                var container = document.getElementById('drugListContainer');
-                var count = document.getElementById('drugCount');
-                var pagination = document.getElementById('pagination');
-
-                if (panel) panel.style.display = 'none';
-                if (container) container.innerHTML = '<p class="text-muted">Search for a drug or click "Show All Drugs".</p>';
-                if (count) count.textContent = '';
-                if (pagination) pagination.style.display = 'none';
-            }
-
-            if (drugSearch) drugSearch.focus();
-            if (typeof showAlert === 'function') showAlert('Search cleared.', 'info');
+        function showAllDrugs() {
+            document.getElementById('drugSearch').value = '';
+            filteredDrugs = allDrugs;
+            renderDrugList();
+            showAlert('Showing all drugs.', 'info');
         }
 
         // ============================================================
@@ -817,196 +1063,116 @@
         function renderDrugList() {
             var container = document.getElementById('drugListContainer');
             var count = document.getElementById('drugCount');
-            var pagination = document.getElementById('pagination');
-            var pageInfo = document.getElementById('pageInfo');
 
-            if (!filteredDrugs || filteredDrugs.length === 0) {
-                if (container) container.innerHTML = '<p class="text-muted">No drugs found.</p>';
+            if (filteredDrugs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">🔍</span>
+                        <p>No drugs found</p>
+                    </div>
+                `;
                 if (count) count.textContent = '0 drugs';
-                if (pagination) pagination.style.display = 'none';
                 return;
             }
-
-            var totalPages = Math.ceil(filteredDrugs.length / pageSize);
-            var start = (currentPage - 1) * pageSize;
-            var end = Math.min(start + pageSize, filteredDrugs.length);
-            var pageDrugs = filteredDrugs.slice(start, end);
 
             if (count) count.textContent = filteredDrugs.length + ' drugs';
 
-            if (filteredDrugs.length > pageSize) {
-                if (pageInfo) pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
-                if (pagination) pagination.style.display = 'flex';
-            } else {
-                if (pagination) pagination.style.display = 'none';
-            }
+            var html = `
+                <div class="list-header">
+                    <span>Drug Name</span>
+                    <span>Form</span>
+                    <span>Qty</span>
+                    <span>Status</span>
+                    <span>Action</span>
+                </div>
+            `;
 
-            var html = '<table>';
-            html += '<tr><th>Drug Name</th><th>Form</th><th>Balance</th><th>Receive Qty</th><th>Action</th></tr>';
+            filteredDrugs.forEach(function(drug, index) {
+                var inCart = receiveItems.some(function(item) { return item.name === drug.name; });
+                var status = getStockStatus(drug.form, drug.balance);
 
-            pageDrugs.forEach(function(drug, index) {
-                var globalIndex = start + index;
-                var inReceive = receiveItems.some(function(item) { return item.name === drug.name; });
-                var safeId = 'rqty-' + globalIndex;
-
-                html += '<tr>';
-                html += '<td><strong>' + drug.name + '</strong></td>';
-                html += '<td>' + drug.form + '</td>';
-                html += '<td>' + drug.balance + '</td>';
-                html += '<td>';
-                html += '<input type="number" id="' + safeId + '" ';
-                html += 'min="1" value="1" style="width:70px;padding:4px 6px;border:1px solid #ccc;text-align:center;">';
-                html += '</td>';
-                html += '<td>';
-                if (inReceive) {
-                    html += '<span style="color:#0a0;">✅ Added</span>';
-                } else {
-                    html += '<button class="btn btn-small" onclick="addToReceive(\'' + drug.name.replace(/'/g, "\\'") + '\',' + drug.balance + ',' + globalIndex + ')">Add</button>';
-                }
-                html += '</td>';
-                html += '</tr>';
+                html += `
+                    <div class="list-item">
+                        <span class="drug-name">${drug.name}</span>
+                        <span class="drug-form">${drug.form}</span>
+                        <span class="drug-qty">${drug.balance}</span>
+                        <span class="status-badge-small ${status.class}">${status.text}</span>
+                        <div style="display:flex;gap:4px;align-items:center;">
+                            <input type="number" id="qty-${index}" min="1" value="1" class="qty-input">
+                            <button class="add-btn ${inCart ? 'added' : ''}" onclick="addToReceive(${index})">
+                                ${inCart ? '✅' : 'Add'}
+                            </button>
+                        </div>
+                    </div>
+                `;
             });
 
-            html += '</table>';
-            if (container) container.innerHTML = html;
-        }
-
-        // ============================================================
-        // PAGINATION
-        // ============================================================
-
-        function prevPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                renderDrugList();
-            }
-        }
-
-        function nextPage() {
-            var totalPages = Math.ceil(filteredDrugs.length / pageSize);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderDrugList();
-            }
-        }
-
-        // ============================================================
-        // ADD TO RECEIVE - HTML FILE
-        // ============================================================
-
-        function addToReceive(drugName, maxStock, index) {
-            var qtyInput = document.getElementById('rqty-' + index);
-            if (!qtyInput) {
-                if (typeof showAlert === 'function') showAlert('Error: Could not find quantity input.', 'error');
-                return;
-            }
-        
-            var qty = parseInt(qtyInput.value) || 1;
-        
-            if (qty < 1) {
-                if (typeof showAlert === 'function') showAlert('Quantity must be at least 1.', 'error');
-                return;
-            }
-        
-            if (receiveItems.some(function(item) { return item.name === drugName; })) {
-                if (typeof showAlert === 'function') showAlert(drugName + ' is already in this receive.', 'warning');
-                return;
-            }
-        
-            if (!isReceiveOpen) {
-                var panel = document.getElementById('receivePanel');
-                var btn = document.getElementById('newReceiveBtn');
-        
-                if (panel) panel.style.display = 'block';
-                if (btn) btn.textContent = '✕ Cancel Receive';
-                isReceiveOpen = true;
-                currentReceiveId = generateReceiveId();
-                var receiveIdDisplay = document.getElementById('receiveIdDisplay');
-                var receiveNotes = document.getElementById('receiveNotes');
-                if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
-                if (receiveNotes) receiveNotes.value = '';
-            }
-        
-            // Add with empty batch and expiry (user can fill them in)
-            receiveItems.push({
-                name: drugName,
-                quantity: qty,
-                batch: '',
-                expiry: ''
-            });
-        
-            renderReceiveList();
-            renderDrugList();
-            if (typeof showAlert === 'function') showAlert('Added ' + drugName + ' to receive.', 'success');
-        }
-
-        // ============================================================
-        // RENDER RECEIVE LIST
-        // ============================================================
-
-        function renderReceiveList() {
-            var container = document.getElementById('receiveListContainer');
-        
-            if (!container) return;
-        
-            if (receiveItems.length === 0) {
-                container.innerHTML = '<p class="text-muted">No items added yet. Search and add drugs.</p>';
-                return;
-            }
-        
-            var html = '<table style="width:100%;border-collapse:collapse;">';
-            html += '<tr style="background:#f0f0f0;">';
-            html += '<th style="padding:8px;text-align:left;border:1px solid #ddd;">Drug</th>';
-            html += '<th style="padding:8px;text-align:center;border:1px solid #ddd;width:60px;">Qty</th>';
-            html += '<th style="padding:8px;text-align:left;border:1px solid #ddd;">Batch</th>';
-            html += '<th style="padding:8px;text-align:left;border:1px solid #ddd;">Expiry</th>';
-            html += '<th style="padding:8px;text-align:center;border:1px solid #ddd;width:50px;">Action</th>';
-            html += '</tr>';
-        
-            receiveItems.forEach(function(item, index) {
-                // Alternate row colors: grey for odd, white for even
-                var rowColor = (index % 2 === 0) ? '#f7fafc' : '#ffffff';
-                var rowStyle = 'background:' + rowColor + ';';
-        
-                html += '<tr style="' + rowStyle + '">';
-                html += '<td style="padding:8px;border:1px solid #ddd;"><strong>' + item.name + '</strong></td>';
-                html += '<td style="padding:8px;border:1px solid #ddd;text-align:center;">';
-                html += '<input type="number" id="receive-qty-' + index + '" value="' + item.quantity + '" ';
-                html += 'min="1" style="width:55px;padding:4px 6px;border:1px solid #ccc;text-align:center;" ';
-                html += 'onchange="updateReceiveQty(' + index + ', this.value)">';
-                html += '</td>';
-                html += '<td style="padding:8px;border:1px solid #ddd;">';
-                html += '<input type="text" id="receive-batch-' + index + '" value="' + (item.batch || '') + '" ';
-                html += 'placeholder="Batch" style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;">';
-                html += '</td>';
-                html += '<td style="padding:8px;border:1px solid #ddd;">';
-                html += '<input type="date" id="receive-expiry-' + index + '" value="' + (item.expiry || '') + '" ';
-                html += 'style="width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:3px;">';
-                html += '</td>';
-                html += '<td style="padding:8px;border:1px solid #ddd;text-align:center;">';
-                html += '<button class="btn btn-small" onclick="removeFromReceive(' + index + ')" style="color:#c00;background:none;border:none;cursor:pointer;font-size:16px;">✕</button>';
-                html += '</td>';
-                html += '</tr>';
-            });
-        
-            html += '</table>';
             container.innerHTML = html;
         }
 
         // ============================================================
-        // UPDATE RECEIVE QUANTITY
+        // ADD TO RECEIVE
         // ============================================================
 
-        function updateReceiveQty(index, newValue) {
-            var qty = parseInt(newValue) || 1;
+        function addToReceive(index) {
+            var drug = filteredDrugs[index];
+            if (!drug) return;
+
+            var qtyInput = document.getElementById('qty-' + index);
+            var qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
 
             if (qty < 1) {
-                if (typeof showAlert === 'function') showAlert('Quantity must be at least 1.', 'error');
-                qty = 1;
+                showAlert('Quantity must be at least 1.', 'error');
+                return;
             }
 
-            receiveItems[index].quantity = qty;
-            renderReceiveList();
+            if (receiveItems.some(function(item) { return item.name === drug.name; })) {
+                showAlert(drug.name + ' is already in this receive.', 'warning');
+                return;
+            }
+
+            receiveItems.push({
+                name: drug.name,
+                quantity: qty,
+                form: drug.form,
+                batch: '',
+                expiry: ''
+            });
+
+            renderCart();
+            renderDrugList();
+            showAlert('Added ' + drug.name + ' to receive.', 'success');
+        }
+
+        // ============================================================
+        // RENDER CART
+        // ============================================================
+
+        function renderCart() {
+            var container = document.getElementById('cartContainer');
+
+            if (receiveItems.length === 0) {
+                container.innerHTML = `
+                    <div class="cart-empty">
+                        <p>No items added yet</p>
+                        <p style="font-size:12px;color:#9ca3af;">Search and add drugs from the list</p>
+                    </div>
+                `;
+                return;
+            }
+
+            var html = '';
+            receiveItems.forEach(function(item, index) {
+                html += `
+                    <div class="cart-item">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-qty">× ${item.quantity}</span>
+                        <button class="remove-btn" onclick="removeFromReceive(${index})">✕</button>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
         // ============================================================
@@ -1016,9 +1182,9 @@
         function removeFromReceive(index) {
             var removed = receiveItems[index].name;
             receiveItems.splice(index, 1);
-            renderReceiveList();
-            if (isDrugListVisible) renderDrugList();
-            if (typeof showAlert === 'function') showAlert('Removed ' + removed + ' from receive.', 'info');
+            renderCart();
+            renderDrugList();
+            showAlert('Removed ' + removed + ' from receive.', 'info');
         }
 
         // ============================================================
@@ -1027,91 +1193,61 @@
 
         function clearReceive() {
             if (receiveItems.length === 0) {
-                if (typeof showAlert === 'function') showAlert('Receive is already empty.', 'info');
+                showAlert('Receive is already empty.', 'info');
                 return;
             }
-        
+
             if (!confirm('Clear all items from this receive?')) return;
-        
+
             receiveItems = [];
-            var receiveNotes = document.getElementById('receiveNotes');
-            if (receiveNotes) receiveNotes.value = '';
-            var receiveSupplier = document.getElementById('receiveSupplier');
-            var receiveInvoice = document.getElementById('receiveInvoice');
-            if (receiveSupplier) receiveSupplier.value = '';
-            if (receiveInvoice) receiveInvoice.value = '';
-            renderReceiveList();
-            if (isDrugListVisible) renderDrugList();
-            if (typeof showAlert === 'function') showAlert('Receive cleared.', 'info');
+            document.getElementById('receiveNotes').value = '';
+            document.getElementById('receiveSupplier').value = '';
+            document.getElementById('receiveInvoice').value = '';
+            renderCart();
+            renderDrugList();
+            showAlert('Receive cleared.', 'info');
         }
 
         // ============================================================
-        // SUBMIT RECEIVE - HTML FILE
+        // SUBMIT RECEIVE
         // ============================================================
 
         function submitReceive() {
             if (receiveItems.length === 0) {
-                if (typeof showAlert === 'function') showAlert('Please add at least one item to receive.', 'warning');
+                showAlert('Please add at least one item to receive.', 'warning');
                 return;
             }
-        
-            if (!confirm('Receive ' + receiveItems.length + ' item(s) into inventory?')) {
+
+            var supplier = document.getElementById('receiveSupplier').value.trim();
+            var invoice = document.getElementById('receiveInvoice').value.trim();
+
+            if (!supplier || !invoice) {
+                showAlert('Supplier and Invoice No are required.', 'error');
                 return;
             }
-        
-            var loadingOverlay = document.createElement('div');
-            loadingOverlay.id = 'receiveLoadingOverlay';
-            loadingOverlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(255,255,255,0.9);
-                z-index: 999999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: Arial, sans-serif;
-            `;
-            loadingOverlay.innerHTML = `
-                <div style="text-align:center;background:#fff;padding:30px 40px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
-                    <div style="border:4px solid #f3f3f3;border-top:4px solid #38a169;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:0 auto 15px;"></div>
-                    <div style="font-size:18px;color:#333;font-weight:500;">Receiving stock...</div>
-                    <div style="font-size:13px;color:#888;margin-top:5px;">Please wait</div>
-                </div>
-            `;
-            document.body.appendChild(loadingOverlay);
-        
-            // Collect all field values
-            var supplier = document.getElementById('receiveSupplier') ? document.getElementById('receiveSupplier').value.trim() : '';
-            var invoice = document.getElementById('receiveInvoice') ? document.getElementById('receiveInvoice').value.trim() : '';
-            var notes = document.getElementById('receiveNotes') ? document.getElementById('receiveNotes').value.trim() : '';
-        
-            // Build items with batch and expiry from the form
-            var itemsWithDetails = receiveItems.map(function(item, index) {
-                var batchInput = document.getElementById('receive-batch-' + index);
-                var expiryInput = document.getElementById('receive-expiry-' + index);
-        
-                return {
-                    drug: item.name,
-                    quantity: item.quantity,
-                    batch: batchInput ? batchInput.value.trim() : '',
-                    expiry: expiryInput ? expiryInput.value : ''
-                };
-            });
-        
+
+            if (!confirm('Receive ' + receiveItems.length + ' item(s) into inventory?')) return;
+
+            var notes = document.getElementById('receiveNotes').value.trim();
+
             var receiveData = {
                 action: 'submitreceive',
                 admin: currentUser.username,
-                items: itemsWithDetails,
+                items: receiveItems.map(function(item) {
+                    return {
+                        drug: item.name,
+                        quantity: item.quantity,
+                        batch: '',
+                        expiry: ''
+                    };
+                }),
                 receiveId: currentReceiveId,
                 supplier: supplier,
                 invoice: invoice,
                 notes: notes,
                 timestamp: new Date().toISOString()
             };
-        
+
             var url = API_URL +
                 '?action=submitreceive' +
                 '&admin=' + encodeURIComponent(receiveData.admin) +
@@ -1121,81 +1257,37 @@
                 '&invoice=' + encodeURIComponent(receiveData.invoice) +
                 '&notes=' + encodeURIComponent(receiveData.notes) +
                 '&timestamp=' + encodeURIComponent(receiveData.timestamp);
-        
+
             fetch(url)
-            .then(function(response) { return response.json(); })
-            .then(function(result) {
-                var overlay = document.getElementById('receiveLoadingOverlay');
-                if (overlay) overlay.remove();
-        
-                if (result.success) {
-                    if (typeof showAlert === 'function') {
+                .then(function(response) { return response.json(); })
+                .then(function(result) {
+                    if (result.success) {
                         showAlert('✅ Receive completed successfully! Stock added.', 'success');
+                        receiveItems = [];
+                        document.getElementById('receiveNotes').value = '';
+                        document.getElementById('receiveSupplier').value = '';
+                        document.getElementById('receiveInvoice').value = '';
+                        renderCart();
+                        renderDrugList();
+
+                        currentReceiveId = generateReceiveId();
+                        document.getElementById('receiveIdDisplay').textContent = currentReceiveId;
+                    } else {
+                        showAlert(result.message || 'Error submitting receive.', 'error');
                     }
-        
-                    receiveItems = [];
-                    var receiveNotes = document.getElementById('receiveNotes');
-                    if (receiveNotes) receiveNotes.value = '';
-                    var receiveSupplier = document.getElementById('receiveSupplier');
-                    var receiveInvoice = document.getElementById('receiveInvoice');
-                    if (receiveSupplier) receiveSupplier.value = '';
-                    if (receiveInvoice) receiveInvoice.value = '';
-                    renderReceiveList();
-                    if (isDrugListVisible) renderDrugList();
-        
-                    currentReceiveId = generateReceiveId();
-                    var receiveIdDisplay = document.getElementById('receiveIdDisplay');
-                    if (receiveIdDisplay) receiveIdDisplay.textContent = 'Receive: ' + currentReceiveId;
-        
-                    setTimeout(function() {
-                        var refreshOverlay = document.createElement('div');
-                        refreshOverlay.id = 'refreshOverlay';
-                        refreshOverlay.style.cssText = `
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            width: 100%;
-                            height: 100%;
-                            background: rgba(255,255,255,0.9);
-                            z-index: 999999;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-family: Arial, sans-serif;
-                        `;
-                        refreshOverlay.innerHTML = `
-                            <div style="text-align:center;background:#fff;padding:30px 40px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
-                                <div style="border:4px solid #f3f3f3;border-top:4px solid #2b6cb0;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:0 auto 15px;"></div>
-                                <div style="font-size:18px;color:#333;font-weight:500;">Refreshing page...</div>
-                            </div>
-                        `;
-                        document.body.appendChild(refreshOverlay);
-                        window.location.reload();
-                    }, 1500);
-        
-                } else {
-                    if (typeof showAlert === 'function') {
-                        showAlert('❌ ' + (result.message || 'Error submitting receive.'), 'error');
-                    }
-                }
-            })
-            .catch(function(error) {
-                var overlay = document.getElementById('receiveLoadingOverlay');
-                if (overlay) overlay.remove();
-        
-                console.error('Error:', error);
-                if (typeof showAlert === 'function') {
-                    showAlert('❌ Error connecting to server.', 'error');
-                }
-            });
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    showAlert('Error connecting to server.', 'error');
+                });
         }
 
         // ============================================================
-        // INITIALIZE NEW DRUG MODAL ENTER KEY
+        // INIT ON LOAD
         // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
-            setupNewDrugEnterNavigation();
+            initPage();
         });
     </script>
 
