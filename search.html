@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drug Stock Search</title>
-    <link rel="stylesheet" href="style.css">
     <style>
         /* ============================================================
-           BASE STYLES
+           RESET
            ============================================================ */
         
         * {
@@ -17,60 +16,110 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f7fafc;
-            padding: 16px;
-            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #ffffff;
+            padding: 20px;
+        }
+        
+        /* ============================================================
+           LAYOUT CONTAINERS
+           ============================================================ */
+        
+        .app-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
         }
         
         /* ============================================================
            HEADER
            ============================================================ */
         
-        .app-header {
-            background: #1a365d;
-            color: #fff;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        
-        .app-header-top {
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 16px 0;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 24px;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 12px;
         }
         
-        .app-header-top h1 {
-            font-size: 20px;
-            font-weight: 600;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
         
-        .app-header-top h1 span {
+        .header-left h1 {
             font-size: 24px;
+            font-weight: 700;
         }
         
-        .user-badge {
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .user-info {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
-            background: rgba(255,255,255,0.15);
-            padding: 6px 12px;
-            border-radius: 20px;
+            font-size: 14px;
         }
         
-        .user-badge .role {
-            font-size: 11px;
-            opacity: 0.7;
+        .user-info .role {
+            color: #6b7280;
+            font-size: 12px;
         }
         
-        /* Hamburger */
-        .hamburger {
+        /* Navigation */
+        .nav {
             display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .nav a,
+        .nav button {
+            padding: 6px 14px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #111827;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .nav a:hover,
+        .nav button:hover {
+            background: #e5e7eb;
+        }
+        
+        .nav .admin-link {
+            display: none;
+        }
+        
+        .nav .admin-link.show {
+            display: inline-block;
+        }
+        
+        .nav .btn-logout {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        
+        .nav .btn-logout:hover {
+            background: #fecaca;
+        }
+        
+        /* Hamburger - hidden on desktop */
+        .hamburger {
+            display: none;
             flex-direction: column;
             gap: 4px;
             background: none;
@@ -81,265 +130,133 @@
         
         .hamburger span {
             display: block;
-            width: 22px;
-            height: 2.5px;
-            background: #fff;
+            width: 24px;
+            height: 3px;
+            background: #111827;
             border-radius: 2px;
-            transition: all 0.3s;
-        }
-        
-        .hamburger.active span:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
-        }
-        
-        .hamburger.active span:nth-child(2) {
-            opacity: 0;
-        }
-        
-        .hamburger.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(5px, -5px);
-        }
-        
-        /* Navigation */
-        .mobile-nav {
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .mobile-nav.open {
-            display: flex;
-        }
-        
-        .mobile-nav a,
-        .mobile-nav button {
-            padding: 10px 14px;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 14px;
-            background: rgba(255,255,255,0.05);
-            border: none;
-            text-align: left;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .mobile-nav a:hover,
-        .mobile-nav button:hover {
-            background: rgba(255,255,255,0.15);
-        }
-        
-        .mobile-nav .admin-link {
-            display: none;
-        }
-        
-        .mobile-nav .admin-link.show {
-            display: block;
-        }
-        
-        .mobile-nav .btn-logout {
-            color: #feb2b2;
-            margin-top: 4px;
-        }
-        
-        .mobile-nav .btn-logout:hover {
-            background: rgba(254, 178, 178, 0.15);
         }
         
         /* ============================================================
-           SEARCH BAR
+           SEARCH SECTION
            ============================================================ */
         
         .search-section {
-            margin-bottom: 16px;
+            margin-bottom: 24px;
         }
         
-        .search-wrapper {
+        .search-row {
             display: flex;
             gap: 8px;
-            background: #fff;
-            border-radius: 12px;
-            padding: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            align-items: center;
         }
         
-        .search-wrapper input {
+        .search-row input {
             flex: 1;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 10px;
+            padding: 10px 14px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
             font-size: 16px;
-            background: transparent;
-            min-height: 48px;
+            min-height: 44px;
         }
         
-        .search-wrapper input:focus {
+        .search-row input:focus {
+            border-color: #6b7280;
             outline: none;
         }
         
-        .search-wrapper input::placeholder {
-            color: #a0aec0;
-        }
-        
-        .search-wrapper button {
-            padding: 10px 18px;
-            background: #2b6cb0;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
+        .search-row button {
+            padding: 10px 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            background: #f3f4f6;
+            font-size: 14px;
             cursor: pointer;
-            min-height: 48px;
-            min-width: 60px;
-            transition: background 0.2s;
+            min-height: 44px;
         }
         
-        .search-wrapper button:hover {
-            background: #1a4a7a;
-        }
-        
-        .search-wrapper button.btn-clear {
-            background: #e2e8f0;
-            color: #4a5568;
-            min-width: 50px;
-        }
-        
-        .search-wrapper button.btn-clear:hover {
-            background: #cbd5e0;
+        .search-row button:hover {
+            background: #e5e7eb;
         }
         
         /* ============================================================
-           RESULTS - CARD LAYOUT
+           RESULTS - DESKTOP GRID
            ============================================================ */
         
-        .results-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
         }
         
         .result-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 16px 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border-left: 4px solid #2b6cb0;
-            transition: transform 0.15s, box-shadow 0.15s;
-            animation: fadeInUp 0.3s ease;
-        }
-        
-        .result-card:active {
-            transform: scale(0.98);
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 16px;
+            background: #fafafa;
         }
         
         .result-card .drug-name {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 600;
-            color: #1a202c;
             margin-bottom: 2px;
         }
         
         .result-card .drug-form {
             font-size: 14px;
-            color: #718096;
-            margin-bottom: 8px;
+            color: #6b7280;
+            margin-bottom: 10px;
         }
         
         .result-card .drug-details {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #edf2f7;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
         }
         
         .result-card .drug-quantity {
-            font-size: 15px;
-            color: #2d3748;
-        }
-        
-        .result-card .drug-quantity strong {
-            font-weight: 600;
-            color: #1a202c;
+            font-size: 14px;
         }
         
         .result-card .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 14px;
-            border-radius: 20px;
+            padding: 2px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
             font-size: 13px;
-            font-weight: 600;
+            background: #f3f4f6;
         }
         
-        .result-card .status-badge.in-stock {
-            background: #c6f6d5;
-            color: #276749;
-        }
+        /* ============================================================
+           EMPTY / LOADING STATES
+           ============================================================ */
         
-        .result-card .status-badge.low-stock {
-            background: #fefcbf;
-            color: #975a16;
-        }
-        
-        .result-card .status-badge.out-of-stock {
-            background: #fed7d7;
-            color: #9b2c2c;
-        }
-        
-        /* Status by border color */
-        .result-card.border-in-stock {
-            border-left-color: #38a169;
-        }
-        
-        .result-card.border-low-stock {
-            border-left-color: #d69e2e;
-        }
-        
-        .result-card.border-out-of-stock {
-            border-left-color: #e53e3e;
-        }
-        
-        /* Empty / loading states */
-        .empty-state,
-        .loading-state {
+        .empty-state {
             text-align: center;
-            padding: 40px 20px;
-            color: #a0aec0;
+            padding: 60px 20px;
+            color: #6b7280;
+            grid-column: 1 / -1;
         }
         
-        .empty-state .icon,
-        .loading-state .icon {
+        .empty-state .icon {
             font-size: 48px;
             display: block;
             margin-bottom: 12px;
         }
         
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+            grid-column: 1 / -1;
+        }
+        
         .loading-state .spinner {
             display: inline-block;
-            width: 36px;
-            height: 36px;
-            border: 3px solid #e2e8f0;
-            border-top: 3px solid #2b6cb0;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #6b7280;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-bottom: 12px;
@@ -356,227 +273,216 @@
         
         .alert {
             padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 16px;
             display: none;
-            font-size: 14px;
         }
         
         .alert.show {
             display: block;
         }
         
-        .alert-success {
-            background: #c6f6d5;
-            color: #276749;
-            border: 1px solid #9ae6b4;
+        .alert-error {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
         }
         
-        .alert-error {
-            background: #fed7d7;
-            color: #9b2c2c;
-            border: 1px solid #feb2b2;
+        .alert-success {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            color: #065f46;
         }
         
         .alert-info {
-            background: #bee3f8;
-            color: #2a4365;
-            border: 1px solid #90cdf4;
-        }
-        
-        .alert-warning {
-            background: #fefcbf;
-            color: #975a16;
-            border: 1px solid #f6e05e;
+            background: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e3a5f;
         }
         
         /* ============================================================
            FOOTER
            ============================================================ */
         
-        .app-footer {
+        .footer {
             text-align: center;
-            padding: 20px 0 8px;
-            font-size: 12px;
-            color: #a0aec0;
+            padding: 24px 0 8px;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 24px;
+            font-size: 13px;
+            color: #6b7280;
         }
         
         /* ============================================================
-           RESPONSIVE - TABLET AND DESKTOP
+           RESPONSIVE BREAKPOINTS
            ============================================================ */
         
-        @media (min-width: 600px) {
+        /* TABLET */
+        @media (max-width: 900px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* MOBILE */
+        @media (max-width: 600px) {
             body {
-                padding: 24px 32px;
-                max-width: 800px;
-                margin: 0 auto;
+                padding: 12px;
             }
             
-            .app-header {
-                padding: 20px 24px;
+            /* Header */
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
             }
             
-            .app-header-top h1 {
-                font-size: 24px;
+            .header-left {
+                justify-content: space-between;
             }
             
-            .results-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+            .header-left h1 {
+                font-size: 20px;
+            }
+            
+            .hamburger {
+                display: flex;
+            }
+            
+            .header-right {
+                display: none;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                width: 100%;
+            }
+            
+            .header-right.open {
+                display: flex;
+            }
+            
+            .user-info {
+                justify-content: center;
+                padding: 8px 0;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .nav {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .nav a,
+            .nav button {
+                text-align: center;
+                padding: 10px;
+                width: 100%;
+            }
+            
+            /* Search */
+            .search-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .search-row input {
+                width: 100%;
+                font-size: 16px;
+            }
+            
+            .search-row button {
+                width: 100%;
+            }
+            
+            /* Results */
+            .results-grid {
+                grid-template-columns: 1fr;
                 gap: 12px;
             }
             
             .result-card {
-                padding: 18px 20px;
-            }
-        }
-        
-        @media (min-width: 900px) {
-            body {
-                padding: 32px 40px;
-                max-width: 1000px;
-            }
-            
-            .results-container {
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 14px;
-            }
-        }
-        
-        /* ============================================================
-           DARK MODE SUPPORT (optional)
-           ============================================================ */
-        
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: #1a202c;
-            }
-            
-            .app-header {
-                background: #2d3748;
-            }
-            
-            .search-wrapper {
-                background: #2d3748;
-            }
-            
-            .search-wrapper input {
-                color: #e2e8f0;
-            }
-            
-            .search-wrapper input::placeholder {
-                color: #718096;
-            }
-            
-            .result-card {
-                background: #2d3748;
-                border-left-color: #4a5568;
+                padding: 14px;
             }
             
             .result-card .drug-name {
-                color: #f7fafc;
+                font-size: 18px;
             }
             
             .result-card .drug-form {
-                color: #a0aec0;
-            }
-            
-            .result-card .drug-details {
-                border-top-color: #4a5568;
-            }
-            
-            .result-card .drug-quantity {
-                color: #e2e8f0;
-            }
-            
-            .result-card .drug-quantity strong {
-                color: #f7fafc;
-            }
-            
-            .empty-state,
-            .loading-state {
-                color: #718096;
-            }
-            
-            .app-footer {
-                color: #4a5568;
-            }
-            
-            .search-wrapper button.btn-clear {
-                background: #4a5568;
-                color: #e2e8f0;
-            }
-            
-            .search-wrapper button.btn-clear:hover {
-                background: #5a6578;
+                font-size: 15px;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- ============================================================
-    HEADER
-    ============================================================ -->
-    <header class="app-header">
-        <div class="app-header-top">
-            <h1><span>💊</span> Drug Stock</h1>
-            <div style="display:flex;align-items:center;gap:8px;">
-                <div class="user-badge">
-                    <span id="userDisplay">User</span>
-                    <span class="role" id="roleDisplay"></span>
-                </div>
+    <div class="app-wrapper">
+
+        <!-- ============================================================
+        HEADER
+        ============================================================ -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Drug Stock</h1>
                 <button class="hamburger" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Toggle menu">
                     <span></span>
                     <span></span>
                     <span></span>
                 </button>
             </div>
+            <div class="header-right" id="headerRight">
+                <div class="user-info">
+                    <span id="userDisplay">User</span>
+                    <span class="role" id="roleDisplay"></span>
+                </div>
+                <nav class="nav" id="nav">
+                    <a href="search.html">Search</a>
+                    <a href="orders.html">New Order</a>
+                    <a href="myorders.html">My Orders</a>
+                    <a href="approve.html" class="admin-link" id="approveLink">Approve</a>
+                    <a href="receive.html" class="admin-link" id="receiveLink">Receive</a>
+                    <a href="profile.html">Profile</a>
+                    <a href="users.html" class="admin-link" id="usersLink">Users</a>
+                    <a href="reset.html" class="admin-link" id="resetLink">Reset</a>
+                    <button class="btn-logout" onclick="logout()">Logout</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- ============================================================
+        ALERT
+        ============================================================ -->
+        <div id="alert" class="alert"></div>
+
+        <!-- ============================================================
+        SEARCH
+        ============================================================ -->
+        <section class="search-section">
+            <div class="search-row">
+                <input type="text" id="searchBox" placeholder="Search for a drug..." autofocus>
+                <button onclick="searchDrugs()">Search</button>
+                <button onclick="clearSearch()">Clear</button>
+            </div>
+        </section>
+
+        <!-- ============================================================
+        RESULTS
+        ============================================================ -->
+        <div class="results-grid" id="results">
+            <div class="empty-state">
+                <span class="icon">🔍</span>
+                <p>Type a drug name and click Search</p>
+            </div>
         </div>
-        <nav class="mobile-nav" id="mobileNav">
-            <a href="search.html">🔍 Search</a>
-            <a href="orders.html">📝 New Order</a>
-            <a href="myorders.html">📋 My Orders</a>
-            <a href="approve.html" class="admin-link" id="approveLink">✅ Approve</a>
-            <a href="receive.html" class="admin-link" id="receiveLink">📥 Receive</a>
-            <a href="profile.html">👤 Profile</a>
-            <a href="users.html" class="admin-link" id="usersLink">👥 Users</a>
-            <a href="reset.html" class="admin-link" id="resetLink">🔄 Reset</a>
-            <button class="btn-logout" onclick="logout()">🚪 Logout</button>
-        </nav>
-    </header>
 
-    <!-- ============================================================
-    ALERT
-    ============================================================ -->
-    <div id="alert" class="alert"></div>
-
-    <!-- ============================================================
-    SEARCH
-    ============================================================ -->
-    <section class="search-section">
-        <div class="search-wrapper">
-            <input type="text" id="searchBox" placeholder="Search for a drug..." autofocus>
-            <button onclick="searchDrugs()">Search</button>
-            <button class="btn-clear" onclick="clearSearch()">✕</button>
+        <!-- ============================================================
+        FOOTER
+        ============================================================ -->
+        <div class="footer">
+            <p>Drug Stock Management System</p>
         </div>
-    </section>
 
-    <!-- ============================================================
-    RESULTS
-    ============================================================ -->
-    <div class="results-container" id="results">
-        <div class="empty-state">
-            <span class="icon">🔍</span>
-            <p>Type a drug name and tap Search</p>
-        </div>
-    </div>
-
-    <!-- ============================================================
-    FOOTER
-    ============================================================ -->
-    <div class="app-footer">
-        <p>Drug Stock Management System &bull; v2.0</p>
     </div>
 
     <!-- ============================================================
@@ -645,20 +551,24 @@
         // ============================================================
 
         function toggleMenu() {
-            var nav = document.getElementById('mobileNav');
+            var headerRight = document.getElementById('headerRight');
             var btn = document.getElementById('hamburgerBtn');
-            if (nav) nav.classList.toggle('open');
-            if (btn) btn.classList.toggle('active');
+            if (headerRight) {
+                headerRight.classList.toggle('open');
+            }
+            if (btn) {
+                btn.classList.toggle('active');
+            }
         }
 
+        // Close menu when clicking outside (mobile)
         document.addEventListener('click', function(e) {
-            var nav = document.getElementById('mobileNav');
+            var headerRight = document.getElementById('headerRight');
             var btn = document.getElementById('hamburgerBtn');
-            if (nav && nav.classList.contains('open')) {
-                var isNavClick = nav.contains(e.target);
-                var isBtnClick = btn && btn.contains(e.target);
-                if (!isNavClick && !isBtnClick) {
-                    nav.classList.remove('open');
+            if (headerRight && headerRight.classList.contains('open')) {
+                var isInside = headerRight.contains(e.target) || (btn && btn.contains(e.target));
+                if (!isInside) {
+                    headerRight.classList.remove('open');
                     if (btn) btn.classList.remove('active');
                 }
             }
@@ -705,36 +615,7 @@
         }
 
         // ============================================================
-        // GET STATUS EMOJI AND CLASS
-        // ============================================================
-
-        function getStatusInfo(balance) {
-            if (balance === 0) {
-                return {
-                    emoji: '🚫',
-                    text: 'Out of Stock',
-                    class: 'out-of-stock',
-                    borderClass: 'border-out-of-stock'
-                };
-            } else if (balance < 10) {
-                return {
-                    emoji: '⚠️',
-                    text: 'Low Stock',
-                    class: 'low-stock',
-                    borderClass: 'border-low-stock'
-                };
-            } else {
-                return {
-                    emoji: '✅',
-                    text: 'In Stock',
-                    class: 'in-stock',
-                    borderClass: 'border-in-stock'
-                };
-            }
-        }
-
-        // ============================================================
-        // SEARCH DRUGS - CARD RESULTS
+        // SEARCH DRUGS
         // ============================================================
 
         async function searchDrugs() {
@@ -744,7 +625,7 @@
                 document.getElementById('results').innerHTML = `
                     <div class="empty-state">
                         <span class="icon">🔍</span>
-                        <p>Type a drug name and tap Search</p>
+                        <p>Type a drug name and click Search</p>
                     </div>
                 `;
                 return;
@@ -754,7 +635,7 @@
             document.getElementById('results').innerHTML = `
                 <div class="loading-state">
                     <div class="spinner"></div>
-                    <p>Searching for "${query}"...</p>
+                    <p>Searching...</p>
                 </div>
             `;
 
@@ -766,8 +647,7 @@
                     document.getElementById('results').innerHTML = `
                         <div class="empty-state">
                             <span class="icon">🔍</span>
-                            <p>No matching drugs found for <strong>"${query}"</strong></p>
-                            <p style="font-size:13px;color:#a0aec0;margin-top:4px;">Try a different search term</p>
+                            <p>No matching drugs found for "<strong>${query}</strong>"</p>
                         </div>
                     `;
                     return;
@@ -778,15 +658,18 @@
                     var name = record[0] || 'Unknown';
                     var form = record[1] || 'N/A';
                     var balance = parseFloat(record[2]) || 0;
-                    var status = getStatusInfo(balance);
+
+                    var statusText = 'In Stock';
+                    if (balance === 0) statusText = 'Out of Stock';
+                    else if (balance < 10) statusText = 'Low Stock';
 
                     html += `
-                        <div class="result-card ${status.borderClass}">
+                        <div class="result-card">
                             <div class="drug-name">${name}</div>
                             <div class="drug-form">${form}</div>
                             <div class="drug-details">
-                                <span class="drug-quantity">📦 <strong>${balance}</strong></span>
-                                <span class="status-badge ${status.class}">${status.emoji} ${status.text}</span>
+                                <span class="drug-quantity">Qty: ${balance}</span>
+                                <span class="status-badge">${statusText}</span>
                             </div>
                         </div>
                     `;
@@ -800,7 +683,6 @@
                     <div class="empty-state">
                         <span class="icon">❌</span>
                         <p>Unable to retrieve stock information</p>
-                        <p style="font-size:13px;color:#a0aec0;margin-top:4px;">Please check your connection and try again</p>
                     </div>
                 `;
             }
@@ -819,7 +701,7 @@
             document.getElementById('results').innerHTML = `
                 <div class="empty-state">
                     <span class="icon">🔍</span>
-                    <p>Type a drug name and tap Search</p>
+                    <p>Type a drug name and click Search</p>
                 </div>
             `;
         }
