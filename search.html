@@ -21,12 +21,8 @@
             padding: 20px;
         }
         
-        /* ============================================================
-           LAYOUT CONTAINERS
-           ============================================================ */
-        
         .app-wrapper {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
         }
         
@@ -75,7 +71,6 @@
             font-size: 12px;
         }
         
-        /* Navigation */
         .nav {
             display: flex;
             gap: 8px;
@@ -117,7 +112,6 @@
             background: #fecaca;
         }
         
-        /* Hamburger - hidden on desktop */
         .hamburger {
             display: none;
             flex-direction: column;
@@ -137,11 +131,11 @@
         }
         
         /* ============================================================
-           SEARCH SECTION
+           SEARCH
            ============================================================ */
         
         .search-section {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         
         .search-row {
@@ -179,52 +173,86 @@
         }
         
         /* ============================================================
-           RESULTS - DESKTOP GRID
+           RESULTS - LIST VIEW
            ============================================================ */
         
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-        
-        .result-card {
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
-            padding: 16px;
-            background: #fafafa;
+            overflow: hidden;
         }
         
-        .result-card .drug-name {
-            font-size: 16px;
+        /* Header row */
+        .list-header {
+            display: grid;
+            grid-template-columns: 3fr 2fr 1.5fr 1.5fr;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #f3f4f6;
             font-weight: 600;
-            margin-bottom: 2px;
+            font-size: 13px;
+            border-bottom: 2px solid #d1d5db;
         }
         
-        .result-card .drug-form {
+        /* Drug row */
+        .list-item {
+            display: grid;
+            grid-template-columns: 3fr 2fr 1.5fr 1.5fr;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e5e7eb;
             font-size: 14px;
-            color: #6b7280;
-            margin-bottom: 10px;
-        }
-        
-        .result-card .drug-details {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding-top: 10px;
-            border-top: 1px solid #e5e7eb;
         }
         
-        .result-card .drug-quantity {
-            font-size: 14px;
+        .list-item:last-child {
+            border-bottom: none;
         }
         
-        .result-card .status-badge {
+        .list-item:hover {
+            background: #f9fafb;
+        }
+        
+        .list-item .drug-name {
+            font-weight: 500;
+        }
+        
+        .list-item .drug-form {
+            color: #6b7280;
+        }
+        
+        .list-item .drug-qty {
+            font-weight: 500;
+        }
+        
+        .list-item .status-badge {
             padding: 2px 12px;
             border: 1px solid #d1d5db;
             border-radius: 12px;
-            font-size: 13px;
+            font-size: 12px;
+            text-align: center;
             background: #f3f4f6;
+            display: inline-block;
+            justify-self: start;
+        }
+        
+        /* Status colors (subtle, just for structure) */
+        .list-item .status-in-stock {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+        }
+        
+        .list-item .status-low-stock {
+            background: #fef3c7;
+            border-color: #fcd34d;
+        }
+        
+        .list-item .status-out-of-stock {
+            background: #fee2e2;
+            border-color: #fca5a5;
         }
         
         /* ============================================================
@@ -233,33 +261,33 @@
         
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: #6b7280;
-            grid-column: 1 / -1;
+            border: 1px dashed #d1d5db;
+            border-radius: 6px;
         }
         
         .empty-state .icon {
-            font-size: 48px;
+            font-size: 40px;
             display: block;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
         
         .loading-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: #6b7280;
-            grid-column: 1 / -1;
         }
         
         .loading-state .spinner {
             display: inline-block;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border: 3px solid #e5e7eb;
             border-top: 3px solid #6b7280;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         
         @keyframes spin {
@@ -307,7 +335,7 @@
         
         .footer {
             text-align: center;
-            padding: 24px 0 8px;
+            padding: 20px 0 8px;
             border-top: 1px solid #e5e7eb;
             margin-top: 24px;
             font-size: 13px;
@@ -315,13 +343,20 @@
         }
         
         /* ============================================================
-           RESPONSIVE BREAKPOINTS
+           RESPONSIVE
            ============================================================ */
         
         /* TABLET */
-        @media (max-width: 900px) {
-            .results-grid {
-                grid-template-columns: repeat(2, 1fr);
+        @media (max-width: 768px) {
+            .list-header {
+                grid-template-columns: 2fr 1.5fr 1fr 1.2fr;
+                font-size: 12px;
+            }
+            
+            .list-item {
+                grid-template-columns: 2fr 1.5fr 1fr 1.2fr;
+                font-size: 13px;
+                padding: 8px 12px;
             }
         }
         
@@ -395,22 +430,53 @@
                 width: 100%;
             }
             
-            /* Results */
-            .results-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
+            /* Results - Mobile list */
+            .list-header {
+                display: none; /* Hide headers on mobile */
             }
             
-            .result-card {
-                padding: 14px;
+            .list-item {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                padding: 12px 14px;
+                border-bottom: 1px solid #e5e7eb;
             }
             
-            .result-card .drug-name {
-                font-size: 18px;
+            .list-item:last-child {
+                border-bottom: none;
             }
             
-            .result-card .drug-form {
-                font-size: 15px;
+            .list-item .drug-name {
+                font-size: 16px;
+                font-weight: 600;
+            }
+            
+            .list-item .drug-form {
+                font-size: 14px;
+                color: #6b7280;
+            }
+            
+            .list-item .drug-details-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 4px;
+            }
+            
+            .list-item .drug-qty {
+                font-size: 14px;
+            }
+            
+            .list-item .status-badge {
+                font-size: 13px;
+                padding: 2px 14px;
+            }
+            
+            .results-list {
+                border: none;
+                border-radius: 0;
             }
         }
     </style>
@@ -467,9 +533,9 @@
         </section>
 
         <!-- ============================================================
-        RESULTS
+        RESULTS - LIST VIEW
         ============================================================ -->
-        <div class="results-grid" id="results">
+        <div id="results">
             <div class="empty-state">
                 <span class="icon">🔍</span>
                 <p>Type a drug name and click Search</p>
@@ -561,7 +627,6 @@
             }
         }
 
-        // Close menu when clicking outside (mobile)
         document.addEventListener('click', function(e) {
             var headerRight = document.getElementById('headerRight');
             var btn = document.getElementById('hamburgerBtn');
@@ -592,7 +657,6 @@
                 roleDisplay.textContent = user.isAdmin ? 'Admin' : 'User';
             }
 
-            // Show/hide admin links
             var adminLinks = document.querySelectorAll('.admin-link');
             adminLinks.forEach(function(link) {
                 if (user.isAdmin) {
@@ -615,7 +679,30 @@
         }
 
         // ============================================================
-        // SEARCH DRUGS
+        // GET STATUS INFO
+        // ============================================================
+
+        function getStatusInfo(balance) {
+            if (balance === 0) {
+                return {
+                    text: 'Out of Stock',
+                    class: 'status-out-of-stock'
+                };
+            } else if (balance < 10) {
+                return {
+                    text: 'Low Stock',
+                    class: 'status-low-stock'
+                };
+            } else {
+                return {
+                    text: 'In Stock',
+                    class: 'status-in-stock'
+                };
+            }
+        }
+
+        // ============================================================
+        // SEARCH DRUGS - LIST VIEW
         // ============================================================
 
         async function searchDrugs() {
@@ -653,28 +740,37 @@
                     return;
                 }
 
-                var html = '';
+                // Build list
+                var html = `<div class="results-list">`;
+                
+                // Desktop header
+                html += `
+                    <div class="list-header">
+                        <span>Drug Name</span>
+                        <span>Form</span>
+                        <span>Quantity</span>
+                        <span>Status</span>
+                    </div>
+                `;
+
+                // List items
                 results.forEach(function(record) {
                     var name = record[0] || 'Unknown';
                     var form = record[1] || 'N/A';
                     var balance = parseFloat(record[2]) || 0;
-
-                    var statusText = 'In Stock';
-                    if (balance === 0) statusText = 'Out of Stock';
-                    else if (balance < 10) statusText = 'Low Stock';
+                    var status = getStatusInfo(balance);
 
                     html += `
-                        <div class="result-card">
-                            <div class="drug-name">${name}</div>
-                            <div class="drug-form">${form}</div>
-                            <div class="drug-details">
-                                <span class="drug-quantity">Qty: ${balance}</span>
-                                <span class="status-badge">${statusText}</span>
-                            </div>
+                        <div class="list-item">
+                            <span class="drug-name">${name}</span>
+                            <span class="drug-form">${form}</span>
+                            <span class="drug-qty">${balance}</span>
+                            <span class="status-badge ${status.class}">${status.text}</span>
                         </div>
                     `;
                 });
 
+                html += `</div>`;
                 document.getElementById('results').innerHTML = html;
 
             } catch (error) {
