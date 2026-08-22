@@ -22,7 +22,7 @@
         }
         
         .app-wrapper {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         
@@ -131,17 +131,7 @@
         }
         
         /* ============================================================
-           RECEIVE LAYOUT
-           ============================================================ */
-        
-        .receive-layout {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
-        }
-        
-        /* ============================================================
-           TOOLBAR (New Drug Button)
+           TOOLBAR
            ============================================================ */
         
         .toolbar {
@@ -176,13 +166,26 @@
         }
         
         /* ============================================================
-           DRUG LIST
+           RECEIVE LAYOUT - 50/50 SPLIT
+           ============================================================ */
+        
+        .receive-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        /* ============================================================
+           DRUG LIST (left panel)
            ============================================================ */
         
         .drug-list-section {
             border: 1px solid #e5e7eb;
             border-radius: 6px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
         }
         
         .drug-list-header {
@@ -242,13 +245,14 @@
         }
         
         .drug-list-scroll {
-            max-height: 500px;
+            flex: 1;
             overflow-y: auto;
+            max-height: 500px;
         }
         
         .list-header {
             display: grid;
-            grid-template-columns: 1.8fr 1.2fr 1fr 1fr 1fr;
+            grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 1fr;
             gap: 6px;
             padding: 8px 14px;
             background: #f9fafb;
@@ -262,7 +266,7 @@
         
         .list-item {
             display: grid;
-            grid-template-columns: 1.8fr 1.2fr 1fr 1fr 1fr;
+            grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 1fr;
             gap: 6px;
             padding: 8px 14px;
             border-bottom: 1px solid #f3f4f6;
@@ -357,7 +361,7 @@
         }
         
         /* ============================================================
-           RECEIVE CART
+           RECEIVE CART (right panel) - 50% with inline editing
            ============================================================ */
         
         .receive-cart {
@@ -366,6 +370,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            min-height: 500px;
         }
         
         .receive-cart-header {
@@ -385,11 +390,18 @@
             font-weight: normal;
         }
         
+        .receive-cart-header .item-count {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: normal;
+            margin-left: 8px;
+        }
+        
         .receive-cart-body {
             flex: 1;
             padding: 12px 16px;
-            max-height: 400px;
             overflow-y: auto;
+            max-height: 400px;
         }
         
         .cart-empty {
@@ -399,9 +411,11 @@
             font-size: 14px;
         }
         
+        /* Cart items with inline quantity editing */
         .cart-item {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1.5fr 0.8fr 0.8fr 0.5fr;
+            gap: 8px;
             align-items: center;
             padding: 8px 0;
             border-bottom: 1px solid #f3f4f6;
@@ -414,12 +428,25 @@
         
         .cart-item .item-name {
             font-weight: 500;
-            flex: 1;
         }
         
-        .cart-item .item-qty {
-            margin: 0 10px;
+        .cart-item .item-form {
             color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .cart-item .item-qty-input {
+            width: 50px;
+            padding: 4px 6px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 13px;
+        }
+        
+        .cart-item .item-qty-input:focus {
+            border-color: #6b7280;
+            outline: none;
         }
         
         .cart-item .remove-btn {
@@ -429,6 +456,7 @@
             cursor: pointer;
             font-size: 16px;
             padding: 0 4px;
+            justify-self: end;
         }
         
         .cart-item .remove-btn:hover {
@@ -610,11 +638,6 @@
         .modal .form-group input:focus {
             border-color: #6b7280;
             outline: none;
-        }
-        
-        .modal .form-group input[readonly] {
-            background: #f3f4f6;
-            color: #6b7280;
         }
         
         .modal .drug-entries {
@@ -851,22 +874,27 @@
         @media (max-width: 900px) {
             .receive-layout {
                 grid-template-columns: 1fr;
+                gap: 16px;
             }
             
             .drug-list-scroll {
-                max-height: 400px;
+                max-height: 300px;
+            }
+            
+            .receive-cart-body {
+                max-height: 300px;
             }
         }
         
         @media (max-width: 768px) {
             .list-header {
-                grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 0.8fr;
+                grid-template-columns: 1.2fr 1fr 0.8fr 0.8fr 0.8fr;
                 font-size: 11px;
                 padding: 6px 10px;
             }
             
             .list-item {
-                grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 0.8fr;
+                grid-template-columns: 1.2fr 1fr 0.8fr 0.8fr 0.8fr;
                 font-size: 12px;
                 padding: 6px 10px;
             }
@@ -878,6 +906,15 @@
             
             .receive-cart-footer .receive-details {
                 grid-template-columns: 1fr;
+            }
+            
+            .cart-item {
+                grid-template-columns: 1fr 0.8fr 0.6fr 0.4fr;
+                font-size: 12px;
+            }
+            
+            .cart-item .item-qty-input {
+                width: 40px;
             }
             
             .modal .form-row {
@@ -1007,8 +1044,27 @@
                 padding: 4px 16px;
             }
             
-            .receive-cart-body {
-                max-height: 250px;
+            .cart-item {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                padding: 10px 0;
+            }
+            
+            .cart-item .item-name {
+                flex: 1;
+                min-width: 120px;
+                font-size: 14px;
+            }
+            
+            .cart-item .item-form {
+                font-size: 12px;
+                color: #6b7280;
+                width: 100%;
+            }
+            
+            .cart-item .item-qty-input {
+                width: 50px;
             }
             
             .receive-cart-footer .cart-actions {
@@ -1078,7 +1134,7 @@
         </div>
 
         <!-- ============================================================
-        RECEIVE LAYOUT
+        RECEIVE LAYOUT - 50/50
         ============================================================ -->
         <div class="receive-layout">
 
@@ -1106,7 +1162,9 @@
             <!-- RIGHT: RECEIVE CART -->
             <div class="receive-cart">
                 <div class="receive-cart-header">
-                    <h2>📦 Receive <span class="receive-id" id="receiveIdDisplay"></span></h2>
+                    <h2>📦 Receive <span class="receive-id" id="receiveIdDisplay"></span>
+                        <span class="item-count" id="cartCount">(0 items)</span>
+                    </h2>
                 </div>
                 <div class="receive-cart-body" id="cartContainer">
                     <div class="cart-empty">
@@ -1139,7 +1197,6 @@
                     <button class="close-btn" onclick="closeNewDrugModal()">✕</button>
                 </div>
 
-                <!-- Supplier & Invoice -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>Supplier <span class="required">*</span></label>
@@ -1157,7 +1214,6 @@
                     </div>
                 </div>
 
-                <!-- Drug Entries -->
                 <div class="drug-entries">
                     <div class="entry-header">
                         <span>Drug Name <span class="required">*</span></span>
@@ -1166,9 +1222,7 @@
                         <span>Expiry <span class="required">*</span></span>
                         <span>Qty <span class="required">*</span></span>
                     </div>
-                    <div id="drugEntriesContainer">
-                        <!-- Rows added dynamically -->
-                    </div>
+                    <div id="drugEntriesContainer"></div>
                 </div>
 
                 <div class="entry-actions">
@@ -1345,7 +1399,6 @@
                 else link.classList.remove('show');
             });
 
-            // Only admin can receive
             if (!currentUser.isAdmin) {
                 document.querySelector('.receive-layout').innerHTML = 
                     '<div class="empty-state" style="padding:60px 20px;"><span class="icon">🔑</span><p>Admin access required for receiving stock.</p></div>';
@@ -1355,6 +1408,7 @@
 
             currentReceiveId = generateReceiveId();
             document.getElementById('receiveIdDisplay').textContent = currentReceiveId;
+            updateCartCount();
 
             loadAllDrugs();
 
@@ -1514,15 +1568,27 @@
 
             receiveItems.push({
                 name: drug.name,
-                quantity: qty,
                 form: drug.form,
-                batch: '',
-                expiry: ''
+                quantity: qty
             });
 
             renderCart();
             renderDrugList();
+            updateCartCount();
             showAlert('Added ' + drug.name + ' to receive.', 'success');
+        }
+
+        // ============================================================
+        // UPDATE CART ITEM QUANTITY (from right panel)
+        // ============================================================
+
+        function updateCartQuantity(index, newValue) {
+            var qty = parseInt(newValue) || 1;
+            if (qty < 1) qty = 1;
+            receiveItems[index].quantity = qty;
+            updateCartCount();
+            // No need to re-render drug list - just update cart
+            renderCart();
         }
 
         // ============================================================
@@ -1547,13 +1613,26 @@
                 html += `
                     <div class="cart-item">
                         <span class="item-name">${item.name}</span>
-                        <span class="item-qty">× ${item.quantity}</span>
+                        <span class="item-form">${item.form}</span>
+                        <input type="number" class="item-qty-input" min="1" value="${item.quantity}" 
+                               onchange="updateCartQuantity(${index}, this.value)">
                         <button class="remove-btn" onclick="removeFromReceive(${index})">✕</button>
                     </div>
                 `;
             });
 
             container.innerHTML = html;
+        }
+
+        // ============================================================
+        // UPDATE CART COUNT
+        // ============================================================
+
+        function updateCartCount() {
+            var countEl = document.getElementById('cartCount');
+            if (countEl) {
+                countEl.textContent = '(' + receiveItems.length + ' items)';
+            }
         }
 
         // ============================================================
@@ -1565,6 +1644,7 @@
             receiveItems.splice(index, 1);
             renderCart();
             renderDrugList();
+            updateCartCount();
             showAlert('Removed ' + removed + ' from receive.', 'info');
         }
 
@@ -1586,6 +1666,7 @@
             document.getElementById('receiveInvoice').value = '';
             renderCart();
             renderDrugList();
+            updateCartCount();
             showAlert('Receive cleared.', 'info');
         }
 
@@ -1650,6 +1731,7 @@
                         document.getElementById('receiveInvoice').value = '';
                         renderCart();
                         renderDrugList();
+                        updateCartCount();
 
                         currentReceiveId = generateReceiveId();
                         document.getElementById('receiveIdDisplay').textContent = currentReceiveId;
@@ -1673,11 +1755,9 @@
                 modal.classList.add('open');
                 document.getElementById('drugEntriesContainer').innerHTML = '';
                 drugRowCount = 0;
-                // Add 3 default rows
                 for (var i = 0; i < 3; i++) {
                     addDrugRow();
                 }
-                // Clear previous values
                 document.getElementById('newDrugSupplier').value = '';
                 document.getElementById('newDrugInvoice').value = '';
                 document.getElementById('newDrugReceivedBy').value = '';
@@ -1712,7 +1792,6 @@
             container.appendChild(row);
             drugRowCount++;
 
-            // Auto-focus first input
             setTimeout(function() {
                 var firstInput = row.querySelector('input');
                 if (firstInput) firstInput.focus();
@@ -1822,7 +1901,6 @@
 
                 if (result.success) {
                     showAlert('✅ ' + result.message, 'success');
-                    // Refresh drug list
                     loadAllDrugs();
                 } else {
                     showAlert('❌ ' + (result.message || 'Error adding drugs.'), 'error');
