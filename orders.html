@@ -1216,4 +1216,53 @@
                 userId: currentUser.userId,
                 department: currentUser.department,
                 orderId: currentOrderId,
-                items: cartItems.map(function(item)
+                items: cartItems.map(function(item) {
+                    return { drug: item.name, quantity: item.quantity };
+                }),
+                notes: notes,
+                timestamp: new Date().toISOString()
+            };
+
+            var url = API_URL +
+                '?action=submitorder' +
+                '&user=' + encodeURIComponent(orderData.user) +
+                '&userId=' + encodeURIComponent(orderData.userId) +
+                '&department=' + encodeURIComponent(orderData.department) +
+                '&orderId=' + encodeURIComponent(orderData.orderId) +
+                '&items=' + encodeURIComponent(JSON.stringify(orderData.items)) +
+                '&notes=' + encodeURIComponent(orderData.notes) +
+                '&timestamp=' + encodeURIComponent(orderData.timestamp);
+
+            fetch(url)
+                .then(function(response) { return response.json(); })
+                .then(function(result) {
+                    if (result.success) {
+                        showAlert('✅ Order submitted successfully! Order ID: ' + currentOrderId, 'success');
+                        cartItems = [];
+                        document.getElementById('orderNotes').value = '';
+                        renderCart();
+                        renderDrugList();
+
+                        currentOrderId = generateOrderId();
+                        document.getElementById('orderIdDisplay').textContent = currentOrderId;
+                    } else {
+                        showAlert(result.message || 'Error submitting order.', 'error');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    showAlert('Error connecting to server.', 'error');
+                });
+        }
+
+        // ============================================================
+        // INIT ON LOAD
+        // ============================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initPage();
+        });
+    </script>
+
+</body>
+</html>
