@@ -137,7 +137,7 @@
         // API URL
         // ============================================================
 
-        var API_URL = "https://script.google.com/macros/s/AKfycbxj00eyfQIzUlGqxaw86tQgzxNSxKoKzvcTyMNWYoDnPFBZCrQYvDrUCpBJx2sH4Nak/exec";
+        var API_URL = "https://script.google.com/macros/s/AKfycbyybdqQbHlOLLp6mUHq36_Bq4sXRjEpO7NgxvSHU9nPew7CD51YMaO8BUmHpJywF7lG/exec";
 
         // ============================================================
         // LOADING INDICATOR
@@ -358,24 +358,24 @@
 
         async function handleForgotPassword(event) {
             event.preventDefault();
-
+        
             var username = document.getElementById('forgotUsername').value.trim();
-
+        
             if (!username) {
                 showAlert('Please enter your username or email.', 'error');
                 return;
             }
-
+        
             showLoading('Sending reset link...');
-
+        
             try {
                 var response = await fetch(API_URL +
                     '?action=forgotpassword' +
                     '&username=' + encodeURIComponent(username));
-
+        
                 var result = await response.json();
                 hideLoading();
-
+        
                 if (result.success) {
                     showAlert('✅ ' + result.message, 'success');
                     showLogin();
@@ -383,7 +383,7 @@
                 } else {
                     showAlert(result.message || 'Error sending reset link.', 'error');
                 }
-
+        
             } catch (error) {
                 hideLoading();
                 console.error('Forgot password error:', error);
