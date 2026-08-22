@@ -6,7 +6,7 @@
 // API URL - UPDATE THIS
 // ============================================================
 
-var API_URL = "https://script.google.com/macros/s/AKfycbyybdqQbHlOLLp6mUHq36_Bq4sXRjEpO7NgxvSHU9nPew7CD51YMaO8BUmHpJywF7lG/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbzHfORUmsdHLH1qVys1kDiYOHDe6hpAHsYMcR4X2nOf-wVA8UhRcVE9ihycw9YDM2vU/exec";
 
 // ============================================================
 // AUTH
