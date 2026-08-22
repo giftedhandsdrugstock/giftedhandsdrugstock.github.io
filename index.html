@@ -37,7 +37,10 @@
                 </div>
                 <button type="submit" class="btn">Login</button>
             </form>
-            <p style="margin-top:15px;">Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+            <p style="margin-top:15px;">
+                <a href="#" onclick="showForgotPassword()" style="color:#2b6cb0;text-decoration:none;font-size:14px;">Forgot Password?</a>
+            </p>
+            <p style="margin-top:5px;">Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
         </div>
 
         <!-- REGISTER -->
@@ -110,6 +113,23 @@
             </form>
             <p style="margin-top:15px;">Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
         </div>
+
+        <!-- ============================================================
+        FORGOT PASSWORD
+        ============================================================ -->
+        <div id="forgotPasswordForm" style="display:none;">
+            <h2>Reset Password</h2>
+            <p style="color:#718096;font-size:14px;margin-bottom:15px;">Enter your username or email to receive a password reset link.</p>
+            <form id="forgotPasswordElement" onsubmit="handleForgotPassword(event)">
+                <div class="form-group">
+                    <label>Username or Email</label>
+                    <input type="text" id="forgotUsername" placeholder="Enter your username or email" required>
+                </div>
+                <button type="submit" class="btn" style="background:#2b6cb0;color:white;">Send Reset Link</button>
+                <button type="button" class="btn" onclick="showLogin()" style="margin-top:8px;">← Back to Login</button>
+            </form>
+        </div>
+
     </div>
 
     <script>
@@ -146,6 +166,7 @@
         function showLogin() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
             document.getElementById('alert').className = 'alert';
             document.getElementById('loginUsername').focus();
         }
@@ -153,8 +174,17 @@
         function showRegister() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
             document.getElementById('alert').className = 'alert';
             document.getElementById('regFirstName').focus();
+        }
+
+        function showForgotPassword() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'block';
+            document.getElementById('alert').className = 'alert';
+            document.getElementById('forgotUsername').focus();
         }
 
         function clearDepartment() {
@@ -323,6 +353,45 @@
         }
 
         // ============================================================
+        // FORGOT PASSWORD
+        // ============================================================
+
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+
+            var username = document.getElementById('forgotUsername').value.trim();
+
+            if (!username) {
+                showAlert('Please enter your username or email.', 'error');
+                return;
+            }
+
+            showLoading('Sending reset link...');
+
+            try {
+                var response = await fetch(API_URL +
+                    '?action=forgotpassword' +
+                    '&username=' + encodeURIComponent(username));
+
+                var result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    showAlert('✅ ' + result.message, 'success');
+                    showLogin();
+                    document.getElementById('loginUsername').focus();
+                } else {
+                    showAlert(result.message || 'Error sending reset link.', 'error');
+                }
+
+            } catch (error) {
+                hideLoading();
+                console.error('Forgot password error:', error);
+                showAlert('Error connecting to server.', 'error');
+            }
+        }
+
+        // ============================================================
         // INIT
         // ============================================================
 
@@ -332,19 +401,21 @@
                 return;
             }
 
-            // Set up Enter key navigation for Login
             setupEnterNavigation(
                 document.getElementById('loginFormElement'),
                 ['loginUsername', 'loginPassword']
             );
 
-            // Set up Enter key navigation for Register
             setupEnterNavigation(
                 document.getElementById('registerFormElement'),
                 ['regFirstName', 'regLastName', 'regEmail', 'regUsername', 'regDepartment', 'regPassword', 'regConfirmPassword']
             );
 
-            // Focus on username field
+            setupEnterNavigation(
+                document.getElementById('forgotPasswordElement'),
+                ['forgotUsername']
+            );
+
             document.getElementById('loginUsername').focus();
         });
     </script>
