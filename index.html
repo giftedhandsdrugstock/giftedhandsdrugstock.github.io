@@ -362,36 +362,41 @@
 
         async function handleForgotPassword(event) {
             event.preventDefault();
-
+        
             var username = document.getElementById('forgotUsername').value.trim();
-
+        
             if (!username) {
                 showAlert('Please enter your username or email.', 'error');
                 return;
             }
-
+        
             showLoading('Sending reset link...');
-
+        
             try {
                 var response = await fetch(API_URL +
                     '?action=forgotpassword' +
                     '&username=' + encodeURIComponent(username));
-
+        
                 var result = await response.json();
                 hideLoading();
-
+        
                 if (result.success) {
                     showAlert('✅ ' + result.message, 'success');
-                    showLogin();
-                    document.getElementById('loginUsername').focus();
+                    // Optionally clear the form
+                    document.getElementById('forgotUsername').value = '';
+                    // Show login form after a delay
+                    setTimeout(function() {
+                        showLogin();
+                        document.getElementById('loginUsername').focus();
+                    }, 3000);
                 } else {
                     showAlert(result.message || 'Error sending reset link.', 'error');
                 }
-
+        
             } catch (error) {
                 hideLoading();
                 console.error('Forgot password error:', error);
-                showAlert('Error connecting to server.', 'error');
+                showAlert('Error connecting to server. Please try again.', 'error');
             }
         }
 
