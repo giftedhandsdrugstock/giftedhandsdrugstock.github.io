@@ -2,78 +2,500 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Drug Stock Search</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ============================================================
+           MOBILE-FIRST RESPONSIVE STYLES
+           ============================================================ */
+        
+        /* Base mobile styles */
+        .mobile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            padding: 10px 0;
+        }
+        
+        .mobile-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .mobile-header-top h1 {
+            font-size: 18px;
+            margin: 0;
+        }
+        
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        
+        .mobile-user-info .text-muted {
+            font-size: 12px;
+        }
+        
+        .mobile-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding-top: 8px;
+            border-top: 1px solid #eee;
+        }
+        
+        .mobile-nav a,
+        .mobile-nav button {
+            font-size: 13px;
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .mobile-nav a:hover,
+        .mobile-nav button:hover {
+            background: #e8e8e8;
+        }
+        
+        .mobile-nav .admin-link {
+            display: none;
+        }
+        
+        .mobile-nav .admin-link.show {
+            display: inline-block;
+        }
+        
+        .mobile-nav .btn-logout {
+            background: #fee;
+            border-color: #fcc;
+            color: #c00;
+        }
+        
+        /* Search box - mobile friendly */
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .search-container .search-input-wrapper {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .search-container input {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 16px; /* Prevents iOS zoom */
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            min-height: 44px; /* Touch-friendly */
+        }
+        
+        .search-container input:focus {
+            border-color: #2b6cb0;
+            outline: none;
+        }
+        
+        .search-container .search-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .search-container .search-actions button {
+            flex: 1;
+            min-width: 60px;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            background: #2b6cb0;
+            color: #fff;
+            cursor: pointer;
+            min-height: 44px;
+        }
+        
+        .search-container .search-actions button:hover {
+            background: #1a4a7a;
+        }
+        
+        .search-container .search-actions button.btn-secondary {
+            background: #e2e8f0;
+            color: #333;
+        }
+        
+        .search-container .search-actions button.btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        /* Results - mobile friendly */
+        .results-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .results-container table {
+            width: 100%;
+            min-width: 300px;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .results-container table th,
+        .results-container table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .results-container table th {
+            background: #f7fafc;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        /* Status indicators */
+        .stock-status {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .stock-status.in-stock {
+            background: #c6f6d5;
+            color: #276749;
+        }
+        
+        .stock-status.low-stock {
+            background: #fefcbf;
+            color: #975a16;
+        }
+        
+        .stock-status.out-of-stock {
+            background: #fed7d7;
+            color: #9b2c2c;
+        }
+        
+        /* Loading state */
+        .loading-indicator {
+            text-align: center;
+            padding: 30px 0;
+            color: #888;
+        }
+        
+        .loading-indicator .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2b6cb0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ============================================================
+           TABLET AND DESKTOP IMPROVEMENTS
+           ============================================================ */
+        
+        @media (min-width: 600px) {
+            .mobile-header {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+            
+            .mobile-header-top {
+                flex: 1;
+            }
+            
+            .mobile-nav {
+                border-top: none;
+                padding-top: 0;
+            }
+            
+            .search-container {
+                flex-direction: row;
+                align-items: center;
+            }
+            
+            .search-container .search-input-wrapper {
+                flex: 1;
+            }
+            
+            .search-container .search-actions {
+                flex: 0 0 auto;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .mobile-header-top h1 {
+                font-size: 24px;
+            }
+            
+            .results-container table {
+                font-size: 15px;
+            }
+            
+            .results-container table th,
+            .results-container table td {
+                padding: 12px 16px;
+            }
+        }
+        
+        /* ============================================================
+           HAMBURGER MENU (mobile)
+           ============================================================ */
+        
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: #333;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+        
+        @media (max-width: 599px) {
+            .hamburger {
+                display: flex;
+            }
+            
+            .mobile-nav {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .mobile-nav.open {
+                display: flex;
+            }
+            
+            .mobile-nav a,
+            .mobile-nav button {
+                width: 100%;
+                text-align: center;
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- HEADER PLACEHOLDER -->
-    <div id="header"></div>
+    <!-- ============================================================
+    MOBILE HEADER (replaces header.html)
+    ============================================================ -->
+    <header class="mobile-header">
+        <div class="mobile-header-top">
+            <h1>💊 Drug Stock</h1>
+            <div class="mobile-user-info">
+                <span id="userDisplay">Welcome, User</span>
+                <span class="text-muted" id="roleDisplay"></span>
+                <button class="hamburger" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <nav class="mobile-nav" id="mobileNav">
+            <a href="search.html">🔍 Search</a>
+            <a href="orders.html">📝 New Order</a>
+            <a href="myorders.html">📋 My Orders</a>
+            <a href="approve.html" class="admin-link" id="approveLink">✅ Approve</a>
+            <a href="receive.html" class="admin-link" id="receiveLink">📥 Receive</a>
+            <a href="profile.html">👤 Profile</a>
+            <a href="users.html" class="admin-link" id="usersLink">👥 Users</a>
+            <a href="reset.html" class="admin-link" id="resetLink">🔄 Reset</a>
+            <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+        </nav>
+    </header>
 
-    <!-- ===== PAGE CONTENT ===== -->
+    <!-- ============================================================
+    ALERT
+    ============================================================ -->
+    <div id="alert" class="alert"></div>
+
+    <!-- ============================================================
+    PAGE CONTENT
+    ============================================================ -->
     <div class="section-box">
-        <div class="search-box">
-            <input type="text" id="searchBox" placeholder="Search for a drug...">
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <input type="text" id="searchBox" placeholder="Search for a drug..." autofocus>
+            </div>
+            <div class="search-actions">
+                <button onclick="searchDrugs()">🔍 Search</button>
+                <button class="btn-secondary" onclick="clearSearch()">✕ Clear</button>
+            </div>
         </div>
 
-        <div id="results">
-            <p class="text-muted">Type a drug name and press Enter.</p>
+        <div class="results-container" id="results">
+            <p class="text-muted">Type a drug name and press Enter or tap Search.</p>
         </div>
     </div>
 
-    <!-- FOOTER PLACEHOLDER -->
+    <!-- ============================================================
+    FOOTER
+    ============================================================ -->
     <div id="footer"></div>
 
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
     <script>
         // ============================================================
-        // LOAD HEADER AND FOOTER, THEN INITIALIZE
+        // CONFIGURATION
+        // ============================================================
+        
+        var API_URL = "https://script.google.com/macros/s/AKfycbzHfORUmsdHLH1qVys1kDiYOHDe6hpAHsYMcR4X2nOf-wVA8UhRcVE9ihycw9YDM2vU/exec";
+
+        // ============================================================
+        // AUTHENTICATION
         // ============================================================
 
-        var headerLoaded = false;
-        var footerLoaded = false;
+        function checkAuth() {
+            if (localStorage.getItem('loggedIn') !== 'true') {
+                window.location.href = 'index.html';
+                return false;
+            }
+            return true;
+        }
 
-        function checkReady() {
-            if (headerLoaded && footerLoaded) {
-                var script = document.createElement('script');
-                script.src = 'script.js';
-                script.onload = function() {
-                    if (typeof initPage === 'function') {
-                        initPage();
-                    }
-                };
-                document.body.appendChild(script);
+        function getCurrentUser() {
+            return {
+                userId: localStorage.getItem('userId') || '',
+                username: localStorage.getItem('username'),
+                fullName: localStorage.getItem('fullName') || localStorage.getItem('username') || 'User',
+                firstName: localStorage.getItem('firstName') || '',
+                lastName: localStorage.getItem('lastName') || '',
+                email: localStorage.getItem('email') || '',
+                department: localStorage.getItem('department') || '',
+                created: localStorage.getItem('created') || '',
+                isAdmin: localStorage.getItem('username') === 'admin'
+            };
+        }
+
+        function logout() {
+            var userId = localStorage.getItem('userId');
+            if (userId) {
+                fetch(API_URL + '?action=logout&userId=' + encodeURIComponent(userId))
+                    .catch(function(error) { console.error('Logout error:', error); });
+            }
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        // ============================================================
+        // ALERT
+        // ============================================================
+
+        function showAlert(message, type) {
+            var alert = document.getElementById('alert');
+            if (!alert) return;
+            alert.textContent = message;
+            alert.className = 'alert alert-' + type + ' show';
+            clearTimeout(alert._timeout);
+            alert._timeout = setTimeout(function() {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // ============================================================
+        // LOADING INDICATOR
+        // ============================================================
+
+        function showLoading(message) {
+            var results = document.getElementById('results');
+            if (results) {
+                results.innerHTML = `
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>${message || 'Searching...'}</p>
+                    </div>
+                `;
             }
         }
 
-        fetch('header.html')
-            .then(function(response) { return response.text(); })
-            .then(function(html) {
-                document.getElementById('header').innerHTML = html;
-                headerLoaded = true;
-                checkReady();
-            })
-            .catch(function(error) {
-                console.error('Error loading header:', error);
-                headerLoaded = true;
-                checkReady();
-            });
-
-        fetch('footer.html')
-            .then(function(response) { return response.text(); })
-            .then(function(html) {
-                document.getElementById('footer').innerHTML = html;
-                footerLoaded = true;
-                checkReady();
-            })
-            .catch(function(error) {
-                console.error('Error loading footer:', error);
-                footerLoaded = true;
-                checkReady();
-            });
+        function hideLoading() {
+            // Will be replaced by search results
+        }
 
         // ============================================================
-        // SEARCH.HTML SPECIFIC
+        // MOBILE MENU
+        // ============================================================
+
+        function toggleMenu() {
+            var nav = document.getElementById('mobileNav');
+            var btn = document.getElementById('hamburgerBtn');
+            if (nav) {
+                nav.classList.toggle('open');
+            }
+            if (btn) {
+                btn.classList.toggle('active');
+            }
+        }
+
+        // Close menu on link click (mobile)
+        document.addEventListener('click', function(e) {
+            var nav = document.getElementById('mobileNav');
+            var btn = document.getElementById('hamburgerBtn');
+            if (nav && nav.classList.contains('open')) {
+                var isNavClick = nav.contains(e.target);
+                var isBtnClick = btn && btn.contains(e.target);
+                if (!isNavClick && !isBtnClick) {
+                    nav.classList.remove('open');
+                    if (btn) btn.classList.remove('active');
+                }
+            }
+        });
+
+        // ============================================================
+        // INITIALIZE PAGE
         // ============================================================
 
         function initPage() {
@@ -81,25 +503,35 @@
 
             var user = getCurrentUser();
             var userDisplay = document.getElementById('userDisplay');
-            if (userDisplay) userDisplay.textContent = 'Welcome, ' + user.fullName;
+            if (userDisplay) {
+                userDisplay.textContent = '👋 ' + user.fullName;
+            }
 
             var roleDisplay = document.getElementById('roleDisplay');
-            if (roleDisplay) roleDisplay.textContent = user.isAdmin ? '(Admin)' : '(User)';
+            if (roleDisplay) {
+                roleDisplay.textContent = user.isAdmin ? '🔑 Admin' : '👤 User';
+            }
 
-            var deptDisplay = document.getElementById('deptDisplay');
-            if (deptDisplay) deptDisplay.textContent = 'Department: ' + user.department;
+            // Show/hide admin links
+            var adminLinks = document.querySelectorAll('.admin-link');
+            adminLinks.forEach(function(link) {
+                if (user.isAdmin) {
+                    link.classList.add('show');
+                } else {
+                    link.classList.remove('show');
+                }
+            });
 
-            if (typeof initNav === 'function') initNav();
-
+            // Focus search
             var searchBox = document.getElementById('searchBox');
             if (searchBox) {
+                searchBox.focus();
                 searchBox.addEventListener('keydown', function(event) {
                     if (event.key === 'Enter') {
                         event.preventDefault();
                         searchDrugs();
                     }
                 });
-                searchBox.focus();
             }
         }
 
@@ -111,44 +543,91 @@
             var query = document.getElementById('searchBox').value.trim();
 
             if (!query) {
-                document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter.</p>';
+                document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter or tap Search.</p>';
                 return;
             }
 
-            var resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<p>Searching...</p>';
-
-            if (typeof showLoading === 'function') showLoading('Searching for: ' + query);
+            showLoading('Searching for: ' + query);
 
             try {
                 var response = await fetch(API_URL + '?search=' + encodeURIComponent(query));
                 var results = await response.json();
 
-                if (typeof hideLoading === 'function') hideLoading();
-
-                if (results.length === 0) {
-                    resultsDiv.innerHTML = '<p>No matching drugs found.</p>';
+                if (!results || results.length === 0) {
+                    document.getElementById('results').innerHTML = '<p>❌ No matching drugs found for "<strong>' + query + '</strong>".</p>';
                     return;
                 }
 
-                var html = '<table><tr><th>Drug Name</th><th>Form</th><th>Balance</th></tr>';
+                var html = '<table>';
+                html += '<thead><tr><th>Drug Name</th><th>Form</th><th>Balance</th><th>Status</th></tr></thead>';
+                html += '<tbody>';
+
                 results.forEach(function(record) {
                     var balance = parseFloat(record[2]) || 0;
+                    var statusClass = 'in-stock';
+                    var statusText = '✅ In Stock';
+                    
+                    if (balance === 0) {
+                        statusClass = 'out-of-stock';
+                        statusText = '❌ Out of Stock';
+                    } else if (balance < 10) {
+                        statusClass = 'low-stock';
+                        statusText = '⚠️ Low Stock';
+                    }
+
                     html += '<tr>';
-                    html += '<td>' + record[0] + '</td>';
+                    html += '<td><strong>' + record[0] + '</strong></td>';
                     html += '<td>' + record[1] + '</td>';
                     html += '<td>' + balance + '</td>';
+                    html += '<td><span class="stock-status ' + statusClass + '">' + statusText + '</span></td>';
                     html += '</tr>';
                 });
-                html += '</table>';
-                resultsDiv.innerHTML = html;
+
+                html += '</tbody></table>';
+                document.getElementById('results').innerHTML = html;
 
             } catch (error) {
-                if (typeof hideLoading === 'function') hideLoading();
                 console.error('Search error:', error);
-                resultsDiv.innerHTML = '<p>Unable to retrieve stock information.</p>';
+                document.getElementById('results').innerHTML = '<p>❌ Unable to retrieve stock information. Please try again.</p>';
             }
         }
+
+        // ============================================================
+        // CLEAR SEARCH
+        // ============================================================
+
+        function clearSearch() {
+            var searchBox = document.getElementById('searchBox');
+            if (searchBox) {
+                searchBox.value = '';
+                searchBox.focus();
+            }
+            document.getElementById('results').innerHTML = '<p class="text-muted">Type a drug name and press Enter or tap Search.</p>';
+        }
+
+        // ============================================================
+        // LOAD HEADER AND FOOTER (for backward compatibility)
+        // ============================================================
+
+        function loadFooter() {
+            fetch('footer.html')
+                .then(function(response) { return response.text(); })
+                .then(function(html) {
+                    document.getElementById('footer').innerHTML = html;
+                })
+                .catch(function(error) {
+                    console.error('Error loading footer:', error);
+                });
+        }
+
+        // ============================================================
+        // INIT ON LOAD
+        // ============================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFooter();
+            initPage();
+        });
     </script>
 
 </body>
