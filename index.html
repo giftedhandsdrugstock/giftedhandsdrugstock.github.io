@@ -369,6 +369,7 @@
             showLoading('Sending reset link...');
         
             try {
+                // Uses the globally declared API_URL
                 var response = await fetch(API_URL +
                     '?action=forgotpassword' +
                     '&username=' + encodeURIComponent(username));
